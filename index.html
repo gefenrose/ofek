@@ -247,6 +247,7 @@
 
   /* ---------- Insights ---------- */
   .stat-row{display:flex; gap:10px; margin:14px 0;}
+  .period-row{margin:2px 0 4px;}
   .stat-card{
     flex:1; background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius-md);
     padding:14px; text-align:center;
@@ -425,8 +426,9 @@
       moodSub:'גררו לבחירת מצב הרוח',
       moodNotePh:'רוצים להוסיף שורה? (לא חובה)', moodSave:'לשמור',
       historyEmpty:'אין עדיין רשומות. הן יופיעו כאן.', calToday:'היום',
-      streakLabel:'רצף ימים', entriesLabel:'רשומות השבוע', avgLabel:'מצב רוח ממוצע',
-      last30:'30 הימים האחרונים', weekTitle:'תובנה על השבוע', reflectBtn:'ליצור תובנה',
+      streakLabel:'רצף ימים', entriesLabel:'רשומות', avgLabel:'מצב רוח ממוצע',
+      last30:'30 הימים האחרונים', lastWeek:'השבוע האחרון', lastYear:'השנה האחרונה',
+      weekTitle:'תובנה על השבוע', reflectBtn:'ליצור תובנה',
       reflectLoading:'חושב על השבוע…', reflectEmpty:'אחרי כמה רשומות יהיה כאן מה לומר.',
       settingsTitle:'הגדרות', settingsName:'שם', settingsLang:'שפה',
       clearData:'מחיקת כל המידע', clearConfirm:'למחוק את כל הרשומות? אי אפשר לשחזר.',
@@ -446,8 +448,9 @@
       moodSub:'Drag to set your mood',
       moodNotePh:'Want to add a line? (optional)', moodSave:'Save',
       historyEmpty:'No entries yet. They\u2019ll show up here.', calToday:'Today',
-      streakLabel:'Day streak', entriesLabel:'Entries this week', avgLabel:'Average mood',
-      last30:'Last 30 days', weekTitle:'This week', reflectBtn:'Reflect on this week',
+      streakLabel:'Day streak', entriesLabel:'Entries', avgLabel:'Average mood',
+      last30:'Last 30 days', lastWeek:'Last week', lastYear:'Last year',
+      weekTitle:'This week', reflectBtn:'Reflect on this week',
       reflectLoading:'Thinking about your week…', reflectEmpty:"After a few entries, there'll be something to say here.",
       settingsTitle:'Settings', settingsName:'Name', settingsLang:'Language',
       clearData:'Erase all data', clearConfirm:"Delete all entries? This can't be undone.",
@@ -1015,21 +1018,50 @@
     return d;
   }
 
-  function renderHorizonChart(){
+  function lastNMonths(n){
+    var out = []; var d = new Date(); d.setDate(1);
+    for(var i=0;i<n;i++){
+      out.push({ year: d.getFullYear(), month: d.getMonth() });
+      d.setMonth(d.getMonth()-1);
+    }
+    return out;
+  }
+
+  function periodDates(period){
+    if(period==='week') return lastNDays(7);
+    if(period==='year') return lastNDays(365);
+    return lastNDays(30);
+  }
+
+  function renderHorizonChart(period){
     var wrap = document.createElement('div'); wrap.className = 'horizon-chart';
-    var days = lastNDays(30).reverse();
-    days.forEach(function(date){
-      var dayEntries = state.entries.filter(function(e){ return e.date===date && typeof e.mood==='number'; });
+
+    function addBar(moods){
       var bar = document.createElement('div'); bar.className = 'horizon-bar';
-      if(dayEntries.length){
-        var avg = dayEntries.reduce(function(a,e){ return a+e.mood; },0)/dayEntries.length;
+      if(moods.length){
+        var avg = moods.reduce(function(a,b){ return a+b; },0)/moods.length;
         bar.style.height = (14 + avg*5)+'px';
         bar.style.background = moodColor(avg);
       } else {
         bar.style.height = '6px';
       }
       wrap.appendChild(bar);
-    });
+    }
+
+    if(period === 'year'){
+      lastNMonths(12).reverse().forEach(function(ym){
+        var moods = state.entries.filter(function(e){
+          return typeof e.mood==='number' && Number(e.date.slice(0,4))===ym.year && Number(e.date.slice(5,7))-1===ym.month;
+        }).map(function(e){ return e.mood; });
+        addBar(moods);
+      });
+    } else {
+      var days = (period==='week' ? lastNDays(7) : lastNDays(30)).reverse();
+      days.forEach(function(date){
+        var moods = state.entries.filter(function(e){ return e.date===date && typeof e.mood==='number'; }).map(function(e){ return e.mood; });
+        addBar(moods);
+      });
+    }
     return wrap;
   }
 
@@ -1090,25 +1122,38 @@
     return card;
   }
 
+  var insightsPeriod = 'week';
+  var PERIOD_KEY = { week:'lastWeek', '30d':'last30', year:'lastYear' };
+
   function renderInsights(){
     var host = document.getElementById('insights-content');
     host.innerHTML = '';
 
+    var periodRow = document.createElement('div'); periodRow.className = 'pillrow period-row';
+    ['week','30d','year'].forEach(function(p){
+      var b = document.createElement('button');
+      b.className = 'pill'+(insightsPeriod===p?' active':'');
+      b.textContent = tr(PERIOD_KEY[p]);
+      b.addEventListener('click', function(){ insightsPeriod = p; renderInsights(); });
+      periodRow.appendChild(b);
+    });
+    host.appendChild(periodRow);
+
     var streak = computeStreak();
-    var week = lastNDays(7);
-    var weekEntries = state.entries.filter(function(e){ return week.indexOf(e.date) !== -1; });
-    var weekMoods = weekEntries.filter(function(e){ return typeof e.mood==='number'; }).map(function(e){ return e.mood; });
-    var avg = weekMoods.length ? (weekMoods.reduce(function(a,b){ return a+b; },0)/weekMoods.length) : null;
+    var periodDays = periodDates(insightsPeriod);
+    var periodEntries = state.entries.filter(function(e){ return periodDays.indexOf(e.date) !== -1; });
+    var periodMoods = periodEntries.filter(function(e){ return typeof e.mood==='number'; }).map(function(e){ return e.mood; });
+    var avg = periodMoods.length ? (periodMoods.reduce(function(a,b){ return a+b; },0)/periodMoods.length) : null;
 
     var statRow = document.createElement('div'); statRow.className = 'stat-row';
     statRow.appendChild(statCard(streak, tr('streakLabel')));
-    statRow.appendChild(statCard(weekEntries.length, tr('entriesLabel')));
+    statRow.appendChild(statCard(periodEntries.length, tr('entriesLabel')));
     statRow.appendChild(statCard(avg!==null ? avg.toFixed(1) : '—', tr('avgLabel')));
     host.appendChild(statRow);
 
-    var chartTitle = document.createElement('div'); chartTitle.className = 'section-title'; chartTitle.textContent = tr('last30');
+    var chartTitle = document.createElement('div'); chartTitle.className = 'section-title'; chartTitle.textContent = tr(PERIOD_KEY[insightsPeriod]);
     host.appendChild(chartTitle);
-    host.appendChild(renderHorizonChart());
+    host.appendChild(renderHorizonChart(insightsPeriod));
 
     var reflectTitle = document.createElement('div'); reflectTitle.className = 'section-title'; reflectTitle.textContent = tr('weekTitle');
     host.appendChild(reflectTitle);
