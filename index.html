@@ -313,6 +313,14 @@
   .sheet.open{transform:translateY(0);}
   .sheet h2{font-size:1.1rem; margin:0 0 16px;}
   .sheet .field input{width:100%;}
+  .data-actions{display:flex; gap:10px; margin-top:18px;}
+  .data-btn{
+    flex:1; padding:11px; border-radius:var(--radius-md); border:1px solid var(--line);
+    background:var(--paper-raised); font-size:0.85rem; font-weight:600; color:var(--ink);
+    transition:background .15s ease, border-color .15s ease, transform .12s ease;
+  }
+  .data-btn:hover{border-color:var(--accent);}
+  .data-btn:active{transform:scale(.98);}
   .danger-btn{color:var(--danger); font-size:0.88rem; margin-top:18px; text-decoration:underline; text-decoration-color:#B5564A33; transition:opacity .15s ease;}
   .danger-btn:hover{opacity:.75;}
   .sheet-close{display:block; width:100%; text-align:center; padding:13px; margin-top:18px; border-radius:var(--radius-md); background:var(--line); font-weight:600; font-size:0.92rem; transition:background .15s ease, transform .12s ease;}
@@ -342,14 +350,17 @@
 
   /* ---------- Desktop layout ---------- */
   @media (min-width:860px){
-    body{background:var(--line);}
+    body{
+      background:var(--line); min-height:100vh;
+      display:flex; align-items:center; justify-content:center;
+    }
     #onboarding{
       max-width:440px; min-height:auto; justify-content:flex-start;
-      margin:7vh auto; padding:46px 42px; border-radius:24px; box-shadow:var(--shadow);
+      margin:0; padding:46px 42px; border-radius:24px; box-shadow:var(--shadow);
       background:var(--paper);
     }
     #app{
-      max-width:1080px; height:calc(100vh - 64px); min-height:0; margin:32px auto;
+      max-width:1080px; height:calc(100vh - 64px); min-height:0; margin:0;
       border-radius:24px; overflow:hidden; box-shadow:var(--shadow); background:var(--paper);
     }
     #app.live{display:flex; flex-direction:row; align-items:stretch;}
@@ -516,6 +527,11 @@
     <label id="settings-lang-label">שפה</label>
     <div class="pillrow" id="settings-lang-row"></div>
   </div>
+  <div class="data-actions">
+    <button class="data-btn" id="export-data-btn">ייצוא נתונים</button>
+    <button class="data-btn" id="import-data-btn">ייבוא נתונים</button>
+  </div>
+  <input type="file" id="import-file-input" accept="application/json,.json" style="display:none;">
   <button class="danger-btn" id="clear-data-btn">מחיקת כל המידע</button>
   <button class="sheet-close" id="sheet-close-btn">סגירה</button>
 </div>
@@ -570,6 +586,9 @@
       weekTitle:'תובנה על השבוע', reflectBtn:'ליצור תובנה',
       reflectLoading:'חושב על השבוע…', reflectEmpty:'אחרי כמה רשומות יהיה כאן מה לומר.',
       settingsTitle:'הגדרות', settingsName:'שם', settingsLang:'שפה',
+      exportData:'ייצוא נתונים', importData:'ייבוא נתונים',
+      importConfirm:'ייבוא יחליף את כל המידע הקיים באפליקציה. להמשיך?',
+      importError:'הקובץ לא תקין, או לא בפורמט המתאים.', importSuccess:'הנתונים יובאו בהצלחה.',
       clearData:'מחיקת כל המידע', clearConfirm:'למחוק את כל הרשומות? אי אפשר לשחזר.',
       close:'סגירה', aiError:'(לא הצלחתי להתחבר כרגע — הרשומה נשמרה בכל זאת)'
     },
@@ -594,6 +613,9 @@
       weekTitle:'This week', reflectBtn:'Reflect on this week',
       reflectLoading:'Thinking about your week…', reflectEmpty:"After a few entries, there'll be something to say here.",
       settingsTitle:'Settings', settingsName:'Name', settingsLang:'Language',
+      exportData:'Export data', importData:'Import data',
+      importConfirm:'Importing will replace all existing data in the app. Continue?',
+      importError:"This file isn't valid, or isn't the right format.", importSuccess:'Data imported successfully.',
       clearData:'Erase all data', clearConfirm:"Delete all entries? This can't be undone.",
       close:'Close', aiError:"(couldn't reach your companion just now — your entry's saved either way)"
     }
@@ -743,6 +765,8 @@
     document.getElementById('settings-title').textContent = tr('settingsTitle');
     document.getElementById('settings-name-label').textContent = tr('settingsName');
     document.getElementById('settings-lang-label').textContent = tr('settingsLang');
+    document.getElementById('export-data-btn').textContent = tr('exportData');
+    document.getElementById('import-data-btn').textContent = tr('importData');
     document.getElementById('clear-data-btn').textContent = tr('clearData');
     document.getElementById('sheet-close-btn').textContent = tr('close');
     var sidenavSettingsLabel = document.getElementById('sidenav-settings-label');
@@ -1486,6 +1510,69 @@
       renderInsights();
       updateRibbon();
     }
+  });
+
+  /* ============ Export / Import ============ */
+  document.getElementById('export-data-btn').addEventListener('click', function(){
+    var payload = { app:'ofek', version:1, exportedAt:new Date().toISOString(), data:state };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'ofek-backup-'+todayStr()+'.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  });
+
+  document.getElementById('import-data-btn').addEventListener('click', function(){
+    document.getElementById('import-file-input').click();
+  });
+
+  document.getElementById('import-file-input').addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      var parsed;
+      try{
+        parsed = JSON.parse(reader.result);
+      }catch(err){
+        alert(tr('importError'));
+        e.target.value = '';
+        return;
+      }
+      var incoming = (parsed && parsed.data) ? parsed.data : parsed;
+      if(!incoming || !incoming.profile || !Array.isArray(incoming.entries)){
+        alert(tr('importError'));
+        e.target.value = '';
+        return;
+      }
+      if(confirm(tr('importConfirm'))){
+        state.profile = incoming.profile;
+        state.entries = incoming.entries;
+        state.weeklyCache = incoming.weeklyCache || {};
+        saveState();
+        applyLangDir();
+        renderStaticLabels();
+        renderGreeting();
+        renderFlowChips();
+        renderHistory();
+        renderInsights();
+        highlightLangToggle();
+        renderSettingsLangRow();
+        updateRibbon();
+        document.getElementById('settings-name').value = state.profile.name || '';
+        alert(tr('importSuccess'));
+      }
+      e.target.value = '';
+    };
+    reader.onerror = function(){
+      alert(tr('importError'));
+      e.target.value = '';
+    };
+    reader.readAsText(file);
   });
 
   /* ============ Service worker ============ */
