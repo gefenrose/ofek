@@ -122,7 +122,7 @@
   .lang-toggle button{padding:6px 11px; font-size:0.78rem; color:var(--ink-soft); transition:background .15s ease, color .15s ease;}
   .lang-toggle button.active{background:var(--ink); color:var(--paper);}
 
-  .ribbon{height:7px; margin:0 18px 4px; border-radius:999px; background:linear-gradient(90deg, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high)); transition:background 1s ease, filter .6s;}
+  .ribbon{height:10px; margin:6px 18px; border-radius:999px; background:linear-gradient(90deg, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high)); box-shadow:0 4px 18px rgba(143,184,201,.22); transition:background 1s ease, filter .6s;}
   @media (prefers-reduced-motion: no-preference){
     .ribbon.ambient{ animation:ribbonDrift 18s ease-in-out infinite; }
   }
@@ -131,7 +131,7 @@
     50%{filter:hue-rotate(6deg) saturate(1.08);}
   }
 
-  .footer-ribbon{height:7px; margin:30px 18px 10px; border-radius:999px; background:linear-gradient(90deg, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high)); opacity:.55;}
+  .footer-ribbon{height:10px; margin:30px 18px 14px; border-radius:999px; background:linear-gradient(90deg, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high)); box-shadow:0 4px 18px rgba(143,184,201,.22); opacity:.7;}
   .footer-credit{text-align:center; padding:0 18px 22px;}
   .footer-credit span{font-size:0.7rem; color:var(--ink-faint);}
 
@@ -154,10 +154,10 @@
   nav.bottomnav button.active{color:var(--accent);}
 
   /* ---------- Chat ---------- */
-  .greeting{padding:14px 2px 6px;}
+  .greeting{padding:8px 2px 4px;}
   .greeting h1{font-size:1.3rem; margin:0 0 2px;}
   .greeting p{margin:0; color:var(--ink-soft); font-size:0.9rem;}
-  .flowrow{display:flex; gap:8px; overflow-x:auto; padding:12px 2px 6px; scrollbar-width:none;}
+  .flowrow{display:flex; gap:8px; overflow-x:auto; padding:4px 2px 6px; scrollbar-width:none;}
   .flowrow::-webkit-scrollbar{display:none;}
   .flowchip{
     flex:0 0 auto; padding:9px 14px; border-radius:999px; background:var(--paper-raised);
@@ -166,16 +166,47 @@
   }
   .flowchip:hover{border-color:var(--accent);}
   .flowchip:active{transform:scale(.96);}
-  .flowchip.highlight{border-color:var(--accent); background:#5B7A8C14;}
+  .flowchip.active{
+    background:var(--ink); color:var(--paper-raised);
+    border-color:var(--ink); font-weight:700;
+    box-shadow:0 4px 14px rgba(31,46,51,.18);
+}
+.flowchip.active .flowchip-label{color:var(--paper-raised);}
+.flowchip.highlight{
+    border-color:var(--accent); background:#5B7A8C14;
+    box-shadow:inset 0 0 0 1px var(--accent);
+}
+.flowchip.highlight::before{
+    content:""; display:inline-block; width:6px; height:6px;
+    border-radius:50%; background:var(--accent);
+    margin-inline-end:6px; vertical-align:middle;
+    box-shadow:0 0 0 3px var(--accent-soft, transparent);
+    animation:highlightPulse 2s ease-in-out infinite;
+}
+@keyframes highlightPulse{
+    0%,100%{opacity:.7;}
+    50%{opacity:1;}
+}
   .flowchip-mood{display:inline-flex; align-items:center;}
   .mood-dot{
     display:inline-block; width:12px; height:12px; border-radius:50%; flex:0 0 auto;
     background:linear-gradient(135deg, var(--h-low), var(--h-mid2), var(--h-high));
     margin-inline-end:6px;
   }
+  .flowchip-icon{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:16px; height:16px; flex:0 0 auto; margin-inline-end:6px; opacity:.85;
+  }
+  .flowchip-icon svg{width:100%; height:100%;}
+  .flowchip-time .flowchip-icon{color:var(--accent);}
+  .flowchip-time.highlight{
+    background:linear-gradient(90deg, var(--h-mid2)22, var(--h-high)22);
+    border-color:var(--accent);
+  }
+  .flowchip-chat .flowchip-icon{color:var(--accent);}
 
   .distress-card{
-    margin:10px 2px 4px; padding:12px 14px; border-radius:var(--radius-md);
+    margin:6px 2px 4px; padding:11px 14px; border-radius:var(--radius-md);
     background:#B5564A0F; border:1px solid #B5564A26; display:flex; align-items:center; gap:10px;
     overflow:hidden; transition:max-height .3s ease, opacity .3s ease, margin .3s ease, padding .3s ease, border-color .3s ease;
   }
@@ -236,7 +267,38 @@
   input[type=range].moodslider::-moz-range-thumb{
     width:30px; height:30px; border-radius:50%; background:#fff; border:3px solid var(--ink);
   }
-  .moodnote{width:100%; padding:12px 16px; border-radius:var(--radius-md); background:var(--paper-raised); border:1px solid var(--line); margin-bottom:14px;}
+  .moodnote{width:100%; padding:12px 16px; border-radius:var(--radius-md); background:var(--paper-raised); border:1px solid var(--line); margin-bottom:10px;}
+  .moodimage-row{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .moodimage-btn{
+    flex:0 0 auto; display:inline-flex; align-items:center; gap:6px;
+    padding:10px 14px; border-radius:999px; border:1px dashed var(--line);
+    background:transparent; color:var(--ink-soft); font-size:0.85rem; font-weight:500;
+    transition:border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .moodimage-btn:hover{border-color:var(--accent); color:var(--ink);}
+  .moodimage-btn:active{transform:scale(.97);}
+  .moodimage-btn svg{width:16px; height:16px;}
+  .moodimage-btn.has-image{border-style:solid; border-color:var(--accent); color:var(--accent);}
+  .moodimage-preview{
+    width:56px; height:56px; border-radius:12px; overflow:hidden;
+    background:var(--line); flex:0 0 auto; position:relative;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+    animation:moodImgIn .25s var(--ease-emph, cubic-bezier(.34,1.56,.64,1)) both;
+  }
+  @keyframes moodImgIn{from{opacity:0; transform:scale(.7);} to{opacity:1; transform:scale(1);}}
+  .moodimage-preview img{width:100%; height:100%; object-fit:cover; display:block;}
+  .moodimage-preview .remove-btn{
+    position:absolute; top:2px; inset-inline-end:2px;
+    width:20px; height:20px; border-radius:50%; background:rgba(43,46,51,.78);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease; backdrop-filter:blur(4px);
+  }
+  .moodimage-preview .remove-btn:hover{background:rgba(43,46,51,.95);}
+  .moodimage-preview .remove-btn svg{width:11px; height:11px;}
+  .moodimage-error{font-size:0.78rem; color:var(--danger); margin:-8px 0 12px; padding:0 4px;}
+  .moodimage-meta{font-size:0.78rem; color:var(--ink-faint); padding:0 4px;}
+  .entry-image{margin:8px 0 4px; border-radius:12px; overflow:hidden; max-width:100%;}
+  .entry-image img{width:100%; max-height:240px; object-fit:cover; display:block;}
 
   /* ---------- Calendar ---------- */
   .cal-header{display:flex; align-items:center; justify-content:space-between; padding:8px 2px 12px;}
@@ -251,14 +313,44 @@
   .cal-cell{
     aspect-ratio:1; border-radius:9px; display:flex; align-items:center; justify-content:center;
     font-size:0.78rem; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink-soft);
-    transition:background .3s ease, color .3s ease, transform .15s ease, box-shadow .15s ease;
+    cursor:pointer; position:relative;
+    transition:background .3s ease, color .3s ease, transform .15s ease, box-shadow .15s ease, border-color .15s ease;
   }
   .cal-cell.empty-slot{visibility:hidden;}
   .cal-cell.has-entry{border-color:transparent; font-weight:700;}
-  .cal-cell.clickable{cursor:pointer;}
-  .cal-cell.clickable:hover{transform:scale(1.08); box-shadow:0 3px 10px rgba(0,0,0,.14);}
-  .cal-cell.clickable:active{transform:scale(.94);}
+  .cal-cell:hover{transform:scale(1.08); box-shadow:0 3px 10px rgba(0,0,0,.14); border-color:var(--accent);}
+  .cal-cell:active{transform:scale(.94);}
   .cal-cell.is-today{box-shadow:0 0 0 2px var(--ink) inset;}
+  .cal-cell.is-selected{
+    box-shadow:0 0 0 2px var(--accent) inset, 0 4px 14px rgba(63,90,117,.28);
+    transform:scale(1.04);
+  }
+  .cal-cell.is-selected::after{
+    content:""; position:absolute; inset:0; border-radius:9px; pointer-events:none;
+    box-shadow:inset 0 0 0 1px var(--accent);
+  }
+  .cal-cell.is-future{
+    cursor:not-allowed; opacity:.45; background:transparent;
+  }
+  .cal-cell.is-future:hover{
+    transform:none; box-shadow:none; border-color:var(--line);
+  }
+  .cal-cell.is-future:active{transform:none;}
+  .cal-filter-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; margin:6px 2px 12px; padding:10px 14px;
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius-md);
+    box-shadow:var(--shadow-sm);
+  }
+  .cal-filter-bar .cal-filter-label{font-size:0.88rem; font-weight:600; color:var(--ink);}
+  .cal-filter-bar .cal-filter-sub{font-size:0.78rem; color:var(--ink-soft); margin-top:2px;}
+  .cal-filter-clear{
+    flex:0 0 auto; padding:7px 14px; border-radius:999px;
+    background:var(--ink); color:var(--paper-raised); font-size:0.78rem; font-weight:600;
+    transition:transform .12s ease, background .15s ease;
+  }
+  .cal-filter-clear:hover{background:#000;}
+  .cal-filter-clear:active{transform:scale(.95);}
 
   /* ---------- History ---------- */
   .day-card{
@@ -275,11 +367,20 @@
   .day-flows span{width:6px; height:6px; border-radius:50%; background:var(--ink-faint);}
   .day-body{max-height:0; overflow:hidden; padding:0 15px 14px; transition:max-height .35s ease;}
   .day-card.open .day-body{max-height:2000px;}
-  .entry-row{padding:10px 0; border-top:1px solid var(--line);}
-  .entry-row .entry-time{font-size:0.72rem; color:var(--ink-faint); margin-bottom:3px;}
-  .entry-row .entry-flow{font-size:0.72rem; color:var(--accent); font-weight:700; margin-inline-start:8px;}
   .entry-row .entry-text{font-size:0.88rem; line-height:1.5;}
-  .empty-state{padding:60px 20px; text-align:center; color:var(--ink-faint); font-size:0.9rem;}
+  .empty-state{padding:40px 20px; text-align:center; color:var(--ink-faint); font-size:0.9rem; display:flex; flex-direction:column; align-items:center; gap:14px;}
+  .empty-state .empty-icon{font-size:1.8rem; opacity:.45;}
+  .empty-state .add-entry-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:10px 18px; border-radius:999px;
+    background:var(--ink); color:var(--paper-raised);
+    font-size:0.88rem; font-weight:600;
+    transition:transform .12s ease, box-shadow .15s ease;
+    box-shadow:0 4px 14px rgba(31,46,51,.18);
+  }
+  .empty-state .add-entry-btn:hover{box-shadow:0 6px 18px rgba(31,46,51,.22);}
+  .empty-state .add-entry-btn:active{transform:scale(.96);}
+  .empty-state .add-entry-btn svg{width:16px; height:16px;}
 
   /* ---------- Insights ---------- */
   .stat-row{display:flex; gap:10px; margin:14px 0;}
@@ -325,6 +426,46 @@
   .danger-btn:hover{opacity:.75;}
   .sheet-close{display:block; width:100%; text-align:center; padding:13px; margin-top:18px; border-radius:var(--radius-md); background:var(--line); font-weight:600; font-size:0.92rem; transition:background .15s ease, transform .12s ease;}
   .sheet-close:hover{background:var(--ink-faint); color:var(--paper);}
+
+  /* ---- Entry actions (edit / delete) ---- */
+  .entry-actions{display:flex; gap:4px; margin-inline-start:auto; flex:0 0 auto; align-items:center;}
+  .entry-action-btn{width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink-faint); background:transparent; transition:background .15s ease, color .15s ease, transform .12s ease;}
+  .entry-action-btn:hover{background:var(--line); color:var(--ink);}
+  .entry-action-btn:active{transform:scale(.9);}
+  .entry-action-btn svg{width:15px; height:15px;}
+  .entry-action-btn.delete:hover{background:#B5564A22; color:var(--danger);}
+  .entry-row{padding:10px 0; border-top:1px solid var(--line);}
+  .entry-row .entry-top{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .entry-row .entry-time{font-size:0.72rem; color:var(--ink-faint);}
+  .entry-row .entry-flow{font-size:0.72rem; color:var(--accent); font-weight:700;}
+
+  /* ---- Edit entry sheet ---- */
+  .edit-entry-sheet .field{margin-bottom:16px;}
+  .edit-entry-sheet .edit-moodlabel{font-size:1.4rem; font-weight:700; margin-bottom:4px; text-align:center; transition:color .2s;}
+  .edit-entry-sheet .edit-moodsub{color:var(--ink-faint); font-size:0.78rem; margin-bottom:14px; text-align:center;}
+  .edit-entry-sheet input[type=range].moodslider{-webkit-appearance:none; appearance:none; width:100%; height:10px; border-radius:999px; background:linear-gradient(to right, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high)); margin-bottom:14px;}
+  [dir="rtl"] .edit-entry-sheet input[type=range].moodslider{background:linear-gradient(to left, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high));}
+  .edit-entry-sheet input[type=range].moodslider::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:28px; height:28px; border-radius:50%; background:#fff; border:3px solid var(--ink); box-shadow:0 4px 12px rgba(0,0,0,.2); cursor:grab;}
+  .edit-entry-sheet input[type=range].moodslider::-webkit-slider-thumb:active{transform:scale(1.1);}
+  .edit-entry-sheet input[type=range].moodslider::-moz-range-thumb{width:28px; height:28px; border-radius:50%; background:#fff; border:3px solid var(--ink); box-shadow:0 4px 12px rgba(0,0,0,.2); cursor:grab;}
+  .edit-entry-sheet .moodnote{width:100%; padding:12px 14px; border-radius:var(--radius-md); background:var(--paper-2); border:1px solid var(--line); font-size:0.95rem;}
+  .edit-entry-sheet .moodnote:focus{border-color:var(--accent); outline:none; box-shadow:0 0 0 4px var(--accent-soft, transparent);}
+  .edit-entry-sheet .edit-image-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .edit-entry-sheet .edit-image-thumb{width:64px; height:64px; border-radius:12px; overflow:hidden; background:var(--line); position:relative; box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .edit-entry-sheet .edit-image-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .edit-entry-sheet .edit-image-thumb .remove-btn{position:absolute; top:2px; inset-inline-end:2px; width:20px; height:20px; border-radius:50%; background:rgba(43,46,51,.78); color:#fff; display:flex; align-items:center; justify-content:center;}
+  .edit-entry-sheet .edit-image-thumb .remove-btn svg{width:11px; height:11px;}
+  .edit-entry-sheet .image-btn{display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px; border:1px dashed var(--line); background:transparent; color:var(--ink-soft); font-size:0.85rem; font-weight:500; transition:border-color .15s ease, color .15s ease;}
+  .edit-entry-sheet .image-btn:hover{border-color:var(--accent); color:var(--ink);}
+  .edit-entry-sheet .image-btn svg{width:16px; height:16px;}
+  .edit-entry-sheet .image-btn.has-image{border-style:solid; border-color:var(--accent); color:var(--accent);}
+  .edit-entry-sheet .edit-meta{font-size:0.78rem; color:var(--ink-faint); margin-bottom:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .edit-entry-sheet .edit-flow-row{gap:6px;}
+  .edit-entry-sheet .edit-flow-row .pill{padding:8px 14px; font-size:0.82rem;}
+  .edit-entry-sheet .edit-actions{display:flex; gap:10px; margin-top:14px;}
+  .edit-entry-sheet .edit-actions .btn-primary{flex:1; margin-top:0;}
+  .edit-entry-sheet .delete-btn{padding:13px 18px; border-radius:var(--radius-md); background:transparent; color:var(--danger); border:1px solid color-mix(in srgb, var(--danger) 30%, transparent); font-weight:600; font-size:0.92rem; transition:background .15s ease, border-color .15s ease;}
+  .edit-entry-sheet .delete-btn:hover{background:var(--danger-soft, #B5564A1A); border-color:var(--danger);}
   .sheet-close:active{transform:scale(.98);}
 
   /* ---------- Sidebar (desktop) ---------- */
@@ -370,10 +511,10 @@
     }
     .app-shell{min-height:0;}
     .app-shell header.topbar{display:none;}
-    .app-shell .ribbon{margin:20px 32px 4px;}
+    .app-shell .ribbon{margin:20px 32px 8px;}
     .app-shell main{padding:0; padding-bottom:28px;}
     .app-shell .panel{max-width:640px; margin:0 auto; padding:6px 32px 32px;}
-    .app-shell .footer-ribbon{max-width:640px; margin:30px auto 10px;}
+    .app-shell .footer-ribbon{margin:30px 32px 14px;}
     .app-shell .footer-credit{max-width:640px; margin:0 auto; padding:0 0 22px;}
     nav.bottomnav{display:none;}
 
@@ -534,6 +675,45 @@
   <input type="file" id="import-file-input" accept="application/json,.json" style="display:none;">
   <button class="danger-btn" id="clear-data-btn">מחיקת כל המידע</button>
   <button class="sheet-close" id="sheet-close-btn">סגירה</button>
+</div>
+
+<div class="sheet edit-entry-sheet" id="edit-entry-sheet">
+  <h2 id="edit-entry-title">עריכת רשומה</h2>
+  <div class="edit-meta" id="edit-entry-meta"></div>
+  <div class="field" id="edit-flow-field" style="display:none;">
+    <label id="edit-flow-label">סוג</label>
+    <div class="pillrow" id="edit-flow-row"></div>
+  </div>
+  <div class="field">
+    <label id="edit-mood-label">מצב רוח</label>
+    <div class="edit-moodlabel" id="edit-moodlabel">—</div>
+    <input type="range" class="moodslider" id="edit-moodslider" min="0" max="14" value="7">
+  </div>
+  <div class="field">
+    <label id="edit-note-label">הערה</label>
+    <input type="text" class="moodnote" id="edit-note" placeholder="">
+  </div>
+  <div class="field">
+    <label id="edit-image-label">תמונה</label>
+    <div class="edit-image-row" id="edit-image-row">
+      <button type="button" class="image-btn" id="edit-image-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="12" cy="12" r="3.5"></circle><path d="M7 5l1.5-2h7L17 5"></path></svg>
+        <span id="edit-image-btn-label">החלף תמונה</span>
+      </button>
+      <input type="file" id="edit-image-input" accept="image/*" style="display:none;">
+      <div class="edit-image-thumb" id="edit-image-thumb" style="display:none;">
+        <img id="edit-image-preview" alt="">
+        <button type="button" class="remove-btn" id="edit-image-remove" aria-label="remove">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="edit-actions">
+    <button class="btn-primary" id="edit-save-btn">שמור שינויים</button>
+    <button class="delete-btn" id="edit-delete-btn">מחק</button>
+  </div>
+  <button class="sheet-close" id="edit-sheet-close-btn">סגירה</button>
 </div>
 
 <script>
@@ -735,6 +915,7 @@
   function startApp(){
     applyLangDir();
     document.getElementById('app').classList.add('live');
+    initDistressCard();
     renderStaticLabels();
     renderGreeting();
     renderFlowChips();
@@ -745,6 +926,9 @@
     document.getElementById('settings-name').value = state.profile.name;
     renderSettingsLangRow();
     highlightLangToggle();
+    // Auto-open "Just Talk" so the user lands in conversation immediately.
+    // A small delay lets the panel animate in first.
+    setTimeout(function(){ openFlow('chat'); }, 60);
   }
 
   function applyLangDir(){
@@ -785,14 +969,35 @@
     var row = document.getElementById('flow-row');
     row.innerHTML = '';
     var part = dayPart(new Date().getHours());
-    var highlightFlow = part==='morning' ? 'morning' : (part==='evening' || part==='night') ? 'evening' : 'mood';
+    var hourBasedFlow = part==='morning' ? 'morning' : (part==='evening' || part==='night') ? 'evening' : null;
     FLOWS.forEach(function(f){
       var b = document.createElement('button');
-      b.className = 'flowchip'+(f===highlightFlow?' highlight':'')+(f==='mood'?' flowchip-mood':'');
-      if(f==='mood'){
+      // Hour-based flows (morning/evening) get a soft pulsing highlight when they match the time of day.
+      // The currently OPEN flow always gets a strong active state.
+      var classes = ['flowchip'];
+      if(f === currentFlow) classes.push('active');
+      else if(f === hourBasedFlow) classes.push('highlight');
+      if(f === 'mood') classes.push('flowchip-mood');
+      if(f === 'morning' || f === 'evening') classes.push('flowchip-time');
+      if(f === 'chat') classes.push('flowchip-chat');
+      b.className = classes.join(' ');
+      if(f === 'mood'){
         var dot = document.createElement('span'); dot.className = 'mood-dot';
-        var lbl = document.createElement('span'); lbl.textContent = tr(FLOW_KEY[f]);
+        var lbl = document.createElement('span'); lbl.className = 'flowchip-label'; lbl.textContent = tr(FLOW_KEY[f]);
         b.appendChild(dot); b.appendChild(lbl);
+      } else if(f === 'morning' || f === 'evening'){
+        // Time-based chips: small icon prefix that hints at morning/evening
+        var icon = document.createElement('span'); icon.className = 'flowchip-icon';
+        icon.innerHTML = f === 'morning'
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+        var lbl = document.createElement('span'); lbl.className = 'flowchip-label'; lbl.textContent = tr(FLOW_KEY[f]);
+        b.appendChild(icon); b.appendChild(lbl);
+      } else if(f === 'chat'){
+        var icon = document.createElement('span'); icon.className = 'flowchip-icon';
+        icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>';
+        var lbl = document.createElement('span'); lbl.className = 'flowchip-label'; lbl.textContent = tr(FLOW_KEY[f]);
+        b.appendChild(icon); b.appendChild(lbl);
       } else {
         b.textContent = tr(FLOW_KEY[f]);
       }
@@ -806,10 +1011,22 @@
   var activeEntryId = null;
   var conversation = [];
 
-  function addBubble(role, text){
+  function addBubble(role, text, image){
     var div = document.createElement('div');
     div.className = 'bubble '+role;
-    div.textContent = text;
+    if(image){
+      var imgWrap = document.createElement('div');
+      imgWrap.className = 'entry-image';
+      var img = document.createElement('img');
+      img.src = image; img.alt = '';
+      imgWrap.appendChild(img);
+      div.appendChild(imgWrap);
+    }
+    if(text){
+      var t = document.createElement('div');
+      t.textContent = text;
+      div.appendChild(t);
+    }
     document.getElementById('thread').appendChild(div);
     div.scrollIntoView({behavior:'smooth', block:'end'});
   }
@@ -829,6 +1046,11 @@
   function resetDistressCard(){
     var card = document.getElementById('distress-card');
     if(!card) return;
+    // Don't re-show if user dismissed in this session
+    if(isDistressDismissed()){
+      card.style.display = 'none';
+      return;
+    }
     card.style.display = '';
     card.style.maxHeight = '';
     card.style.opacity = '';
@@ -836,20 +1058,37 @@
     card.style.paddingTop = ''; card.style.paddingBottom = '';
     card.style.borderColor = '';
   }
+  var DISTRESS_DISMISS_KEY = 'ofek_distress_dismissed_v1';
+  function isDistressDismissed(){
+    try { return sessionStorage.getItem(DISTRESS_DISMISS_KEY) === '1'; }
+    catch(e){ return false; }
+  }
+  function dismissDistressCard(){
+    var card = document.getElementById('distress-card');
+    if(!card) return;
+    card.style.maxHeight = card.scrollHeight + 'px';
+    requestAnimationFrame(function(){
+      card.style.maxHeight = '0px';
+      card.style.opacity = '0';
+      card.style.marginTop = '0px'; card.style.marginBottom = '0px';
+      card.style.paddingTop = '0px'; card.style.paddingBottom = '0px';
+      card.style.borderColor = 'transparent';
+    });
+    setTimeout(function(){ card.style.display = 'none'; }, 320);
+    try { sessionStorage.setItem(DISTRESS_DISMISS_KEY, '1'); } catch(e){}
+  }
+  function initDistressCard(){
+    var card = document.getElementById('distress-card');
+    if(!card) return;
+    if(isDistressDismissed()){
+      card.style.display = 'none';
+    } else {
+      card.style.display = '';
+    }
+  }
   var distressCloseBtn = document.getElementById('distress-close');
   if(distressCloseBtn){
-    distressCloseBtn.addEventListener('click', function(){
-      var card = document.getElementById('distress-card');
-      card.style.maxHeight = card.scrollHeight + 'px';
-      requestAnimationFrame(function(){
-        card.style.maxHeight = '0px';
-        card.style.opacity = '0';
-        card.style.marginTop = '0px'; card.style.marginBottom = '0px';
-        card.style.paddingTop = '0px'; card.style.paddingBottom = '0px';
-        card.style.borderColor = 'transparent';
-      });
-      setTimeout(function(){ card.style.display = 'none'; }, 320);
-    });
+    distressCloseBtn.addEventListener('click', dismissDistressCard);
   }
 
   function openFlow(flow){
@@ -860,6 +1099,8 @@
     document.getElementById('thread').innerHTML = '';
     document.getElementById('mood-picker-host').innerHTML = '';
     document.getElementById('endflow-row').style.display = 'none';
+    // Re-render chips so the active pill updates immediately.
+    renderFlowChips();
 
     if(flow === 'mood'){
       document.getElementById('composer-row').style.display = 'none';
@@ -922,7 +1163,7 @@
     setSending(false);
   }
 
-  function persistEntry(moodVal, note){
+  function persistEntry(moodVal, note, image){
     var now = new Date();
     var entry = state.entries.find(function(e){ return e.id===activeEntryId; });
     if(!entry){
@@ -932,6 +1173,7 @@
     entry.messages = conversation.slice();
     if(typeof moodVal === 'number') entry.mood = moodVal;
     if(note) entry.note = note;
+    if(image) entry.image = image;
     saveState();
     updateRibbon();
   }
@@ -973,11 +1215,56 @@
     document.getElementById('mood-picker-host').innerHTML = '';
     document.getElementById('composer-row').style.display = 'none';
     document.getElementById('endflow-row').style.display = 'none';
+    renderFlowChips();
     renderHistory();
     renderInsights();
   }
 
   /* ============ Mood picker ============ */
+  // Local helper: read an image File, downscale via canvas, return base64 JPEG dataURL
+  var MOOD_IMAGE_MAX_DIM = 1200;   // resize so the longest edge is at most this
+  var MOOD_IMAGE_QUALITY = 0.82;   // JPEG quality
+  var MOOD_IMAGE_MAX_BYTES = 1500 * 1024; // soft cap per image (after resize)
+  function readMoodImage(file){
+    return new Promise(function(resolve, reject){
+      if(!file || !file.type || file.type.indexOf('image/') !== 0){
+        reject(new Error('not an image'));
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(){
+        var img = new Image();
+        img.onload = function(){
+          var w = img.naturalWidth, h = img.naturalHeight;
+          var scale = Math.min(1, MOOD_IMAGE_MAX_DIM / Math.max(w, h));
+          var tw = Math.max(1, Math.round(w * scale));
+          var th = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement('canvas');
+          canvas.width = tw; canvas.height = th;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, tw, th);
+          var dataUrl;
+          try{
+            dataUrl = canvas.toDataURL('image/jpeg', MOOD_IMAGE_QUALITY);
+          }catch(err){
+            reject(err); return;
+          }
+          if(dataUrl.length > MOOD_IMAGE_MAX_BYTES){
+            // try lower quality
+            try{
+              dataUrl = canvas.toDataURL('image/jpeg', 0.65);
+            }catch(err){ reject(err); return; }
+          }
+          resolve(dataUrl);
+        };
+        img.onerror = function(){ reject(new Error('decode failed')); };
+        img.src = reader.result;
+      };
+      reader.onerror = function(){ reject(new Error('read failed')); };
+      reader.readAsDataURL(file);
+    });
+  }
+
   function renderMoodPicker(){
     var host = document.getElementById('mood-picker-host');
     host.innerHTML = '';
@@ -989,6 +1276,64 @@
     slider.type = 'range'; slider.min = 0; slider.max = MOOD_STEPS-1; slider.value = 7; slider.className = 'moodslider';
     var note = document.createElement('input');
     note.type = 'text'; note.className = 'moodnote'; note.placeholder = tr('moodNotePh');
+
+    // Image attachment UI
+    var pickedImage = null;       // data URL string (the thing we save)
+    var imageRow = document.createElement('div'); imageRow.className = 'moodimage-row';
+    var imgBtn = document.createElement('button');
+    imgBtn.type = 'button';
+    imgBtn.className = 'moodimage-btn';
+    imgBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="12" cy="12" r="3.5"></circle><path d="M7 5l1.5-2h7L17 5"></path></svg>'+
+                      '<span>'+(lang==='he' ? 'הוסף תמונה' : 'Add photo')+'</span>';
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.style.display = 'none';
+    var previewWrap = document.createElement('div'); previewWrap.className = 'moodimage-preview'; previewWrap.style.display = 'none';
+    var previewImg = document.createElement('img');
+    var removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'remove-btn';
+    removeBtn.setAttribute('aria-label', lang==='he' ? 'הסר תמונה' : 'Remove photo');
+    removeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    previewWrap.appendChild(previewImg);
+    previewWrap.appendChild(removeBtn);
+    imageRow.appendChild(imgBtn);
+    imageRow.appendChild(previewWrap);
+    imageRow.appendChild(fileInput);
+
+    var errorEl = document.createElement('div'); errorEl.className = 'moodimage-error'; errorEl.style.display = 'none';
+
+    function setPickedImage(dataUrl){
+      pickedImage = dataUrl;
+      if(dataUrl){
+        previewImg.src = dataUrl;
+        previewWrap.style.display = '';
+        imgBtn.classList.add('has-image');
+      } else {
+        previewImg.src = '';
+        previewWrap.style.display = 'none';
+        imgBtn.classList.remove('has-image');
+      }
+    }
+
+    imgBtn.addEventListener('click', function(){ fileInput.click(); });
+    fileInput.addEventListener('change', function(){
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
+      var file = fileInput.files && fileInput.files[0];
+      if(!file) return;
+      readMoodImage(file).then(function(dataUrl){
+        setPickedImage(dataUrl);
+        fileInput.value = '';
+      }).catch(function(){
+        errorEl.textContent = lang==='he' ? 'לא הצלחתי לטעון את התמונה. נסה/י שוב.' : "Couldn't load that image. Try another one.";
+        errorEl.style.display = '';
+        fileInput.value = '';
+      });
+    });
+    removeBtn.addEventListener('click', function(){
+      setPickedImage(null);
+    });
+
     var saveBtn = document.createElement('button'); saveBtn.className = 'btn-primary'; saveBtn.textContent = tr('moodSave');
 
     function update(){
@@ -1005,9 +1350,10 @@
       var moodLine = MOOD_LABELS[lang][v] + (noteText ? ' — '+noteText : '');
       activeEntryId = 'e'+Date.now();
       conversation = [{role:'user', text: moodLine}];
-      persistEntry(v, noteText);
+      persistEntry(v, noteText, pickedImage);
+      var savedImage = pickedImage;
       closeMoodPickerUI();
-      addBubble('user', moodLine);
+      addBubble('user', moodLine, savedImage);
       setSending(true);
       try{
         var system = buildSystemPrompt('mood') + (lang==='he' ? ' המשתמש/ת דירג/ה מצב רוח: '+MOOD_LABELS.he[v]+'.' : ' The user rated their mood: '+MOOD_LABELS.en[v]+'.');
@@ -1022,7 +1368,9 @@
       setSending(false);
     });
 
-    wrap.appendChild(labelEl); wrap.appendChild(subEl); wrap.appendChild(slider); wrap.appendChild(note); wrap.appendChild(saveBtn);
+    wrap.appendChild(labelEl); wrap.appendChild(subEl); wrap.appendChild(slider); wrap.appendChild(note);
+    wrap.appendChild(imageRow); wrap.appendChild(errorEl);
+    wrap.appendChild(saveBtn);
     host.appendChild(wrap);
   }
 
@@ -1047,6 +1395,7 @@
 
   /* ============ Calendar ============ */
   var calendarMonth = new Date(); calendarMonth.setDate(1); calendarMonth.setHours(0,0,0,0);
+  var selectedDate = null; // currently filtered day in History, format 'YYYY-MM-DD'
   var WD_SHORT = { he:['א','ב','ג','ד','ה','ו','ש'], en:['Su','Mo','Tu','We','Th','Fr','Sa'] };
 
   function idealTextOn(rgbStr){
@@ -1056,11 +1405,19 @@
   }
 
   function jumpToDay(dateKey){
-    var card = document.querySelector('.day-card[data-date="'+dateKey+'"]');
-    if(card){
-      card.classList.add('open');
-      card.scrollIntoView({behavior:'smooth', block:'center'});
+    // toggle off if clicking the same day
+    if(selectedDate === dateKey){
+      selectedDate = null;
+    } else {
+      selectedDate = dateKey;
     }
+    renderCalendar();
+    renderHistory();
+  }
+  function clearSelectedDate(){
+    selectedDate = null;
+    renderCalendar();
+    renderHistory();
   }
 
   function renderCalendar(){
@@ -1117,7 +1474,13 @@
       var dayEntries = state.entries.filter(function(e){ return e.date===dateKey; });
       var cell = document.createElement('div'); cell.className = 'cal-cell';
       cell.textContent = d;
+      cell.dataset.date = dateKey;
       if(dateKey===todayKey) cell.classList.add('is-today');
+      if(dateKey > todayKey) cell.classList.add('is-future');
+      if(dateKey === selectedDate) cell.classList.add('is-selected');
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('aria-pressed', dateKey === selectedDate ? 'true' : 'false');
+      cell.setAttribute('aria-label', dateKey);
 
       if(dayEntries.length){
         var moods = dayEntries.filter(function(e){ return typeof e.mood==='number'; }).map(function(e){ return e.mood; });
@@ -1129,9 +1492,12 @@
         } else {
           bg = 'var(--accent)'; fg = '#fff';
         }
-        cell.classList.add('has-entry','clickable');
+        cell.classList.add('has-entry');
         cell.style.background = bg;
         cell.style.color = fg;
+      }
+      // Only allow selection of today and past days.
+      if(dateKey <= todayKey){
         cell.addEventListener('click', (function(key){ return function(){ jumpToDay(key); }; })(dateKey));
       }
       grid.appendChild(cell);
@@ -1144,6 +1510,45 @@
     renderCalendar();
     var list = document.getElementById('history-list');
     list.innerHTML = '';
+    // If a specific day is selected, show a filter bar and entries for that day only.
+    if(selectedDate){
+      var filterBar = document.createElement('div');
+      filterBar.className = 'cal-filter-bar';
+      var labelWrap = document.createElement('div');
+      var labelEl = document.createElement('div'); labelEl.className = 'cal-filter-label';
+      labelEl.textContent = formatDate(selectedDate);
+      var subEl = document.createElement('div'); subEl.className = 'cal-filter-sub';
+      var dayEnts = state.entries.filter(function(e){ return e.date === selectedDate; });
+      var lang = state.profile.lang;
+      if(dayEnts.length){
+        subEl.textContent = lang === 'he'
+          ? (dayEnts.length + ' רשומות ביום הזה')
+          : (dayEnts.length + (dayEnts.length === 1 ? ' entry on this day' : ' entries on this day'));
+      } else {
+        subEl.textContent = lang === 'he' ? 'אין רשומות ביום הזה' : 'No entries on this day';
+      }
+      labelWrap.appendChild(labelEl); labelWrap.appendChild(subEl);
+      var clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.className = 'cal-filter-clear';
+      clearBtn.textContent = lang === 'he' ? 'הצג הכל' : 'Show all';
+      clearBtn.addEventListener('click', clearSelectedDate);
+      filterBar.appendChild(labelWrap); filterBar.appendChild(clearBtn);
+      list.appendChild(filterBar);
+
+      if(!dayEnts.length){
+        var empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = lang === 'he'
+          ? 'לא רשומים דברים מהיום הזה. אפשר להתחיל שיחה מהכרטיסייה למעלה.'
+          : 'Nothing logged for this day yet. Start a chat from the chips above.';
+        list.appendChild(empty);
+        return;
+      }
+      // Render only the selected day
+      renderDayCards(list, [selectedDate], dayEnts);
+      return;
+    }
     if(!state.entries.length){
       list.innerHTML = '<div class="empty-state"></div>';
       list.querySelector('.empty-state').textContent = tr('historyEmpty');
@@ -1154,46 +1559,89 @@
     var dates = Object.keys(byDate).sort().reverse();
     dates.forEach(function(date){
       var dayEntries = byDate[date].slice().sort(function(a,b){ return a.time.localeCompare(b.time); });
-      var moods = dayEntries.filter(function(e){ return typeof e.mood==='number'; }).map(function(e){ return e.mood; });
-      var avgMood = moods.length ? moods.reduce(function(a,b){ return a+b; },0)/moods.length : null;
-
-      var card = document.createElement('div'); card.className = 'day-card'; card.dataset.date = date;
-      var head = document.createElement('div'); head.className = 'day-head';
-      var swatch = document.createElement('div'); swatch.className = 'day-swatch';
-      swatch.style.background = avgMood!==null ? moodColor(avgMood) : 'var(--line)';
-      var meta = document.createElement('div'); meta.className = 'day-meta';
-      var dateEl = document.createElement('div'); dateEl.className = 'day-date'; dateEl.textContent = formatDate(date);
-      var excerptEl = document.createElement('div'); excerptEl.className = 'day-excerpt';
-      var first = dayEntries[0];
-      var firstText = (typeof first.mood==='number' ? MOOD_LABELS[state.profile.lang][first.mood] : null)
-        || (first.messages && first.messages[0] && first.messages[0].text)
-        || first.note
-        || tr(FLOW_KEY[first.flow] || 'flowChat');
-      excerptEl.textContent = firstText;
-      meta.appendChild(dateEl); meta.appendChild(excerptEl);
-      head.appendChild(swatch); head.appendChild(meta);
-      head.addEventListener('click', function(){ card.classList.toggle('open'); });
-
-      var body = document.createElement('div'); body.className = 'day-body';
-      dayEntries.forEach(function(e){
-        var row = document.createElement('div'); row.className = 'entry-row';
-        var top = document.createElement('div');
-        var timeSpan = document.createElement('span'); timeSpan.className = 'entry-time'; timeSpan.textContent = e.time;
-        var flowSpan = document.createElement('span'); flowSpan.className = 'entry-flow'; flowSpan.textContent = tr(FLOW_KEY[e.flow] || 'flowChat');
-        top.appendChild(timeSpan); top.appendChild(flowSpan);
-        var textEl = document.createElement('div'); textEl.className = 'entry-text';
-        var lines = (e.messages||[]).map(function(m){ return (m.role==='ai' ? '— ' : '') + m.text; });
-        if(!e.messages || !e.messages.length){
-          if(e.note) lines.unshift(e.note);
-          if(typeof e.mood==='number') lines.unshift(MOOD_LABELS[state.profile.lang][e.mood]);
-        }
-        textEl.textContent = lines.join(' · ');
-        row.appendChild(top); row.appendChild(textEl);
-        body.appendChild(row);
-      });
-
-      card.appendChild(head); card.appendChild(body);
+      var card = buildDayCard(date, dayEntries);
       list.appendChild(card);
+    });
+  }
+
+  function buildDayCard(date, dayEntries){
+    var moods = dayEntries.filter(function(e){ return typeof e.mood==='number'; }).map(function(e){ return e.mood; });
+    var avgMood = moods.length ? moods.reduce(function(a,b){ return a+b; },0)/moods.length : null;
+
+    var card = document.createElement('div'); card.className = 'day-card'; card.dataset.date = date;
+    var head = document.createElement('div'); head.className = 'day-head';
+    var swatch = document.createElement('div'); swatch.className = 'day-swatch';
+    swatch.style.background = avgMood!==null ? moodColor(avgMood) : 'var(--line)';
+    var meta = document.createElement('div'); meta.className = 'day-meta';
+    var dateEl = document.createElement('div'); dateEl.className = 'day-date'; dateEl.textContent = formatDate(date);
+    var excerptEl = document.createElement('div'); excerptEl.className = 'day-excerpt';
+    var first = dayEntries[0];
+    var firstText = (typeof first.mood==='number' ? MOOD_LABELS[state.profile.lang][first.mood] : null)
+      || (first.messages && first.messages[0] && first.messages[0].text)
+      || first.note
+      || tr(FLOW_KEY[first.flow] || 'flowChat');
+    excerptEl.textContent = firstText;
+    meta.appendChild(dateEl); meta.appendChild(excerptEl);
+    head.appendChild(swatch); head.appendChild(meta);
+    head.addEventListener('click', function(){ card.classList.toggle('open'); });
+
+    var body = document.createElement('div'); body.className = 'day-body';
+    dayEntries.forEach(function(e){
+      var row = document.createElement('div'); row.className = 'entry-row';
+      var top = document.createElement('div'); top.className = 'entry-top';
+      var timeSpan = document.createElement('span'); timeSpan.className = 'entry-time'; timeSpan.textContent = e.time;
+      var flowSpan = document.createElement('span'); flowSpan.className = 'entry-flow'; flowSpan.textContent = tr(FLOW_KEY[e.flow] || 'flowChat');
+      top.appendChild(timeSpan); top.appendChild(flowSpan);
+      // Edit + delete buttons
+      var actions = document.createElement('div'); actions.className = 'entry-actions';
+      var editBtn = document.createElement('button');
+      editBtn.type = 'button'; editBtn.className = 'entry-action-btn edit';
+      editBtn.setAttribute('aria-label', state.profile.lang === 'he' ? 'עריכה' : 'Edit');
+      editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>';
+      editBtn.addEventListener('click', function(ev){ ev.stopPropagation(); openEditEntry(e.id); });
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button'; delBtn.className = 'entry-action-btn delete';
+      delBtn.setAttribute('aria-label', state.profile.lang === 'he' ? 'מחיקה' : 'Delete');
+      delBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>';
+      delBtn.addEventListener('click', function(ev){ ev.stopPropagation(); deleteEntry(e.id); });
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+      top.appendChild(actions);
+      if(e.image){
+        var imgWrap = document.createElement('div');
+        imgWrap.className = 'entry-image';
+        var img = document.createElement('img');
+        img.src = e.image; img.alt = '';
+        imgWrap.appendChild(img);
+        row.appendChild(imgWrap);
+      }
+      var textEl = document.createElement('div'); textEl.className = 'entry-text';
+      var lines = (e.messages||[]).map(function(m){ return (m.role==='ai' ? '— ' : '') + m.text; });
+      if(!e.messages || !e.messages.length){
+        if(e.note) lines.unshift(e.note);
+        if(typeof e.mood==='number') lines.unshift(MOOD_LABELS[state.profile.lang][e.mood]);
+      }
+      textEl.textContent = lines.join(' · ');
+      row.appendChild(top); row.appendChild(textEl);
+      body.appendChild(row);
+    });
+
+    card.appendChild(head); card.appendChild(body);
+    return card;
+  }
+
+  function renderDayCards(container, dates, dayEnts){
+    // dates is a list of YYYY-MM-DD strings; dayEnts is the matching entries (optional)
+    var grouped = {};
+    (dayEnts || state.entries).forEach(function(e){
+      (grouped[e.date] = grouped[e.date] || []).push(e);
+    });
+    dates.forEach(function(date){
+      var entries = (grouped[date] || []).slice().sort(function(a,b){ return a.time.localeCompare(b.time); });
+      var card = buildDayCard(date, entries);
+      // when filter is active, open the card immediately so the entries are visible
+      if(selectedDate) card.classList.add('open');
+      container.appendChild(card);
     });
   }
 
@@ -1500,6 +1948,250 @@
     saveState();
     renderGreeting();
   }
+
+  /* ============ Edit / add entry ============ */
+  var editingEntryId = null;
+  var editingImage = null; // data URL or null (controls whether to update image on save)
+  var editingMode = 'edit'; // 'edit' or 'add'
+  var editingTargetDate = null; // for add mode, the YYYY-MM-DD to write the entry to
+
+  function renderEditFlowRow(activeFlow){
+    var row = document.getElementById('edit-flow-row');
+    row.innerHTML = '';
+    FLOWS.forEach(function(f){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pill'+(f===activeFlow?' active':'');
+      b.textContent = tr(FLOW_KEY[f]);
+      b.addEventListener('click', function(){
+        row.querySelectorAll('.pill').forEach(function(p){ p.classList.remove('active'); });
+        b.classList.add('active');
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function openEditEntry(entryId){
+    var entry = state.entries.find(function(e){ return e.id === entryId; });
+    if(!entry) return;
+    editingMode = 'edit';
+    editingEntryId = entryId;
+    editingImage = entry.image || null; // start with existing image
+    editingTargetDate = entry.date;
+    var lang = state.profile.lang;
+    var sheet = document.getElementById('edit-entry-sheet');
+    document.getElementById('sheet-backdrop').classList.add('open');
+    sheet.classList.add('open');
+    // hide flow picker when editing (flow is fixed for existing entries)
+    document.getElementById('edit-flow-field').style.display = 'none';
+    // localize
+    document.getElementById('edit-entry-title').textContent = lang === 'he' ? 'עריכת רשומה' : 'Edit entry';
+    document.getElementById('edit-mood-label').textContent = lang === 'he' ? 'מצב רוח' : 'Mood';
+    document.getElementById('edit-note-label').textContent = lang === 'he' ? 'הערה' : 'Note';
+    document.getElementById('edit-image-label').textContent = lang === 'he' ? 'תמונה' : 'Image';
+    document.getElementById('edit-image-btn-label').textContent = lang === 'he' ? (entry.image ? 'החלף תמונה' : 'הוסף תמונה') : (entry.image ? 'Replace photo' : 'Add photo');
+    document.getElementById('edit-save-btn').textContent = lang === 'he' ? 'שמור שינויים' : 'Save changes';
+    document.getElementById('edit-delete-btn').style.display = '';
+    document.getElementById('edit-delete-btn').textContent = lang === 'he' ? 'מחק' : 'Delete';
+    document.getElementById('edit-sheet-close-btn').textContent = lang === 'he' ? 'סגירה' : 'Close';
+    document.getElementById('edit-note').placeholder = lang === 'he' ? 'הערה (לא חובה)' : 'Note (optional)';
+    // meta
+    var flowLabel = tr(FLOW_KEY[entry.flow] || 'flowChat');
+    document.getElementById('edit-entry-meta').textContent = (lang === 'he' ? 'מתוך ' : 'From ') + formatDate(entry.date) + ' · ' + entry.time + ' · ' + flowLabel;
+    // mood
+    var moodVal = (typeof entry.mood === 'number') ? entry.mood : 7;
+    var slider = document.getElementById('edit-moodslider');
+    slider.value = String(moodVal);
+    var labelEl = document.getElementById('edit-moodlabel');
+    labelEl.textContent = MOOD_LABELS[lang][moodVal];
+    labelEl.style.color = moodColor(moodVal);
+    // note
+    document.getElementById('edit-note').value = entry.note || '';
+    // image
+    refreshEditImageThumb();
+  }
+
+  function openAddEntry(dateKey){
+    editingMode = 'add';
+    editingEntryId = null;
+    editingImage = null;
+    editingTargetDate = dateKey;
+    var lang = state.profile.lang;
+    var sheet = document.getElementById('edit-entry-sheet');
+    document.getElementById('sheet-backdrop').classList.add('open');
+    sheet.classList.add('open');
+    // show flow picker for new entries
+    document.getElementById('edit-flow-field').style.display = '';
+    // default flow: chat or mood depending on hour
+    var part = dayPart(new Date().getHours());
+    var defaultFlow = part==='morning' ? 'morning' : (part==='evening' || part==='night') ? 'evening' : 'mood';
+    renderEditFlowRow(defaultFlow);
+    // localize
+    document.getElementById('edit-entry-title').textContent = lang === 'he' ? 'רשומה חדשה ליום הזה' : 'New entry for this day';
+    document.getElementById('edit-flow-label').textContent = lang === 'he' ? 'סוג' : 'Type';
+    document.getElementById('edit-mood-label').textContent = lang === 'he' ? 'מצב רוח' : 'Mood';
+    document.getElementById('edit-note-label').textContent = lang === 'he' ? 'הערה' : 'Note';
+    document.getElementById('edit-image-label').textContent = lang === 'he' ? 'תמונה' : 'Image';
+    document.getElementById('edit-image-btn-label').textContent = lang === 'he' ? 'הוסף תמונה' : 'Add photo';
+    document.getElementById('edit-save-btn').textContent = lang === 'he' ? 'הוסף רשומה' : 'Add entry';
+    document.getElementById('edit-delete-btn').style.display = 'none';
+    document.getElementById('edit-sheet-close-btn').textContent = lang === 'he' ? 'ביטול' : 'Cancel';
+    document.getElementById('edit-note').placeholder = lang === 'he' ? 'הערה (לא חובה)' : 'Note (optional)';
+    // meta - just show the date
+    document.getElementById('edit-entry-meta').textContent = (lang === 'he' ? 'ליום ' : 'For ') + formatDate(dateKey);
+    // mood default to neutral
+    var slider = document.getElementById('edit-moodslider');
+    slider.value = '7';
+    var labelEl = document.getElementById('edit-moodlabel');
+    labelEl.textContent = MOOD_LABELS[lang][7];
+    labelEl.style.color = moodColor(7);
+    // clear note
+    document.getElementById('edit-note').value = '';
+    // image empty
+    refreshEditImageThumb();
+  }
+
+  function refreshEditImageThumb(){
+    var thumb = document.getElementById('edit-image-thumb');
+    var preview = document.getElementById('edit-image-preview');
+    var btn = document.getElementById('edit-image-btn');
+    if(editingImage){
+      preview.src = editingImage;
+      thumb.style.display = '';
+      btn.classList.add('has-image');
+    } else {
+      preview.src = '';
+      thumb.style.display = 'none';
+      btn.classList.remove('has-image');
+    }
+  }
+
+  function closeEditEntry(){
+    document.getElementById('edit-entry-sheet').classList.remove('open');
+    // backdrop closes only when both sheets are closed
+    if(!document.getElementById('settings-sheet').classList.contains('open')){
+      document.getElementById('sheet-backdrop').classList.remove('open');
+    }
+    editingEntryId = null;
+    editingImage = null;
+  }
+
+  function saveEditEntry(){
+    var moodVal = Number(document.getElementById('edit-moodslider').value);
+    var noteText = document.getElementById('edit-note').value.trim();
+    if(editingMode === 'add'){
+      if(!editingTargetDate) return;
+      var flowRow = document.getElementById('edit-flow-row');
+      var activePill = flowRow.querySelector('.pill.active');
+      var flow = activePill ? FLOWS.find(function(f){ return tr(FLOW_KEY[f]) === activePill.textContent; }) : null;
+      if(!flow) flow = 'chat';
+      var now = new Date();
+      var entry = {
+        id: 'e'+Date.now(),
+        date: editingTargetDate,
+        time: timeStr(now),
+        flow: flow,
+        mood: (Number.isFinite(moodVal)) ? moodVal : null,
+        note: noteText || undefined,
+        messages: [],
+        createdAt: Date.now()
+      };
+      if(editingImage) entry.image = editingImage;
+      state.entries.push(entry);
+      // After adding, switch to "show all" filter so the user can see their new entry
+      selectedDate = null;
+      saveState();
+      updateRibbon();
+      renderCalendar();
+      renderHistory();
+      renderInsights();
+      closeEditEntry();
+      return;
+    }
+    if(!editingEntryId) return;
+    var entry = state.entries.find(function(e){ return e.id === editingEntryId; });
+    if(!entry) return;
+    entry.mood = (Number.isFinite(moodVal)) ? moodVal : null;
+    entry.note = noteText || undefined;
+    if(editingImage){
+      entry.image = editingImage;
+    } else {
+      delete entry.image;
+    }
+    entry.editedAt = Date.now();
+    saveState();
+    updateRibbon();
+    renderHistory();
+    renderInsights();
+    closeEditEntry();
+  }
+
+  function deleteEntry(entryId){
+    var entry = state.entries.find(function(e){ return e.id === entryId; });
+    if(!entry) return;
+    var lang = state.profile.lang;
+    var msg = lang === 'he'
+      ? 'למחוק את הרשומה הזאת? אי אפשר לשחזר.'
+      : 'Delete this entry? This cannot be undone.';
+    if(!confirm(msg)) return;
+    state.entries = state.entries.filter(function(e){ return e.id !== entryId; });
+    state.weeklyCache = {};
+    saveState();
+    updateRibbon();
+    renderHistory();
+    renderInsights();
+    if(editingEntryId === entryId) closeEditEntry();
+  }
+
+  // Edit entry sheet wiring
+  var editMoodSlider = document.getElementById('edit-moodslider');
+  if(editMoodSlider){
+    editMoodSlider.addEventListener('input', function(){
+      var v = Number(this.value);
+      var lang = state.profile ? state.profile.lang : 'he';
+      var labelEl = document.getElementById('edit-moodlabel');
+      labelEl.textContent = MOOD_LABELS[lang][v];
+      labelEl.style.color = moodColor(v);
+    });
+  }
+  var editImageBtn = document.getElementById('edit-image-btn');
+  var editImageInput = document.getElementById('edit-image-input');
+  if(editImageBtn && editImageInput){
+    editImageBtn.addEventListener('click', function(){ editImageInput.click(); });
+    editImageInput.addEventListener('change', function(){
+      var file = editImageInput.files && editImageInput.files[0];
+      if(!file) return;
+      readMoodImage(file).then(function(dataUrl){
+        editingImage = dataUrl;
+        refreshEditImageThumb();
+        editImageInput.value = '';
+      }).catch(function(){
+        var lang = state.profile ? state.profile.lang : 'he';
+        alert(lang === 'he' ? 'לא הצלחתי לטעון את התמונה.' : "Couldn't load that image.");
+        editImageInput.value = '';
+      });
+    });
+  }
+  var editImageRemove = document.getElementById('edit-image-remove');
+  if(editImageRemove){
+    editImageRemove.addEventListener('click', function(){
+      editingImage = null;
+      refreshEditImageThumb();
+    });
+  }
+  var editSaveBtn = document.getElementById('edit-save-btn');
+  if(editSaveBtn) editSaveBtn.addEventListener('click', saveEditEntry);
+  var editDeleteBtn = document.getElementById('edit-delete-btn');
+  if(editDeleteBtn) editDeleteBtn.addEventListener('click', function(){
+    if(editingEntryId) deleteEntry(editingEntryId);
+  });
+  var editSheetClose = document.getElementById('edit-sheet-close-btn');
+  if(editSheetClose) editSheetClose.addEventListener('click', closeEditEntry);
+  // Backdrop closes whichever sheet is open
+  document.getElementById('sheet-backdrop').addEventListener('click', function(){
+    if(document.getElementById('edit-entry-sheet').classList.contains('open')) closeEditEntry();
+    else if(document.getElementById('settings-sheet').classList.contains('open')) closeSettings();
+  });
 
   document.getElementById('clear-data-btn').addEventListener('click', function(){
     if(confirm(tr('clearConfirm'))){
