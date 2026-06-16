@@ -147,6 +147,12 @@
     border:1px solid var(--line); font-size:0.85rem; white-space:nowrap; color:var(--ink);
   }
   .flowchip.highlight{border-color:var(--accent); background:#5B7A8C14;}
+  .flowchip-mood{display:inline-flex; align-items:center;}
+  .mood-dot{
+    display:inline-block; width:12px; height:12px; border-radius:50%; flex:0 0 auto;
+    background:linear-gradient(135deg, var(--h-low), var(--h-mid2), var(--h-high));
+    margin-inline-end:6px;
+  }
 
   .distress-card{
     margin:10px 2px 4px; padding:12px 14px; border-radius:var(--radius-md);
@@ -186,8 +192,11 @@
   .moodpicker .moodsub{color:var(--ink-faint); font-size:0.8rem; margin-bottom:18px;}
   input[type=range].moodslider{
     -webkit-appearance:none; width:100%; height:10px; border-radius:999px;
-    background:linear-gradient(90deg, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high));
+    background:linear-gradient(to right, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high));
     margin-bottom:22px;
+  }
+  [dir="rtl"] input[type=range].moodslider{
+    background:linear-gradient(to left, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high));
   }
   input[type=range].moodslider::-webkit-slider-thumb{
     -webkit-appearance:none; width:30px; height:30px; border-radius:50%;
@@ -197,6 +206,24 @@
     width:30px; height:30px; border-radius:50%; background:#fff; border:3px solid var(--ink);
   }
   .moodnote{width:100%; padding:12px 16px; border-radius:var(--radius-md); background:var(--paper-raised); border:1px solid var(--line); margin-bottom:14px;}
+
+  /* ---------- Calendar ---------- */
+  .cal-header{display:flex; align-items:center; justify-content:space-between; padding:8px 2px 12px;}
+  .cal-title{font-weight:700; font-size:1rem;}
+  .cal-nav{display:flex; align-items:center; gap:4px;}
+  .cal-nav-btn svg{width:19px; height:19px;}
+  [dir="rtl"] .cal-nav-btn svg{transform:scaleX(-1);}
+  .cal-today-btn{font-size:0.74rem; color:var(--accent); padding:5px 11px; border-radius:999px; border:1px solid var(--line); margin-inline-end:2px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:24px;}
+  .cal-wd{text-align:center; font-size:0.66rem; color:var(--ink-faint); padding-bottom:4px;}
+  .cal-cell{
+    aspect-ratio:1; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:0.78rem; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink-soft);
+  }
+  .cal-cell.empty-slot{visibility:hidden;}
+  .cal-cell.has-entry{border-color:transparent; font-weight:700;}
+  .cal-cell.clickable{cursor:pointer;}
+  .cal-cell.is-today{box-shadow:0 0 0 2px var(--ink) inset;}
 
   /* ---------- History ---------- */
   .day-card{
@@ -317,6 +344,7 @@
     </section>
 
     <section class="panel" id="panel-history">
+      <div id="calendar-host"></div>
       <div id="history-list"></div>
     </section>
 
@@ -396,7 +424,7 @@
       endFlow:'לסיים ולשמור',
       moodSub:'גררו לבחירת מצב הרוח',
       moodNotePh:'רוצים להוסיף שורה? (לא חובה)', moodSave:'לשמור',
-      historyEmpty:'אין עדיין רשומות. הן יופיעו כאן.',
+      historyEmpty:'אין עדיין רשומות. הן יופיעו כאן.', calToday:'היום',
       streakLabel:'רצף ימים', entriesLabel:'רשומות השבוע', avgLabel:'מצב רוח ממוצע',
       last30:'30 הימים האחרונים', weekTitle:'תובנה על השבוע', reflectBtn:'ליצור תובנה',
       reflectLoading:'חושב על השבוע…', reflectEmpty:'אחרי כמה רשומות יהיה כאן מה לומר.',
@@ -417,7 +445,7 @@
       endFlow:'Finish & save',
       moodSub:'Drag to set your mood',
       moodNotePh:'Want to add a line? (optional)', moodSave:'Save',
-      historyEmpty:'No entries yet. They\u2019ll show up here.',
+      historyEmpty:'No entries yet. They\u2019ll show up here.', calToday:'Today',
       streakLabel:'Day streak', entriesLabel:'Entries this week', avgLabel:'Average mood',
       last30:'Last 30 days', weekTitle:'This week', reflectBtn:'Reflect on this week',
       reflectLoading:'Thinking about your week…', reflectEmpty:"After a few entries, there'll be something to say here.",
@@ -588,8 +616,14 @@
     var highlightFlow = part==='morning' ? 'morning' : (part==='evening' || part==='night') ? 'evening' : 'mood';
     FLOWS.forEach(function(f){
       var b = document.createElement('button');
-      b.className = 'flowchip'+(f===highlightFlow?' highlight':'');
-      b.textContent = tr(FLOW_KEY[f]);
+      b.className = 'flowchip'+(f===highlightFlow?' highlight':'')+(f==='mood'?' flowchip-mood':'');
+      if(f==='mood'){
+        var dot = document.createElement('span'); dot.className = 'mood-dot';
+        var lbl = document.createElement('span'); lbl.textContent = tr(FLOW_KEY[f]);
+        b.appendChild(dot); b.appendChild(lbl);
+      } else {
+        b.textContent = tr(FLOW_KEY[f]);
+      }
       b.addEventListener('click', function(){ openFlow(f); });
       row.appendChild(b);
     });
@@ -810,8 +844,103 @@
     });
   });
 
+  /* ============ Calendar ============ */
+  var calendarMonth = new Date(); calendarMonth.setDate(1); calendarMonth.setHours(0,0,0,0);
+  var WD_SHORT = { he:['א','ב','ג','ד','ה','ו','ש'], en:['Su','Mo','Tu','We','Th','Fr','Sa'] };
+
+  function idealTextOn(rgbStr){
+    var nums = rgbStr.match(/\d+/g).map(Number);
+    var lum = 0.299*nums[0] + 0.587*nums[1] + 0.114*nums[2];
+    return lum > 150 ? '#2B2E33' : '#FAF8F4';
+  }
+
+  function jumpToDay(dateKey){
+    var card = document.querySelector('.day-card[data-date="'+dateKey+'"]');
+    if(card){
+      card.classList.add('open');
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+  }
+
+  function renderCalendar(){
+    var host = document.getElementById('calendar-host');
+    if(!host) return;
+    host.innerHTML = '';
+    var lang = state.profile.lang;
+    var year = calendarMonth.getFullYear(), month = calendarMonth.getMonth();
+
+    var header = document.createElement('div'); header.className = 'cal-header';
+    var title = document.createElement('div'); title.className = 'cal-title';
+    title.textContent = MONTHS[lang][month] + ' ' + year;
+
+    var navWrap = document.createElement('div'); navWrap.className = 'cal-nav';
+    var now = new Date();
+    if(year !== now.getFullYear() || month !== now.getMonth()){
+      var todayBtn = document.createElement('button'); todayBtn.className = 'cal-today-btn';
+      todayBtn.textContent = tr('calToday');
+      todayBtn.addEventListener('click', function(){
+        calendarMonth = new Date(); calendarMonth.setDate(1); calendarMonth.setHours(0,0,0,0);
+        renderCalendar();
+      });
+      navWrap.appendChild(todayBtn);
+    }
+
+    var prevBtn = document.createElement('button'); prevBtn.className = 'icon-btn cal-nav-btn';
+    prevBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+    prevBtn.addEventListener('click', function(){ calendarMonth.setMonth(calendarMonth.getMonth()-1); renderCalendar(); });
+
+    var nextBtn = document.createElement('button'); nextBtn.className = 'icon-btn cal-nav-btn';
+    nextBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+    nextBtn.addEventListener('click', function(){ calendarMonth.setMonth(calendarMonth.getMonth()+1); renderCalendar(); });
+
+    navWrap.appendChild(prevBtn); navWrap.appendChild(nextBtn);
+    header.appendChild(title); header.appendChild(navWrap);
+    host.appendChild(header);
+
+    var grid = document.createElement('div'); grid.className = 'cal-grid';
+    WD_SHORT[lang].forEach(function(w){
+      var el = document.createElement('div'); el.className = 'cal-wd'; el.textContent = w;
+      grid.appendChild(el);
+    });
+
+    var firstDow = new Date(year, month, 1).getDay();
+    for(var i=0;i<firstDow;i++){
+      var padCell = document.createElement('div'); padCell.className = 'cal-cell empty-slot';
+      grid.appendChild(padCell);
+    }
+
+    var daysInMonth = new Date(year, month+1, 0).getDate();
+    var todayKey = todayStr();
+    for(var d=1; d<=daysInMonth; d++){
+      var dateKey = year+'-'+pad(month+1)+'-'+pad(d);
+      var dayEntries = state.entries.filter(function(e){ return e.date===dateKey; });
+      var cell = document.createElement('div'); cell.className = 'cal-cell';
+      cell.textContent = d;
+      if(dateKey===todayKey) cell.classList.add('is-today');
+
+      if(dayEntries.length){
+        var moods = dayEntries.filter(function(e){ return typeof e.mood==='number'; }).map(function(e){ return e.mood; });
+        var bg, fg;
+        if(moods.length){
+          var avg = moods.reduce(function(a,b){ return a+b; },0)/moods.length;
+          bg = moodColor(avg);
+          fg = idealTextOn(bg);
+        } else {
+          bg = 'var(--accent)'; fg = '#fff';
+        }
+        cell.classList.add('has-entry','clickable');
+        cell.style.background = bg;
+        cell.style.color = fg;
+        cell.addEventListener('click', (function(key){ return function(){ jumpToDay(key); }; })(dateKey));
+      }
+      grid.appendChild(cell);
+    }
+    host.appendChild(grid);
+  }
+
   /* ============ History ============ */
   function renderHistory(){
+    renderCalendar();
     var list = document.getElementById('history-list');
     list.innerHTML = '';
     if(!state.entries.length){
@@ -827,7 +956,7 @@
       var moods = dayEntries.filter(function(e){ return typeof e.mood==='number'; }).map(function(e){ return e.mood; });
       var avgMood = moods.length ? moods.reduce(function(a,b){ return a+b; },0)/moods.length : null;
 
-      var card = document.createElement('div'); card.className = 'day-card';
+      var card = document.createElement('div'); card.className = 'day-card'; card.dataset.date = date;
       var head = document.createElement('div'); head.className = 'day-head';
       var swatch = document.createElement('div'); swatch.className = 'day-swatch';
       swatch.style.background = avgMood!==null ? moodColor(avgMood) : 'var(--line)';
