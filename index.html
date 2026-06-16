@@ -131,6 +131,10 @@
     50%{filter:hue-rotate(6deg) saturate(1.08);}
   }
 
+  .footer-ribbon{height:7px; margin:30px 18px 10px; border-radius:999px; background:linear-gradient(90deg, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high)); opacity:.55;}
+  .footer-credit{text-align:center; padding:0 18px 22px;}
+  .footer-credit span{font-size:0.7rem; color:var(--ink-faint);}
+
   main{flex:1; overflow-y:auto; padding-bottom:calc(86px + var(--safe-b));}
   .panel{display:none; padding:6px 18px 28px;}
   .panel.active{display:block; animation:panelIn .28s ease;}
@@ -173,10 +177,17 @@
   .distress-card{
     margin:10px 2px 4px; padding:12px 14px; border-radius:var(--radius-md);
     background:#B5564A0F; border:1px solid #B5564A26; display:flex; align-items:center; gap:10px;
+    overflow:hidden; transition:max-height .3s ease, opacity .3s ease, margin .3s ease, padding .3s ease, border-color .3s ease;
   }
-  .distress-card svg{flex:0 0 auto; color:var(--danger); width:18px; height:18px;}
+  .distress-card > svg{flex:0 0 auto; color:var(--danger); width:18px; height:18px;}
   .distress-card .dtext{flex:1; font-size:0.8rem; color:var(--ink-soft); line-height:1.4;}
   .distress-card a{color:var(--danger); font-weight:700; text-decoration:none;}
+  .distress-card .dismiss-btn{
+    flex:0 0 auto; width:24px; height:24px; border-radius:50%; color:var(--ink-faint);
+    display:flex; align-items:center; justify-content:center; transition:background .15s ease;
+  }
+  .distress-card .dismiss-btn svg{width:14px; height:14px;}
+  .distress-card .dismiss-btn:hover{background:#00000012; color:var(--ink-soft);}
 
   .thread{display:flex; flex-direction:column; gap:10px; padding:10px 2px 14px; min-height:80px;}
   .bubble{max-width:84%; padding:11px 15px; border-radius:18px; font-size:0.95rem; line-height:1.45; animation:bubbleIn .25s ease;}
@@ -351,6 +362,8 @@
     .app-shell .ribbon{margin:20px 32px 4px;}
     .app-shell main{padding:0; padding-bottom:28px;}
     .app-shell .panel{max-width:640px; margin:0 auto; padding:6px 32px 32px;}
+    .app-shell .footer-ribbon{max-width:640px; margin:30px auto 10px;}
+    .app-shell .footer-credit{max-width:640px; margin:0 auto; padding:0 0 22px;}
     nav.bottomnav{display:none;}
 
     .sheet{
@@ -442,9 +455,12 @@
         <p id="greeting-sub"></p>
       </div>
       <div class="flowrow" id="flow-row"></div>
-      <div class="distress-card">
+      <div class="distress-card" id="distress-card">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
         <div class="dtext" id="distress-text">אם קשה עכשיו, אפשר להתקשר לער"ן בחינם — <a href="tel:1201">1201</a></div>
+        <button class="dismiss-btn" id="distress-close" aria-label="dismiss">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
       <div class="thread" id="thread"></div>
       <div id="mood-picker-host"></div>
@@ -467,6 +483,9 @@
     <section class="panel" id="panel-insights">
       <div id="insights-content"></div>
     </section>
+
+    <div class="footer-ribbon"></div>
+    <div class="footer-credit"><span id="footer-credit-text">נוצר על ידי גפן ר. גולני, 2026</span></div>
   </main>
 
   <nav class="bottomnav">
@@ -544,6 +563,7 @@
       moodSub:'גררו לבחירת מצב הרוח',
       moodNotePh:'רוצים להוסיף שורה? (לא חובה)', moodSave:'לשמור',
       historyEmpty:'אין עדיין רשומות. הן יופיעו כאן.', calToday:'היום',
+      credit:'נוצר על ידי גפן ר. גולני, 2026',
       streakLabel:'רצף ימים', entriesLabel:'רשומות', avgLabel:'מצב רוח ממוצע',
       periodWeek:'שבוע', periodMonth:'חודש', periodYear:'שנה',
       jumpWeek:'השבוע', jumpMonth:'החודש', jumpYear:'השנה',
@@ -567,6 +587,7 @@
       moodSub:'Drag to set your mood',
       moodNotePh:'Want to add a line? (optional)', moodSave:'Save',
       historyEmpty:'No entries yet. They\u2019ll show up here.', calToday:'Today',
+      credit:'Made by Gefen R. Golani, 2026',
       streakLabel:'Day streak', entriesLabel:'Entries', avgLabel:'Average mood',
       periodWeek:'Week', periodMonth:'Month', periodYear:'Year',
       jumpWeek:'This week', jumpMonth:'This month', jumpYear:'This year',
@@ -726,6 +747,7 @@
     document.getElementById('sheet-close-btn').textContent = tr('close');
     var sidenavSettingsLabel = document.getElementById('sidenav-settings-label');
     if(sidenavSettingsLabel) sidenavSettingsLabel.textContent = tr('settingsTitle');
+    document.getElementById('footer-credit-text').textContent = tr('credit');
   }
 
   function renderGreeting(){
@@ -780,10 +802,37 @@
     }
   }
 
+  function resetDistressCard(){
+    var card = document.getElementById('distress-card');
+    if(!card) return;
+    card.style.display = '';
+    card.style.maxHeight = '';
+    card.style.opacity = '';
+    card.style.marginTop = ''; card.style.marginBottom = '';
+    card.style.paddingTop = ''; card.style.paddingBottom = '';
+    card.style.borderColor = '';
+  }
+  var distressCloseBtn = document.getElementById('distress-close');
+  if(distressCloseBtn){
+    distressCloseBtn.addEventListener('click', function(){
+      var card = document.getElementById('distress-card');
+      card.style.maxHeight = card.scrollHeight + 'px';
+      requestAnimationFrame(function(){
+        card.style.maxHeight = '0px';
+        card.style.opacity = '0';
+        card.style.marginTop = '0px'; card.style.marginBottom = '0px';
+        card.style.paddingTop = '0px'; card.style.paddingBottom = '0px';
+        card.style.borderColor = 'transparent';
+      });
+      setTimeout(function(){ card.style.display = 'none'; }, 320);
+    });
+  }
+
   function openFlow(flow){
     currentFlow = flow;
     conversation = [];
     activeEntryId = 'e'+Date.now();
+    resetDistressCard();
     document.getElementById('thread').innerHTML = '';
     document.getElementById('mood-picker-host').innerHTML = '';
     document.getElementById('endflow-row').style.display = 'none';
