@@ -212,10 +212,11 @@
 
   .distress-card{
     margin:6px 2px 4px; padding:11px 14px; border-radius:var(--radius-md);
-    background:#B5564A0F; border:1px solid #B5564A26; display:flex; align-items:center; gap:10px;
+    background:#B5564A0F; border:1px solid #B5564A26; display:flex; flex-direction:column; gap:10px;
     overflow:hidden; transition:max-height .3s ease, opacity .3s ease, margin .3s ease, padding .3s ease, border-color .3s ease;
   }
-  .distress-card > svg{flex:0 0 auto; color:var(--danger); width:18px; height:18px;}
+  .distress-top{display:flex; align-items:center; gap:10px;}
+  .distress-top > svg{flex:0 0 auto; color:var(--danger); width:18px; height:18px;}
   .distress-card .dtext{flex:1; font-size:0.8rem; color:var(--ink-soft); line-height:1.4;}
   .distress-card a{color:var(--danger); font-weight:700; text-decoration:none;}
   .distress-card .dismiss-btn{
@@ -224,6 +225,16 @@
   }
   .distress-card .dismiss-btn svg{width:14px; height:14px;}
   .distress-card .dismiss-btn:hover{background:#00000012; color:var(--ink-soft);}
+  .grounding-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:10px 14px; border-radius:999px; border:1px solid #B5564A33;
+    background:#fff; color:var(--ink); font-size:0.84rem; font-weight:600;
+    transition:background .15s ease, border-color .15s ease, transform .12s ease;
+  }
+  .grounding-btn svg{width:16px; height:16px; color:var(--danger); flex:0 0 auto;}
+  .grounding-btn:hover{background:#B5564A0A; border-color:var(--danger);}
+  .grounding-btn:active{transform:scale(.97);}
+  .disclaimer-text{font-size:0.92rem; line-height:1.55; color:var(--ink-soft); margin:0 0 18px;}
 
   .thread{display:flex; flex-direction:column; gap:10px; padding:10px 2px 14px; min-height:80px;}
   .bubble{max-width:84%; padding:11px 15px; border-radius:18px; font-size:0.95rem; line-height:1.45; animation:bubbleIn .25s ease;}
@@ -613,10 +624,16 @@
       </div>
       <div class="flowrow" id="flow-row"></div>
       <div class="distress-card" id="distress-card">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-        <div class="dtext" id="distress-text">אם קשה עכשיו, אפשר להתקשר לער"ן בחינם — <a href="tel:1201">1201</a></div>
-        <button class="dismiss-btn" id="distress-close" aria-label="dismiss">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <div class="distress-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          <div class="dtext" id="distress-text">אם קשה עכשיו, אפשר להתקשר לער"ן בחינם — <a href="tel:1201">1201</a></div>
+          <button class="dismiss-btn" id="distress-close" aria-label="dismiss">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <button class="grounding-btn" id="grounding-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"></circle><line x1="12" y1="8" x2="12" y2="21"></line><path d="M5 13a7 7 0 0 0 14 0"></path><line x1="5" y1="13" x2="2" y2="13"></line><line x1="22" y1="13" x2="19" y2="13"></line></svg>
+          <span id="grounding-btn-label">שיחת קרקוע</span>
         </button>
       </div>
       <div class="thread" id="thread"></div>
@@ -721,6 +738,13 @@
   <button class="sheet-close" id="edit-sheet-close-btn">סגירה</button>
 </div>
 
+<div class="sheet" id="grounding-disclaimer-sheet">
+  <h2 id="grounding-disclaimer-title">לפני שמתחילים</h2>
+  <p class="disclaimer-text" id="grounding-disclaimer-text">אופק הוא לא מטפל/ת מוסמך/ת ולא תחליף לטיפול מקצועי — הוא יכול להציע תרגילי נשימה וקרקוע עדינים לרגע הזה. במצב חירום או מצוקה גדולה, אפשר גם להתקשר לער"ן בחינם — 1201.</p>
+  <button class="btn-primary" id="grounding-continue-btn">להתחיל</button>
+  <button class="sheet-close" id="grounding-cancel-btn">ביטול</button>
+</div>
+
 <script>
 (function(){
   'use strict';
@@ -758,6 +782,10 @@
       navChat:'שיחה', navHistory:'היסטוריה', navInsights:'תובנות',
       greetMorning:'בוקר טוב', greetAfternoon:'צהריים טובים', greetEvening:'ערב טוב', greetNight:'לילה טוב',
       flowMorning:'יומן בוקר', flowEvening:'סיכום יום', flowMood:'מצב רוח', flowGratitude:'יומן תודות', flowChat:'שיחה חופשית',
+      flowGrounding:'שיחת קרקוע',
+      groundingDisclaimerTitle:'לפני שמתחילים',
+      groundingDisclaimerText:'אופק הוא לא מטפל/ת מוסמך/ת ולא תחליף לטיפול מקצועי — הוא יכול להציע תרגילי נשימה וקרקוע עדינים לרגע הזה. במצב חירום או מצוקה גדולה, אפשר גם להתקשר לער"ן בחינם — 1201.',
+      groundingContinue:'להתחיל', groundingCancel:'ביטול',
       composerPh:'מה שעל הלב…',
       distressText:'אם קשה עכשיו, אפשר להתקשר לער"ן בחינם —',
       endFlow:'לסיים ולשמור',
@@ -785,6 +813,10 @@
       navChat:'Chat', navHistory:'History', navInsights:'Insights',
       greetMorning:'Good morning', greetAfternoon:'Good afternoon', greetEvening:'Good evening', greetNight:'Good night',
       flowMorning:'Morning check-in', flowEvening:'Evening summary', flowMood:'Mood', flowGratitude:'Gratitude', flowChat:'Just talk',
+      flowGrounding:'Grounding chat',
+      groundingDisclaimerTitle:'Before we begin',
+      groundingDisclaimerText:"Ofek isn't a licensed therapist and isn't a substitute for professional care — it can offer gentle breathing and grounding exercises for this moment. In a crisis or significant distress, you can also call ER'N for free — 1201.",
+      groundingContinue:'Start', groundingCancel:'Cancel',
       composerPh:"What's on your mind…",
       distressText:"If things feel heavy right now, ER'N is free to call —",
       endFlow:'Finish & save',
@@ -806,8 +838,8 @@
     }
   };
 
-  var FLOWS = ['chat','morning','evening','mood','gratitude'];
-  var FLOW_KEY = { morning:'flowMorning', evening:'flowEvening', mood:'flowMood', gratitude:'flowGratitude', chat:'flowChat' };
+  var FLOWS = ['chat','morning','evening','gratitude','mood'];
+  var FLOW_KEY = { morning:'flowMorning', evening:'flowEvening', mood:'flowMood', gratitude:'flowGratitude', chat:'flowChat', grounding:'flowGrounding' };
 
   function tr(key, langOverride){
     var lang = langOverride || (state.profile && state.profile.lang) || 'he';
@@ -961,6 +993,11 @@
     var sidenavSettingsLabel = document.getElementById('sidenav-settings-label');
     if(sidenavSettingsLabel) sidenavSettingsLabel.textContent = tr('settingsTitle');
     document.getElementById('footer-credit-text').textContent = tr('credit');
+    document.getElementById('grounding-btn-label').textContent = tr('flowGrounding');
+    document.getElementById('grounding-disclaimer-title').textContent = tr('groundingDisclaimerTitle');
+    document.getElementById('grounding-disclaimer-text').textContent = tr('groundingDisclaimerText');
+    document.getElementById('grounding-continue-btn').textContent = tr('groundingContinue');
+    document.getElementById('grounding-cancel-btn').textContent = tr('groundingCancel');
   }
 
   function renderGreeting(){
@@ -1139,7 +1176,10 @@
       evening: lang==='he' ? ' זה סיכום יום — שאל/י מה בלט היום, טוב או קשה.' : ' This is an evening summary — ask what stood out today, good or hard.',
       gratitude: lang==='he' ? ' זה יומן תודות — בקש/י דבר אחד או שניים שיש תודה עליהם היום.' : ' This is a gratitude check-in — ask for one or two things they are thankful for today.',
       chat: lang==='he' ? ' זו שיחה חופשית — תן/י למשתמש/ת לכוון.' : ' This is open chat — let the person lead.',
-      mood: lang==='he' ? ' זה רישום מצב רוח קצר.' : ' This is a brief mood log.'
+      mood: lang==='he' ? ' זה רישום מצב רוח קצר.' : ' This is a brief mood log.',
+      grounding: lang==='he'
+        ? ' זו שיחת קרקוע לרגעים של מצוקה או חרדה. הציעו תרגיל קרקוע אחד בכל פעם — נשימה איטית, או תרגיל 5-4-3-2-1 חושי — בקצב רגוע ובלי למהר. שאלו שאלה קצרה אחת כדי להבין מה קורה, ואז הציעו תרגיל מתאים. אינך מטפל/ת מוסמך/ת ואל תתחזה/י לכזה. אם נשמע שהמצב חריף או מסוכן, הזכיר/י בעדינות שאפשר להתקשר לער"ן (1201) או לפנות לעזרה מקצועית.'
+        : " This is a grounding chat for moments of distress or anxiety. Offer one grounding technique at a time — slow breathing, or the 5-4-3-2-1 senses exercise — at an unhurried pace. Ask one short question to understand what's going on, then offer a fitting technique. You are not a licensed therapist and must not claim to be one. If things sound severe or unsafe, gently remind them they can call ER'N (1201) or reach out for professional help."
     };
     return base + (notes[flow] || '');
   }
@@ -1949,9 +1989,16 @@
     document.getElementById('settings-sheet').classList.add('open');
     document.getElementById('sheet-backdrop').classList.add('open');
   }
+  function closeBackdropIfNoSheetsOpen(){
+    var anyOpen = ['settings-sheet','edit-entry-sheet','grounding-disclaimer-sheet'].some(function(id){
+      var el = document.getElementById(id);
+      return el && el.classList.contains('open');
+    });
+    if(!anyOpen) document.getElementById('sheet-backdrop').classList.remove('open');
+  }
   function closeSettings(){
     document.getElementById('settings-sheet').classList.remove('open');
-    document.getElementById('sheet-backdrop').classList.remove('open');
+    closeBackdropIfNoSheetsOpen();
     var newName = document.getElementById('settings-name').value.trim();
     if(newName) state.profile.name = newName;
     saveState();
@@ -2077,10 +2124,7 @@
 
   function closeEditEntry(){
     document.getElementById('edit-entry-sheet').classList.remove('open');
-    // backdrop closes only when both sheets are closed
-    if(!document.getElementById('settings-sheet').classList.contains('open')){
-      document.getElementById('sheet-backdrop').classList.remove('open');
-    }
+    closeBackdropIfNoSheetsOpen();
     editingEntryId = null;
     editingImage = null;
   }
@@ -2196,9 +2240,30 @@
   });
   var editSheetClose = document.getElementById('edit-sheet-close-btn');
   if(editSheetClose) editSheetClose.addEventListener('click', closeEditEntry);
+
+  /* ============ Grounding chat (distress button) ============ */
+  function openGroundingDisclaimer(){
+    document.getElementById('grounding-disclaimer-sheet').classList.add('open');
+    document.getElementById('sheet-backdrop').classList.add('open');
+  }
+  function closeGroundingDisclaimer(){
+    document.getElementById('grounding-disclaimer-sheet').classList.remove('open');
+    closeBackdropIfNoSheetsOpen();
+  }
+  var groundingBtn = document.getElementById('grounding-btn');
+  if(groundingBtn) groundingBtn.addEventListener('click', openGroundingDisclaimer);
+  var groundingCancelBtn = document.getElementById('grounding-cancel-btn');
+  if(groundingCancelBtn) groundingCancelBtn.addEventListener('click', closeGroundingDisclaimer);
+  var groundingContinueBtn = document.getElementById('grounding-continue-btn');
+  if(groundingContinueBtn) groundingContinueBtn.addEventListener('click', function(){
+    closeGroundingDisclaimer();
+    openFlow('grounding');
+  });
+
   // Backdrop closes whichever sheet is open
   document.getElementById('sheet-backdrop').addEventListener('click', function(){
     if(document.getElementById('edit-entry-sheet').classList.contains('open')) closeEditEntry();
+    else if(document.getElementById('grounding-disclaimer-sheet').classList.contains('open')) closeGroundingDisclaimer();
     else if(document.getElementById('settings-sheet').classList.contains('open')) closeSettings();
   });
 

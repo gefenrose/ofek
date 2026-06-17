@@ -1,4 +1,4 @@
-const VERSION = 'ofek-v5';
+const VERSION = 'ofek-v6';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
@@ -8,7 +8,11 @@ const CORE_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(VERSION).then((cache) => cache.addAll(CORE_ASSETS)).then(() => self.skipWaiting())
+    caches.open(VERSION)
+      .then((cache) => Promise.all(CORE_ASSETS.map((url) =>
+        fetch(url, { cache: 'no-store' }).then((res) => cache.put(url, res)).catch(() => {})
+      )))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -28,7 +32,7 @@ self.addEventListener('fetch', (event) => {
   if (req.url.includes('workers.dev') || req.url.includes('/api/')) return;
 
   event.respondWith(
-    fetch(req)
+    fetch(req, { cache: 'no-store' })
       .then((res) => {
         const copy = res.clone();
         caches.open(VERSION).then((cache) => cache.put(req, copy));
