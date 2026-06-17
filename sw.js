@@ -1,4 +1,4 @@
-const VERSION = 'ofek-v6';
+const VERSION = 'ofek-v7';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
