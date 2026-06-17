@@ -851,7 +851,14 @@
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
       if(raw) return JSON.parse(raw);
-    }catch(e){}
+    }catch(e){
+      // Don't silently discard data we failed to parse — keep a backup copy
+      // so a corrupted write never turns into permanent data loss.
+      try{
+        var bad = localStorage.getItem(STORAGE_KEY);
+        if(bad) localStorage.setItem(STORAGE_KEY + '_recovery_' + Date.now(), bad);
+      }catch(e2){}
+    }
     return { profile:null, entries:[], weeklyCache:{} };
   }
   var state = loadState();
@@ -2354,7 +2361,16 @@
     }
   }
 
+  function requestPersistentStorage(){
+    if(navigator.storage && navigator.storage.persist){
+      navigator.storage.persisted().then(function(already){
+        if(!already) navigator.storage.persist();
+      }).catch(function(){});
+    }
+  }
+
   /* ============ Init ============ */
+  requestPersistentStorage();
   if(state.profile && state.profile.onboarded){
     document.getElementById('onboarding').style.display = 'none';
     startApp();
