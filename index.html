@@ -145,13 +145,17 @@
     position:absolute; top:98px; left:50%; width:10px; height:10px; border-radius:50%;
     background:#FFF7E6; box-shadow:0 0 10px rgba(255,247,230,.85);
     transform:translate(-50%, 0);
-    animation:horizonDotIn 1.8s cubic-bezier(.22,.85,.32,1) both;
+    animation:horizonDotIn 4s linear both;
   }
   @keyframes horizonDotIn{
-    0%{transform:translate(calc(-50% - 130px), 6px); opacity:0;}
-    40%{opacity:1;}
-    70%{transform:translate(calc(-50% - 24px), 1px);}
-    100%{transform:translate(-50%, 0); opacity:1;}
+    0%{left:-60%; transform:translate(-50%, 7px); opacity:0;}
+    18%{opacity:1;}
+    30%{left:0%; transform:translate(-50%, 7px);}
+    42%{left:10%; transform:translate(-50%, 4.48px);}
+    54%{left:20%; transform:translate(-50%, 2.52px);}
+    66%{left:30%; transform:translate(-50%, 1.12px);}
+    80%{left:40%; transform:translate(-50%, 0.28px);}
+    100%{left:50%; transform:translate(-50%, 0); opacity:1;}
   }
   .settings-credit{text-align:center; margin-top:18px;}
   .settings-credit span{font-size:0.7rem; color:var(--ink-faint);}
