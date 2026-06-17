@@ -1004,6 +1004,8 @@
       b.addEventListener('click', function(){ openFlow(f); });
       row.appendChild(b);
     });
+    var activeChip = row.querySelector('.flowchip.active');
+    if(activeChip) activeChip.scrollIntoView({behavior:'instant', block:'nearest', inline:'center'});
   }
 
   /* ============ Chat / flows ============ */
@@ -1104,8 +1106,10 @@
 
     if(flow === 'mood'){
       document.getElementById('composer-row').style.display = 'none';
+      document.getElementById('thread').style.display = 'none';
       renderMoodPicker();
     } else {
+      document.getElementById('thread').style.display = '';
       document.getElementById('composer-row').style.display = 'flex';
       document.getElementById('endflow-row').style.display = 'flex';
       addBubble('system', tr(FLOW_KEY[flow]));
@@ -1376,6 +1380,7 @@
 
   function closeMoodPickerUI(){
     document.getElementById('mood-picker-host').innerHTML = '';
+    document.getElementById('thread').style.display = '';
     document.getElementById('endflow-row').style.display = 'flex';
   }
 
@@ -1935,7 +1940,6 @@
     b.addEventListener('click', openSettings);
   });
   document.getElementById('sheet-close-btn').addEventListener('click', closeSettings);
-  document.getElementById('sheet-backdrop').addEventListener('click', closeSettings);
   function openSettings(){
     document.getElementById('settings-sheet').classList.add('open');
     document.getElementById('sheet-backdrop').classList.add('open');
