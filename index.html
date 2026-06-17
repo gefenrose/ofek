@@ -289,6 +289,7 @@
   .moodpicker{padding:18px 4px 8px; text-align:center;}
   .moodpicker .moodlabel{font-size:1.4rem; font-weight:700; margin-bottom:4px; transition:color .2s;}
   .moodpicker .moodsub{color:var(--ink-faint); font-size:0.8rem; margin-bottom:18px;}
+  .moodpicker-saveonly{margin-top:12px; font-size:0.82rem; color:var(--ink-soft); text-decoration:underline; text-decoration-color:var(--line); background:none;}
   input[type=range].moodslider{
     -webkit-appearance:none; width:100%; height:10px; border-radius:999px;
     background:linear-gradient(to right, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high));
@@ -842,6 +843,7 @@
       endFlow:'לסיים ולשמור',
       moodSub:'גררו לבחירת מצב הרוח',
       moodNotePh:'רוצים להוסיף שורה? (לא חובה)', moodSave:'לשמור',
+      moodSaveTalk:'שמירה והמשך שיחה', moodSaveOnly:'שמירה להיסטוריה',
       historyEmpty:'אין עדיין רשומות. הן יופיעו כאן.', calToday:'היום',
       credit:'נוצר על ידי גפן ר. גולני, 2026',
       streakLabel:'רצף ימים', entriesLabel:'רשומות', avgLabel:'מצב רוח ממוצע',
@@ -879,6 +881,7 @@
       endFlow:'Finish & save',
       moodSub:'Drag to set your mood',
       moodNotePh:'Want to add a line? (optional)', moodSave:'Save',
+      moodSaveTalk:'Save & keep talking', moodSaveOnly:'Save to history',
       historyEmpty:'No entries yet. They\u2019ll show up here.', calToday:'Today',
       credit:'Made by Gefen R. Golani, 2026',
       streakLabel:'Day streak', entriesLabel:'Entries', avgLabel:'Average mood',
@@ -1462,7 +1465,11 @@
       setPickedImage(null);
     });
 
-    var saveBtn = document.createElement('button'); saveBtn.className = 'btn-primary'; saveBtn.textContent = tr('moodSave');
+    var saveBtn = document.createElement('button'); saveBtn.className = 'btn-primary'; saveBtn.textContent = tr('moodSaveTalk');
+    var saveOnlyBtn = document.createElement('button');
+    saveOnlyBtn.type = 'button';
+    saveOnlyBtn.className = 'moodpicker-saveonly';
+    saveOnlyBtn.textContent = tr('moodSaveOnly');
 
     function update(){
       var v = Number(slider.value);
@@ -1496,9 +1503,19 @@
       setSending(false);
     });
 
+    saveOnlyBtn.addEventListener('click', function(){
+      var v = Number(slider.value);
+      var noteText = note.value.trim();
+      var moodLine = MOOD_LABELS[lang][v] + (noteText ? ' — '+noteText : '');
+      activeEntryId = 'e'+Date.now();
+      conversation = [{role:'user', text: moodLine}];
+      persistEntry(v, noteText, pickedImage);
+      closeFlow();
+    });
+
     wrap.appendChild(labelEl); wrap.appendChild(subEl); wrap.appendChild(slider); wrap.appendChild(note);
     wrap.appendChild(imageRow); wrap.appendChild(errorEl);
-    wrap.appendChild(saveBtn);
+    wrap.appendChild(saveBtn); wrap.appendChild(saveOnlyBtn);
     host.appendChild(wrap);
   }
 
