@@ -134,16 +134,15 @@
   }
 
   .footer-horizon{
-    height:96px; margin-top:36px;
-    background:linear-gradient(180deg, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high));
-    border-radius:50% 50% 0 0 / 34px 34px 0 0;
-    box-shadow:0 -4px 18px rgba(143,184,201,.18); opacity:.9;
+    height:140px; margin-top:48px;
+    background:linear-gradient(180deg, transparent 0%, var(--h-low) 26%, var(--h-mid1) 52%, var(--h-mid2) 74%, var(--h-high) 100%);
+    border-radius:50% 50% 0 0 / 40px 40px 0 0;
   }
-  .footer-credit{text-align:center; padding:14px 18px 22px;}
-  .footer-credit span{font-size:0.7rem; color:var(--ink-faint);}
+  .settings-credit{text-align:center; margin-top:18px;}
+  .settings-credit span{font-size:0.7rem; color:var(--ink-faint);}
 
   main{flex:1; overflow-y:auto; padding-bottom:calc(86px + var(--safe-b));}
-  .panel{display:none; padding:6px 18px 28px;}
+  .panel{display:none; padding:6px 18px 0;}
   .panel.active{display:block; animation:panelIn .28s ease;}
   @keyframes panelIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
 
@@ -538,10 +537,9 @@
     .app-shell{min-height:0;}
     .app-shell header.topbar{display:none;}
     .app-shell .ribbon{margin:20px 32px 8px;}
-    .app-shell main{padding:0; padding-bottom:28px;}
-    .app-shell .panel{max-width:640px; margin:0 auto; padding:6px 32px 32px;}
-    .app-shell .footer-horizon{margin-top:40px;}
-    .app-shell .footer-credit{max-width:640px; margin:0 auto; padding:14px 0 22px;}
+    .app-shell main{padding:0;}
+    .app-shell .panel{max-width:640px; margin:0 auto; padding:6px 32px 0;}
+    .app-shell .footer-horizon{margin-top:48px;}
     nav.bottomnav{display:none;}
 
     .sheet{
@@ -669,7 +667,6 @@
     </section>
 
     <div class="footer-horizon"></div>
-    <div class="footer-credit"><span id="footer-credit-text">נוצר על ידי גפן ר. גולני, 2026</span></div>
   </main>
 
   <nav class="bottomnav">
@@ -722,6 +719,7 @@
   </div>
   <input type="file" id="import-file-input" accept="application/json,.json" style="display:none;">
   <button class="danger-btn" id="clear-data-btn">מחיקת כל המידע</button>
+  <div class="settings-credit"><span id="settings-credit-text">נוצר על ידי גפן ר. גולני, 2026</span></div>
   <button class="sheet-close" id="sheet-close-btn">סגירה</button>
 </div>
 
@@ -1046,7 +1044,7 @@
     document.getElementById('sheet-close-btn').textContent = tr('close');
     var sidenavSettingsLabel = document.getElementById('sidenav-settings-label');
     if(sidenavSettingsLabel) sidenavSettingsLabel.textContent = tr('settingsTitle');
-    document.getElementById('footer-credit-text').textContent = tr('credit');
+    document.getElementById('settings-credit-text').textContent = tr('credit');
     document.getElementById('grounding-btn-label').textContent = tr('flowGrounding');
     document.getElementById('grounding-disclaimer-title').textContent = tr('groundingDisclaimerTitle');
     document.getElementById('grounding-disclaimer-text').textContent = tr('groundingDisclaimerText');
