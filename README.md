@@ -8,7 +8,7 @@ Live: https://gefenrose.github.io/ofek/
 
 - `index.html` — the whole app (HTML/CSS/JS, single file)
 - `manifest.webmanifest`, `sw.js`, `icon-*.png` — PWA install support
-- `worker/worker.js` — optional standalone Cloudflare Worker (Gemini 2.5 Flash proxy) if you want Ofek on its own backend instead of reusing `serenity-api`
+- `worker/worker.js` — optional standalone Cloudflare Worker (OpenRouter proxy, free-tier model) if you want Ofek on its own backend instead of reusing `serenity-api`
 
 ## AI backend
 
