@@ -1257,7 +1257,7 @@
       evening: lang==='he' ? ' זה סיכום יום — שאל/י מה בלט היום, טוב או קשה.' : ' This is an evening summary — ask what stood out today, good or hard.',
       gratitude: lang==='he' ? ' זה יומן תודות — בקש/י דבר אחד או שניים שיש תודה עליהם היום.' : ' This is a gratitude check-in — ask for one or two things they are thankful for today.',
       chat: lang==='he' ? ' זו שיחה חופשית — תן/י למשתמש/ת לכוון.' : ' This is open chat — let the person lead.',
-      mood: lang==='he' ? ' זה רישום מצב רוח קצר.' : ' This is a brief mood log.',
+      mood: lang==='he' ? ' המשתמש/ת רשמ/ה מצב רוח. אם יבחר/תבחר להמשיך לדבר על זה, התייחס/י בטבעיות לשיחה המתפתחת.' : ' The user just logged a mood. If they choose to keep talking about it, respond naturally as the conversation develops.',
       grounding: lang==='he'
         ? ' זו שיחת קרקוע לרגעים של מצוקה או חרדה. הציעו תרגיל קרקוע אחד בכל פעם — נשימה איטית, או תרגיל 5-4-3-2-1 חושי — בקצב רגוע ובלי למהר. שאלו שאלה קצרה אחת כדי להבין מה קורה, ואז הציעו תרגיל מתאים. אינך מטפל/ת מוסמך/ת ואל תתחזה/י לכזה. אם נשמע שהמצב חריף או מסוכן, הזכיר/י בעדינות שאפשר להתקשר לער"ן (1201) או לפנות לעזרה מקצועית.'
         : " This is a grounding chat for moments of distress or anxiety. Offer one grounding technique at a time — slow breathing, or the 5-4-3-2-1 senses exercise — at an unhurried pace. Ask one short question to understand what's going on, then offer a fitting technique. You are not a licensed therapist and must not claim to be one. If things sound severe or unsafe, gently remind them they can call ER'N (1201) or reach out for professional help."
@@ -1553,6 +1553,7 @@
   function closeMoodPickerUI(){
     document.getElementById('mood-picker-host').innerHTML = '';
     document.getElementById('thread').style.display = '';
+    document.getElementById('composer-row').style.display = 'flex';
     document.getElementById('endflow-row').style.display = 'flex';
   }
 
