@@ -2312,6 +2312,14 @@
     return (habit.completions||[]).indexOf(todayStr()) !== -1;
   }
 
+  function habitCheckedToday(habit){
+    if(habit.trackMode === 'elapsed'){
+      if(!habit.lastDoneAt) return false;
+      return stripTime(new Date(habit.lastDoneAt)).getTime() === stripTime(new Date()).getTime();
+    }
+    return habitDoneToday(habit);
+  }
+
   function habitElapsedLabel(habit){
     var lang = state.profile.lang;
     if(!habit.lastDoneAt) return tr('habitNotDoneYet');
@@ -2341,7 +2349,14 @@
     var habit = state.habits.find(function(h){ return h.id===habitId; });
     if(!habit) return;
     if(habit.trackMode === 'elapsed'){
-      habit.lastDoneAt = Date.now();
+      if(habitCheckedToday(habit)){
+        // tap again to undo today's check-in, restoring whatever it showed before
+        habit.lastDoneAt = (habit.previousLastDoneAt !== undefined) ? habit.previousLastDoneAt : null;
+        delete habit.previousLastDoneAt;
+      } else {
+        habit.previousLastDoneAt = habit.lastDoneAt || null;
+        habit.lastDoneAt = Date.now();
+      }
     } else {
       var today = todayStr();
       var idx = (habit.completions||[]).indexOf(today);
@@ -2371,7 +2386,7 @@
 
       var checkBtn = document.createElement('button');
       checkBtn.type = 'button'; checkBtn.className = 'habit-check-btn';
-      var checked = habit.trackMode === 'elapsed' ? false : habitDoneToday(habit);
+      var checked = habitCheckedToday(habit);
       if(checked) checkBtn.classList.add('checked');
       checkBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
       checkBtn.addEventListener('click', function(){ toggleHabitDone(habit.id); });
