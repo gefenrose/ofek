@@ -38,7 +38,7 @@
     --safe-b:env(safe-area-inset-bottom, 0px);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0; padding:0; height:100%; background:var(--paper); color:var(--ink);}
+  html,body{margin:0; padding:0; height:100%; background:var(--paper); color:var(--ink); overflow:hidden;}
   body{
     font-family:'Assistant', system-ui, sans-serif;
     font-size:16px;
@@ -57,8 +57,8 @@
   #app, #onboarding{
     max-width:480px;
     margin:0 auto;
-    min-height:100dvh;
     min-height:100vh;
+    min-height:100dvh;
     position:relative;
     background:var(--paper);
   }
@@ -98,7 +98,7 @@
 
   /* ---------- App shell ---------- */
   #app{display:none; flex-direction:column;}
-  #app.live{display:flex; animation:appIn .35s ease; height:100dvh; height:100vh;}
+  #app.live{display:flex; animation:appIn .35s ease; height:100vh; height:100dvh;}
   @keyframes appIn{from{opacity:0;} to{opacity:1;}}
 
   .sidenav{display:none;}
