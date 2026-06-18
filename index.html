@@ -98,11 +98,11 @@
 
   /* ---------- App shell ---------- */
   #app{display:none; flex-direction:column;}
-  #app.live{display:flex; animation:appIn .35s ease;}
+  #app.live{display:flex; animation:appIn .35s ease; height:100dvh; height:100vh;}
   @keyframes appIn{from{opacity:0;} to{opacity:1;}}
 
   .sidenav{display:none;}
-  .app-shell{display:flex; flex-direction:column; min-width:0; flex:1;}
+  .app-shell{display:flex; flex-direction:column; min-width:0; min-height:0; flex:1;}
 
   header.topbar{
     position:sticky; top:0; z-index:20; background:var(--paper);
@@ -134,7 +134,7 @@
   }
 
   .footer-horizon{
-    height:calc(140px + 86px + var(--safe-b)); margin-top:48px;
+    height:calc(140px + 86px + var(--safe-b)); margin-top:48px; flex-shrink:0;
     background:linear-gradient(180deg, transparent 0%, var(--h-low) 16%, var(--h-mid1) 32%, var(--h-mid2) 46%, var(--h-high) 60%, var(--h-high) 100%);
     position:relative; overflow:hidden;
   }
@@ -176,9 +176,9 @@
   .settings-credit{text-align:center; margin-top:18px;}
   .settings-credit span{font-size:0.7rem; color:var(--ink-faint);}
 
-  main{flex:1; overflow-y:auto;}
+  main{flex:1; overflow-y:auto; display:flex; flex-direction:column; min-height:0;}
   .panel{display:none; padding:6px 18px 0;}
-  .panel.active{display:block; animation:panelIn .28s ease;}
+  .panel.active{display:block; animation:panelIn .28s ease; flex:1 0 auto;}
   @keyframes panelIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
 
   nav.bottomnav{
@@ -622,7 +622,7 @@
       max-width:1080px; height:calc(100vh - 64px); min-height:0; margin:0;
       border-radius:24px; overflow:hidden; box-shadow:var(--shadow); background:var(--paper);
     }
-    #app.live{display:flex; flex-direction:row; align-items:stretch; width:min(1080px, calc(100% - 64px));}
+    #app.live{display:flex; flex-direction:row; align-items:stretch; width:min(1080px, calc(100% - 64px)); height:calc(100vh - 64px);}
     .sidenav{
       display:flex; flex-direction:column; width:230px; flex:0 0 230px;
       padding:26px 18px; border-inline-end:1px solid var(--line); background:var(--paper-raised);
