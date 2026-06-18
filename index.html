@@ -506,6 +506,14 @@
   .reflect-btn{padding:10px 16px; border-radius:999px; background:var(--ink); color:var(--paper); font-size:0.85rem; font-weight:600; transition:opacity .15s ease, transform .12s ease;}
   .reflect-btn:active:not(:disabled){transform:scale(.96);}
   .reflect-btn:disabled{opacity:.4;}
+  .habit-insight-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 15px; border-radius:var(--radius-md); background:var(--paper-raised);
+    border:1px solid var(--line); margin-bottom:8px;
+  }
+  .habit-insight-name{font-weight:600; font-size:0.88rem;}
+  .habit-insight-stat{font-size:0.82rem; color:var(--ink-soft); white-space:nowrap; flex:0 0 auto;}
+  .habit-insight-stat.streak{color:var(--accent); font-weight:700;}
 
   /* ---------- Settings sheet ---------- */
   .sheet-backdrop{
@@ -994,7 +1002,9 @@
       habitSave:'שמירה', habitDelete:'מחק', habitDeleteConfirm:'למחוק את ההרגל הזה?',
       habitNotDoneYet:'עדיין לא בוצע', habitToday:'היום', habitOneDayAgo:'לפני יום', habitTwoDaysAgo:'לפני יומיים',
       habitDaysAgoSuffix:'ימים', habitDaysAgoPrefix:'לפני',
-      habitDoneToday:'בוצע היום', habitNotDueToday:'לא היום'
+      habitDoneToday:'בוצע היום', habitNotDueToday:'לא היום',
+      insightsHabitsTitle:'הרגלים', habitsCompletedToday:'הושלמו היום', habitsBestStreak:'הרצף הטוב',
+      habitsTotalLabel:'הרגלים פעילים'
     },
     en: {
       onboardTitle:"Let's set things up", onboardSub:'A couple of quick things first.',
@@ -1051,7 +1061,9 @@
       habitSave:'Save', habitDelete:'Delete', habitDeleteConfirm:'Delete this habit?',
       habitNotDoneYet:'Not done yet', habitToday:'Today', habitOneDayAgo:'1 day ago', habitTwoDaysAgo:'2 days ago',
       habitDaysAgoSuffix:'days ago', habitDaysAgoPrefix:'',
-      habitDoneToday:'Done today', habitNotDueToday:'Not today'
+      habitDoneToday:'Done today', habitNotDueToday:'Not today',
+      insightsHabitsTitle:'Habits', habitsCompletedToday:'Done today', habitsBestStreak:'Best streak',
+      habitsTotalLabel:'Active habits'
     }
   };
 
@@ -2286,6 +2298,40 @@
     var reflectTitle = document.createElement('div'); reflectTitle.className = 'section-title'; reflectTitle.textContent = tr('weekTitle');
     host.appendChild(reflectTitle);
     host.appendChild(renderReflectCard());
+
+    renderHabitsInsightsSection(host);
+  }
+
+  function renderHabitsInsightsSection(host){
+    if(!state.habits.length) return;
+
+    var title = document.createElement('div'); title.className = 'section-title'; title.textContent = tr('insightsHabitsTitle');
+    host.appendChild(title);
+
+    var dueTodayCount = state.habits.filter(function(h){ return h.trackMode === 'elapsed' || isHabitDueToday(h); }).length;
+    var doneTodayCount = state.habits.filter(function(h){ return habitCheckedToday(h); }).length;
+    var streaks = state.habits.map(habitStreak).filter(function(s){ return s !== null; });
+    var bestStreak = streaks.length ? Math.max.apply(null, streaks) : 0;
+
+    var statRow = document.createElement('div'); statRow.className = 'stat-row';
+    statRow.appendChild(statCard(doneTodayCount+'/'+dueTodayCount, tr('habitsCompletedToday')));
+    statRow.appendChild(statCard(bestStreak, tr('habitsBestStreak')));
+    statRow.appendChild(statCard(state.habits.length, tr('habitsTotalLabel')));
+    host.appendChild(statRow);
+
+    state.habits.slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); }).forEach(function(habit){
+      var row = document.createElement('div'); row.className = 'habit-insight-row';
+      var nameEl = document.createElement('div'); nameEl.className = 'habit-insight-name'; nameEl.textContent = habit.name;
+      var statEl = document.createElement('div'); statEl.className = 'habit-insight-stat';
+      if(habit.trackMode === 'simple'){
+        statEl.classList.add('streak');
+        statEl.textContent = habitStreak(habit) + ' ' + tr('streakLabel');
+      } else {
+        statEl.textContent = habitElapsedLabel(habit);
+      }
+      row.appendChild(nameEl); row.appendChild(statEl);
+      host.appendChild(row);
+    });
   }
 
   /* ============ Habits ============ */
@@ -2343,6 +2389,29 @@
     if(habit.frequency === 'interval') return (lang==='he' ? (tr('habitIntervalPrefix')+' '+habit.intervalDays+' '+tr('habitIntervalSuffix')) : (tr('habitIntervalPrefix')+' '+habit.intervalDays+' '+tr('habitIntervalSuffix')));
     var names = (habit.daysOfWeek||[]).slice().sort().map(function(d){ return WD_SHORT[lang][d]; });
     return names.join(', ');
+  }
+
+  function habitStreak(habit){
+    // Only simple/repeating habits keep a completions history; elapsed-mode habits
+    // only store a single lastDoneAt with no past record, so a streak isn't meaningful there.
+    if(habit.trackMode !== 'simple') return null;
+    var streak = 0;
+    var d = new Date(); d.setHours(0,0,0,0);
+    if(isHabitDueToday(habit, d) && !habitDoneToday(habit)){
+      d.setDate(d.getDate()-1); // grace: don't break the streak just because today isn't done yet
+    }
+    var createdDate = stripTime(new Date(habit.createdAt||0));
+    var guard = 0;
+    while(d >= createdDate && guard < 2000){
+      guard++;
+      if(isHabitDueToday(habit, d)){
+        var key = todayStr(d);
+        if((habit.completions||[]).indexOf(key) !== -1) streak++;
+        else break;
+      }
+      d.setDate(d.getDate()-1);
+    }
+    return streak;
   }
 
   function toggleHabitDone(habitId){
