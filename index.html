@@ -1278,6 +1278,35 @@
     return text;
   }
 
+  async function summarizeEntryConversation(messages){
+    var lang = state.profile.lang;
+    var transcript = messages.map(function(m){
+      var who = m.role === 'user' ? (lang==='he' ? 'משתמש' : 'User') : (lang==='he' ? 'אופק' : 'Ofek');
+      return who + ': ' + m.text;
+    }).join('\n');
+    var system = lang==='he'
+      ? 'את/ה עוזר/ת שמסכם/ת רשומות יומן. תקבל/י שיחה בין מישהו/י לבין אופק, מלווה יומי. כתוב/כתבי משפט אחד או שניים בגוף ראשון שמתעדים מה היה בשיחה, כמו רשומת יומן קצרה וטבעית. בלי לפתוח ב"המשתמש", בלי לתאר את השיחה מבחוץ, בלי לחזור על השם אופק.'
+      : 'You summarize journal entries. You will get a conversation between someone and Ofek, their daily companion. Write one or two sentences in first person capturing what this entry was about, like a brief natural diary note. Do not start with "The user", do not describe the conversation from the outside, do not mention Ofek by name.';
+    return await askCompanion(system, [{role:'user', content: transcript}]);
+  }
+
+  async function maybeSummarizeEntry(entryId, convo){
+    if(!entryId || !convo || convo.length < 2) return;
+    var hasUser = convo.some(function(m){ return m.role==='user'; });
+    var hasAi = convo.some(function(m){ return m.role==='ai'; });
+    if(!hasUser || !hasAi) return; // only worth summarizing an actual back-and-forth
+    try{
+      var summary = await summarizeEntryConversation(convo);
+      var entry = state.entries.find(function(e){ return e.id===entryId; });
+      if(!entry) return; // may have been deleted while the summary was generating
+      entry.summary = summary;
+      saveState();
+      renderHistory();
+    }catch(e){
+      // Quiet failure: the raw conversation remains visible as a fallback, no need to alarm the user.
+    }
+  }
+
   async function kickoffFlow(flow){
     var lang = state.profile.lang;
     var system = buildSystemPrompt(flow);
@@ -1340,6 +1369,8 @@
 
   document.getElementById('endflow-btn').addEventListener('click', closeFlow);
   function closeFlow(){
+    var entryIdToSummarize = activeEntryId;
+    var convoToSummarize = conversation.slice();
     currentFlow = null; activeEntryId = null; conversation = [];
     document.getElementById('thread').innerHTML = '';
     document.getElementById('mood-picker-host').innerHTML = '';
@@ -1348,6 +1379,7 @@
     renderFlowChips();
     renderHistory();
     renderInsights();
+    maybeSummarizeEntry(entryIdToSummarize, convoToSummarize);
   }
 
   /* ============ Mood picker ============ */
@@ -1721,7 +1753,8 @@
     var dateEl = document.createElement('div'); dateEl.className = 'day-date'; dateEl.textContent = formatDate(date);
     var excerptEl = document.createElement('div'); excerptEl.className = 'day-excerpt';
     var first = dayEntries[0];
-    var firstText = (typeof first.mood==='number' ? MOOD_LABELS[state.profile.lang][first.mood] : null)
+    var firstText = first.summary
+      || (typeof first.mood==='number' ? MOOD_LABELS[state.profile.lang][first.mood] : null)
       || (first.messages && first.messages[0] && first.messages[0].text)
       || first.note
       || tr(FLOW_KEY[first.flow] || 'flowChat');
@@ -1761,12 +1794,16 @@
         row.appendChild(imgWrap);
       }
       var textEl = document.createElement('div'); textEl.className = 'entry-text';
-      var lines = (e.messages||[]).map(function(m){ return (m.role==='ai' ? '— ' : '') + m.text; });
-      if(!e.messages || !e.messages.length){
-        if(e.note) lines.unshift(e.note);
-        if(typeof e.mood==='number') lines.unshift(MOOD_LABELS[state.profile.lang][e.mood]);
+      if(e.summary){
+        textEl.textContent = e.summary;
+      } else {
+        var lines = (e.messages||[]).map(function(m){ return (m.role==='ai' ? '— ' : '') + m.text; });
+        if(!e.messages || !e.messages.length){
+          if(e.note) lines.unshift(e.note);
+          if(typeof e.mood==='number') lines.unshift(MOOD_LABELS[state.profile.lang][e.mood]);
+        }
+        textEl.textContent = lines.join(' · ');
       }
-      textEl.textContent = lines.join(' · ');
       row.appendChild(top); row.appendChild(textEl);
       body.appendChild(row);
     });
