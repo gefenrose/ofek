@@ -89,7 +89,16 @@ export default {
     }
 
     const data = await upstream.json();
-    const text = data.choices?.[0]?.message?.content || '';
+    const rawContent = data.choices?.[0]?.message?.content;
+    let text = '';
+    if (typeof rawContent === 'string') {
+      text = rawContent;
+    } else if (Array.isArray(rawContent)) {
+      // Some providers (incl. some Gemini routes on OpenRouter) return
+      // content as an array of parts rather than a plain string - join
+      // just the text parts instead of letting it get stringified raw.
+      text = rawContent.map(p => (typeof p === 'string' ? p : p?.text || '')).join('');
+    }
 
     return new Response(JSON.stringify({ content: [{ text }] }), {
       headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' }
