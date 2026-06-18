@@ -1240,6 +1240,25 @@
     }
   }
 
+  function recentEntriesDigest(){
+    var lang = state.profile.lang;
+    var cutoff = Date.now() - 30*24*60*60*1000; // last 30 days
+    var candidates = state.entries.filter(function(e){
+      return e.id !== activeEntryId && (e.createdAt||0) >= cutoff;
+    }).sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
+    var picked = candidates.slice(0, 12);
+    if(!picked.length) return '';
+    var lines = picked.map(function(e){
+      var text = e.summary
+        || (typeof e.mood === 'number' ? MOOD_LABELS[lang][e.mood] + (e.note ? ' — '+e.note : '') : null)
+        || (e.messages && e.messages[0] && e.messages[0].text)
+        || e.note;
+      if(!text) return null;
+      return formatDate(e.date) + ': ' + text;
+    }).filter(Boolean);
+    return lines.join('\n');
+  }
+
   function buildSystemPrompt(flow){
     var lang = state.profile.lang;
     var name = state.profile.name;
@@ -1262,7 +1281,14 @@
         ? ' זו שיחת קרקוע לרגעים של מצוקה או חרדה. הציעו תרגיל קרקוע אחד בכל פעם — נשימה איטית, או תרגיל 5-4-3-2-1 חושי — בקצב רגוע ובלי למהר. שאלו שאלה קצרה אחת כדי להבין מה קורה, ואז הציעו תרגיל מתאים. אינך מטפל/ת מוסמך/ת ואל תתחזה/י לכזה. אם נשמע שהמצב חריף או מסוכן, הזכיר/י בעדינות שאפשר להתקשר לער"ן (1201) או לפנות לעזרה מקצועית.'
         : " This is a grounding chat for moments of distress or anxiety. Offer one grounding technique at a time — slow breathing, or the 5-4-3-2-1 senses exercise — at an unhurried pace. Ask one short question to understand what's going on, then offer a fitting technique. You are not a licensed therapist and must not claim to be one. If things sound severe or unsafe, gently remind them they can call ER'N (1201) or reach out for professional help."
     };
-    return base + (notes[flow] || '');
+    var memory = recentEntriesDigest();
+    var memoryNote = '';
+    if(memory){
+      memoryNote = lang==='he'
+        ? ('\n\nלידיעתך, כמה דברים מיומנו של '+name+' מהתקופה האחרונה (מהחדש לישן). אפשר להתייחס אליהם בעדינות אם רלוונטי לשיחה הנוכחית, אך אין חובה להזכיר את כולם, ואל תציפו את השיחה בפרטים מהעבר:\n'+memory)
+        : ('\n\nFor your awareness, some recent things from '+name+"'s journal (newest first). You can gently reference these if relevant to the current conversation, but there's no need to bring them all up, and don't flood the conversation with past details:\n"+memory);
+    }
+    return base + (notes[flow] || '') + memoryNote;
   }
 
   async function askCompanion(system, messages){
