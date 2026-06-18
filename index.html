@@ -441,6 +441,54 @@
   .add-entry-btn svg{width:16px; height:16px;}
   .day-add-row{display:flex; justify-content:center; padding:18px 0 6px;}
 
+  /* ---------- Habits ---------- */
+  .habits-add-row{display:flex; justify-content:center; padding:4px 0 18px;}
+  .habit-card{
+    margin-bottom:10px; border-radius:var(--radius-md); background:var(--paper-raised);
+    border:1px solid var(--line); padding:13px 15px; display:flex; align-items:center; gap:12px;
+  }
+  .habit-check-btn{
+    width:34px; height:34px; border-radius:50%; flex:0 0 auto; border:2px solid var(--line);
+    background:transparent; display:flex; align-items:center; justify-content:center; color:transparent;
+    transition:background .15s ease, border-color .15s ease, color .15s ease, transform .12s ease;
+  }
+  .habit-check-btn:active{transform:scale(.9);}
+  .habit-check-btn svg{width:16px; height:16px;}
+  .habit-check-btn.checked{background:var(--accent); border-color:var(--accent); color:var(--accent-ink);}
+  .habit-card.not-due{opacity:.55;}
+  .habit-meta{flex:1; min-width:0;}
+  .habit-name{font-weight:700; font-size:0.95rem;}
+  .habit-status{color:var(--ink-soft); font-size:0.8rem; margin-top:1px;}
+  .habit-bell{width:8px; height:8px; border-radius:50%; background:var(--accent); display:inline-block; margin-inline-start:5px; vertical-align:middle;}
+
+  /* habit creation/edit sheet (dynamically rendered) */
+  .habit-sheet-field{margin-bottom:20px;}
+  .habit-sheet-field label{display:block; font-size:0.85rem; color:var(--ink-soft); margin-bottom:8px;}
+  .habit-sheet-field input[type=text]{
+    width:100%; padding:13px 16px; border-radius:var(--radius-md);
+    background:var(--paper-2); border:1px solid var(--line); font-size:1rem;
+  }
+  .habit-interval-row{display:flex; align-items:center; gap:10px;}
+  .habit-interval-row input[type=number]{
+    width:64px; padding:10px; text-align:center; border-radius:var(--radius-md);
+    background:var(--paper-2); border:1px solid var(--line); font-size:1rem;
+  }
+  .habit-interval-row span{font-size:0.88rem; color:var(--ink-soft);}
+  .habit-switch-row{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .habit-switch-row label{margin:0;}
+  .switch{position:relative; display:inline-block; width:44px; height:26px; flex:0 0 auto;}
+  .switch input{position:absolute; opacity:0; width:1px; height:1px;}
+  .switch .slider{position:absolute; inset:0; background:var(--line); border-radius:999px; transition:background .2s ease; cursor:pointer;}
+  .switch .slider:before{content:''; position:absolute; width:20px; height:20px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform .2s ease; box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .switch input:checked + .slider{background:var(--accent);}
+  .switch input:checked + .slider:before{transform:translateX(18px);}
+  [dir="rtl"] .switch input:checked + .slider:before{transform:translateX(-18px);}
+  .habit-notify-note{font-size:0.76rem; color:var(--ink-faint); margin-top:8px; line-height:1.45;}
+  input[type=time].habit-time-input{
+    width:100%; padding:12px 16px; border-radius:var(--radius-md);
+    background:var(--paper-2); border:1px solid var(--line); font-size:1rem; font-family:inherit;
+  }
+
   /* ---------- Insights ---------- */
   .stat-row{display:flex; gap:10px; margin:14px 0;}
   .period-row{margin:2px 0 4px;}
@@ -664,6 +712,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"></path><path d="M7 14l4-4 3 3 5-6"></path></svg>
       <span data-nav="insights">תובנות</span>
     </button>
+    <button class="nav-btn" data-panel="habits">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+      <span data-nav="habits">הרגלים</span>
+    </button>
 
     <div class="sidenav-spacer"></div>
 
@@ -733,6 +785,11 @@
       <div id="insights-content"></div>
     </section>
 
+    <section class="panel" id="panel-habits">
+      <div id="habits-list"></div>
+      <div class="habits-add-row"><button type="button" class="add-entry-btn" id="habit-add-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span id="habit-add-btn-label">הוספת הרגל</span></button></div>
+    </section>
+
     <div class="footer-horizon">
       <svg class="horizon-line" viewBox="0 0 400 24" preserveAspectRatio="none"><path d="M0,18 Q200,4 400,18"></path></svg>
       <div class="horizon-dot"></div>
@@ -751,6 +808,10 @@
     <button class="nav-btn" data-panel="insights">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"></path><path d="M7 14l4-4 3 3 5-6"></path></svg>
       <span data-nav="insights">תובנות</span>
+    </button>
+    <button class="nav-btn" data-panel="habits">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+      <span data-nav="habits">הרגלים</span>
     </button>
   </nav>
   </div>
@@ -832,6 +893,16 @@
   <button class="sheet-close" id="edit-sheet-close-btn">סגירה</button>
 </div>
 
+<div class="sheet" id="habit-sheet">
+  <h2 id="habit-sheet-title">הרגל חדש</h2>
+  <div id="habit-sheet-body"></div>
+  <div class="edit-actions">
+    <button class="btn-primary" id="habit-save-btn">שמירה</button>
+    <button class="delete-btn" id="habit-delete-btn" style="display:none;">מחק</button>
+  </div>
+  <button class="sheet-close" id="habit-sheet-close-btn">סגירה</button>
+</div>
+
 <div class="sheet" id="grounding-disclaimer-sheet">
   <h2 id="grounding-disclaimer-title">לפני שמתחילים</h2>
   <p class="disclaimer-text" id="grounding-disclaimer-text">אופק הוא לא מטפל/ת מוסמך/ת ולא תחליף לטיפול מקצועי — הוא יכול להציע תרגילי נשימה וקרקוע עדינים לרגע הזה. במצב חירום או מצוקה גדולה, אפשר גם להתקשר לער"ן בחינם — 1201.</p>
@@ -904,7 +975,26 @@
       importConfirm:'ייבוא יחליף את כל המידע הקיים באפליקציה. להמשיך?',
       importError:'הקובץ לא תקין, או לא בפורמט המתאים.', importSuccess:'הנתונים יובאו בהצלחה.',
       clearData:'מחיקת כל המידע', clearConfirm:'למחוק את כל הרשומות? אי אפשר לשחזר.',
-      close:'סגירה', aiError:'(לא הצלחתי להתחבר כרגע — הרשומה נשמרה בכל זאת)'
+      close:'סגירה', aiError:'(לא הצלחתי להתחבר כרגע — הרשומה נשמרה בכל זאת)',
+      navHabits:'הרגלים',
+      habitAddBtn:'הוספת הרגל',
+      habitsEmpty:'אין עדיין הרגלים. הוספת הרגל ראשון תעזור לבנות שגרה.',
+      habitNewTitle:'הרגל חדש', habitEditTitle:'עריכת הרגל',
+      habitNameLabel:'שם ההרגל', habitNamePh:'למשל: לשתות מים, מדיטציה…',
+      habitModeLabel:'סוג מעקב',
+      habitModeElapsed:'מעקב מאז ביצוע אחרון', habitModeSimple:'הרגל חוזר, בלי מעקב',
+      habitFreqLabel:'תדירות',
+      habitFreqDaily:'כל יום', habitFreqDays:'ימים נבחרים', habitFreqInterval:'כל X ימים',
+      habitDaysLabel:'באילו ימים',
+      habitIntervalPrefix:'כל', habitIntervalSuffix:'ימים',
+      habitTimeLabel:'שעה (לא חובה)',
+      habitNotifyLabel:'תזכורות',
+      habitNotifyNote:'התזכורות יוצגו כשהאפליקציה פתוחה או פעלה לאחרונה בדפדפן. הן לא יישלחו אם האפליקציה סגורה לחלוטין — זה דורש שרת התראות שאין כרגע.',
+      habitNotifyDenied:'התראות חסומות בדפדפן. אפשר לאפשר אותן בהגדרות הדפדפן.',
+      habitSave:'שמירה', habitDelete:'מחק', habitDeleteConfirm:'למחוק את ההרגל הזה?',
+      habitNotDoneYet:'עדיין לא בוצע', habitToday:'היום', habitOneDayAgo:'לפני יום', habitTwoDaysAgo:'לפני יומיים',
+      habitDaysAgoSuffix:'ימים', habitDaysAgoPrefix:'לפני',
+      habitDoneToday:'בוצע היום', habitNotDueToday:'לא היום'
     },
     en: {
       onboardTitle:"Let's set things up", onboardSub:'A couple of quick things first.',
@@ -942,7 +1032,26 @@
       importConfirm:'Importing will replace all existing data in the app. Continue?',
       importError:"This file isn't valid, or isn't the right format.", importSuccess:'Data imported successfully.',
       clearData:'Erase all data', clearConfirm:"Delete all entries? This can't be undone.",
-      close:'Close', aiError:"(couldn't reach your companion just now — your entry's saved either way)"
+      close:'Close', aiError:"(couldn't reach your companion just now — your entry's saved either way)",
+      navHabits:'Habits',
+      habitAddBtn:'Add habit',
+      habitsEmpty:'No habits yet. Add your first one to start building a routine.',
+      habitNewTitle:'New habit', habitEditTitle:'Edit habit',
+      habitNameLabel:'Habit name', habitNamePh:'e.g. Drink water, Meditate…',
+      habitModeLabel:'Tracking type',
+      habitModeElapsed:'Track time since last done', habitModeSimple:'Repeating habit, no tracking',
+      habitFreqLabel:'Frequency',
+      habitFreqDaily:'Every day', habitFreqDays:'Specific days', habitFreqInterval:'Every X days',
+      habitDaysLabel:'On which days',
+      habitIntervalPrefix:'Every', habitIntervalSuffix:'days',
+      habitTimeLabel:'Time (optional)',
+      habitNotifyLabel:'Reminders',
+      habitNotifyNote:"Reminders show up while the app is open or has been recently active in the browser. They won't arrive if the app is fully closed — that needs a notification server this app doesn't have yet.",
+      habitNotifyDenied:'Notifications are blocked in the browser. You can allow them in browser settings.',
+      habitSave:'Save', habitDelete:'Delete', habitDeleteConfirm:'Delete this habit?',
+      habitNotDoneYet:'Not done yet', habitToday:'Today', habitOneDayAgo:'1 day ago', habitTwoDaysAgo:'2 days ago',
+      habitDaysAgoSuffix:'days ago', habitDaysAgoPrefix:'',
+      habitDoneToday:'Done today', habitNotDueToday:'Not today'
     }
   };
 
@@ -967,9 +1076,10 @@
         if(bad) localStorage.setItem(STORAGE_KEY + '_recovery_' + Date.now(), bad);
       }catch(e2){}
     }
-    return { profile:null, entries:[], weeklyCache:{} };
+    return { profile:null, entries:[], weeklyCache:{}, habits:[] };
   }
   var state = loadState();
+  if(!state.habits) state.habits = []; // migration safety for existing users
   function saveState(){
     state.lastModified = Date.now();
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
@@ -1078,6 +1188,8 @@
     updateRibbon();
     renderHistory();
     renderInsights();
+    renderHabits();
+    checkHabitNotifications();
     registerSW();
     document.getElementById('settings-name').value = state.profile.name;
     renderSettingsLangRow();
@@ -1099,6 +1211,8 @@
     document.querySelectorAll('[data-nav="chat"]').forEach(function(el){ el.textContent = tr('navChat'); });
     document.querySelectorAll('[data-nav="history"]').forEach(function(el){ el.textContent = tr('navHistory'); });
     document.querySelectorAll('[data-nav="insights"]').forEach(function(el){ el.textContent = tr('navInsights'); });
+    document.querySelectorAll('[data-nav="habits"]').forEach(function(el){ el.textContent = tr('navHabits'); });
+    document.getElementById('habit-add-btn-label').textContent = tr('habitAddBtn');
     document.getElementById('distress-text').innerHTML = tr('distressText')+' <a href="tel:1201">1201</a>';
     document.getElementById('composer-input').placeholder = tr('composerPh');
     document.getElementById('endflow-btn').textContent = tr('endFlow');
@@ -1659,6 +1773,7 @@
     document.getElementById('panel-'+targetPanel).classList.add('active');
     if(targetPanel==='history') renderHistory();
     if(targetPanel==='insights') renderInsights();
+    if(targetPanel==='habits') renderHabits();
   }
   document.querySelectorAll('.nav-btn').forEach(function(btn){
     btn.addEventListener('click', function(){ switchToPanel(btn.dataset.panel); });
@@ -2173,6 +2288,344 @@
     host.appendChild(renderReflectCard());
   }
 
+  /* ============ Habits ============ */
+  var editingHabitId = null; // null while creating a new habit; set while editing an existing one
+  var notifyPermissionAsked = false;
+
+  function habitDow(dateObj){ return dateObj.getDay(); }
+
+  function isHabitDueToday(habit, dateObj){
+    dateObj = dateObj || new Date();
+    if(habit.frequency === 'days'){
+      return (habit.daysOfWeek||[]).indexOf(habitDow(dateObj)) !== -1;
+    }
+    if(habit.frequency === 'interval'){
+      var last = habit.lastDoneAt ? new Date(habit.lastDoneAt) : new Date(habit.createdAt);
+      var diffDays = Math.floor((stripTime(dateObj) - stripTime(last)) / 86400000);
+      return diffDays >= Math.max(1, habit.intervalDays||1);
+    }
+    return true; // daily
+  }
+  function stripTime(d){ var x = new Date(d); x.setHours(0,0,0,0); return x; }
+
+  function habitDoneToday(habit){
+    return (habit.completions||[]).indexOf(todayStr()) !== -1;
+  }
+
+  function habitElapsedLabel(habit){
+    var lang = state.profile.lang;
+    if(!habit.lastDoneAt) return tr('habitNotDoneYet');
+    var diffDays = Math.floor((stripTime(new Date()) - stripTime(new Date(habit.lastDoneAt))) / 86400000);
+    if(diffDays <= 0) return tr('habitToday');
+    if(diffDays === 1) return tr('habitOneDayAgo');
+    if(diffDays === 2) return tr('habitTwoDaysAgo');
+    return (lang==='he' ? (tr('habitDaysAgoPrefix')+' '+diffDays+' '+tr('habitDaysAgoSuffix')) : (diffDays+' '+tr('habitDaysAgoSuffix')));
+  }
+
+  function habitStatusLabel(habit){
+    if(habit.trackMode === 'elapsed') return habitElapsedLabel(habit);
+    var due = isHabitDueToday(habit);
+    if(habitDoneToday(habit)) return tr('habitDoneToday');
+    return due ? scheduleSummaryLabel(habit) : tr('habitNotDueToday');
+  }
+
+  function scheduleSummaryLabel(habit){
+    var lang = state.profile.lang;
+    if(habit.frequency === 'daily') return tr('habitFreqDaily');
+    if(habit.frequency === 'interval') return (lang==='he' ? (tr('habitIntervalPrefix')+' '+habit.intervalDays+' '+tr('habitIntervalSuffix')) : (tr('habitIntervalPrefix')+' '+habit.intervalDays+' '+tr('habitIntervalSuffix')));
+    var names = (habit.daysOfWeek||[]).slice().sort().map(function(d){ return WD_SHORT[lang][d]; });
+    return names.join(', ');
+  }
+
+  function toggleHabitDone(habitId){
+    var habit = state.habits.find(function(h){ return h.id===habitId; });
+    if(!habit) return;
+    if(habit.trackMode === 'elapsed'){
+      habit.lastDoneAt = Date.now();
+    } else {
+      var today = todayStr();
+      var idx = (habit.completions||[]).indexOf(today);
+      habit.completions = habit.completions || [];
+      if(idx === -1) habit.completions.push(today);
+      else habit.completions.splice(idx, 1); // tap again to undo
+    }
+    habit.editedAt = Date.now();
+    saveState();
+    renderHabits();
+  }
+
+  function renderHabits(){
+    var list = document.getElementById('habits-list');
+    list.innerHTML = '';
+    if(!state.habits.length){
+      var empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = tr('habitsEmpty');
+      list.appendChild(empty);
+      return;
+    }
+    state.habits.slice().sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); }).forEach(function(habit){
+      var card = document.createElement('div'); card.className = 'habit-card';
+      var due = habit.trackMode === 'elapsed' ? true : isHabitDueToday(habit);
+      if(!due) card.classList.add('not-due');
+
+      var checkBtn = document.createElement('button');
+      checkBtn.type = 'button'; checkBtn.className = 'habit-check-btn';
+      var checked = habit.trackMode === 'elapsed' ? false : habitDoneToday(habit);
+      if(checked) checkBtn.classList.add('checked');
+      checkBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      checkBtn.addEventListener('click', function(){ toggleHabitDone(habit.id); });
+
+      var meta = document.createElement('div'); meta.className = 'habit-meta';
+      var nameEl = document.createElement('div'); nameEl.className = 'habit-name';
+      nameEl.textContent = habit.name;
+      if(habit.notify){
+        var bell = document.createElement('span'); bell.className = 'habit-bell';
+        nameEl.appendChild(bell);
+      }
+      var statusEl = document.createElement('div'); statusEl.className = 'habit-status';
+      statusEl.textContent = habitStatusLabel(habit);
+      meta.appendChild(nameEl); meta.appendChild(statusEl);
+
+      var actions = document.createElement('div'); actions.className = 'entry-actions';
+      var editBtn = document.createElement('button');
+      editBtn.type = 'button'; editBtn.className = 'entry-action-btn edit';
+      editBtn.setAttribute('aria-label', state.profile.lang==='he' ? 'עריכה' : 'Edit');
+      editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>';
+      editBtn.addEventListener('click', function(){ openHabitSheet(habit.id); });
+      actions.appendChild(editBtn);
+
+      card.appendChild(checkBtn); card.appendChild(meta); card.appendChild(actions);
+      list.appendChild(card);
+    });
+  }
+
+  function defaultHabitDraft(){
+    return {
+      id: null, name: '', trackMode: 'simple', frequency: 'daily',
+      daysOfWeek: [0,1,2,3,4,5,6], intervalDays: 2, time: '', notify: false,
+      lastDoneAt: null, completions: [], createdAt: null
+    };
+  }
+  var habitDraft = defaultHabitDraft();
+
+  function renderHabitSheetBody(){
+    var lang = state.profile.lang;
+    var host = document.getElementById('habit-sheet-body');
+    host.innerHTML = '';
+
+    // Name
+    var nameField = document.createElement('div'); nameField.className = 'habit-sheet-field';
+    var nameLabel = document.createElement('label'); nameLabel.textContent = tr('habitNameLabel');
+    var nameInput = document.createElement('input'); nameInput.type = 'text'; nameInput.id = 'habit-name-input';
+    nameInput.placeholder = tr('habitNamePh'); nameInput.value = habitDraft.name; nameInput.maxLength = 60;
+    nameInput.addEventListener('input', function(){ habitDraft.name = nameInput.value; });
+    nameField.appendChild(nameLabel); nameField.appendChild(nameInput);
+    host.appendChild(nameField);
+
+    // Tracking mode
+    var modeField = document.createElement('div'); modeField.className = 'habit-sheet-field';
+    var modeLabel = document.createElement('label'); modeLabel.textContent = tr('habitModeLabel');
+    var modeRow = document.createElement('div'); modeRow.className = 'pillrow';
+    [['elapsed','habitModeElapsed'],['simple','habitModeSimple']].forEach(function(pair){
+      var b = document.createElement('button'); b.type='button';
+      b.className = 'pill'+(habitDraft.trackMode===pair[0]?' active':'');
+      b.textContent = tr(pair[1]);
+      b.addEventListener('click', function(){ habitDraft.trackMode = pair[0]; renderHabitSheetBody(); });
+      modeRow.appendChild(b);
+    });
+    modeField.appendChild(modeLabel); modeField.appendChild(modeRow);
+    host.appendChild(modeField);
+
+    // Frequency
+    var freqField = document.createElement('div'); freqField.className = 'habit-sheet-field';
+    var freqLabel = document.createElement('label'); freqLabel.textContent = tr('habitFreqLabel');
+    var freqRow = document.createElement('div'); freqRow.className = 'pillrow';
+    [['daily','habitFreqDaily'],['days','habitFreqDays'],['interval','habitFreqInterval']].forEach(function(pair){
+      var b = document.createElement('button'); b.type='button';
+      b.className = 'pill'+(habitDraft.frequency===pair[0]?' active':'');
+      b.textContent = tr(pair[1]);
+      b.addEventListener('click', function(){ habitDraft.frequency = pair[0]; renderHabitSheetBody(); });
+      freqRow.appendChild(b);
+    });
+    freqField.appendChild(freqLabel); freqField.appendChild(freqRow);
+    host.appendChild(freqField);
+
+    if(habitDraft.frequency === 'days'){
+      var daysField = document.createElement('div'); daysField.className = 'habit-sheet-field';
+      var daysLabel = document.createElement('label'); daysLabel.textContent = tr('habitDaysLabel');
+      var daysRow = document.createElement('div'); daysRow.className = 'pillrow';
+      WD_SHORT[lang].forEach(function(label, dow){
+        var b = document.createElement('button'); b.type='button';
+        var active = (habitDraft.daysOfWeek||[]).indexOf(dow) !== -1;
+        b.className = 'pill'+(active?' active':'');
+        b.textContent = label;
+        b.addEventListener('click', function(){
+          var i = habitDraft.daysOfWeek.indexOf(dow);
+          if(i === -1) habitDraft.daysOfWeek.push(dow);
+          else habitDraft.daysOfWeek.splice(i, 1);
+          renderHabitSheetBody();
+        });
+        daysRow.appendChild(b);
+      });
+      daysField.appendChild(daysLabel); daysField.appendChild(daysRow);
+      host.appendChild(daysField);
+    }
+
+    if(habitDraft.frequency === 'interval'){
+      var intField = document.createElement('div'); intField.className = 'habit-sheet-field';
+      var intRow = document.createElement('div'); intRow.className = 'habit-interval-row';
+      var prefixSpan = document.createElement('span'); prefixSpan.textContent = tr('habitIntervalPrefix');
+      var intInput = document.createElement('input'); intInput.type = 'number'; intInput.min = 2; intInput.max = 60;
+      intInput.value = habitDraft.intervalDays;
+      intInput.addEventListener('input', function(){ habitDraft.intervalDays = Math.max(2, Number(intInput.value)||2); });
+      var suffixSpan = document.createElement('span'); suffixSpan.textContent = tr('habitIntervalSuffix');
+      intRow.appendChild(prefixSpan); intRow.appendChild(intInput); intRow.appendChild(suffixSpan);
+      intField.appendChild(intRow);
+      host.appendChild(intField);
+    }
+
+    // Time
+    var timeField = document.createElement('div'); timeField.className = 'habit-sheet-field';
+    var timeLabel = document.createElement('label'); timeLabel.textContent = tr('habitTimeLabel');
+    var timeInput = document.createElement('input'); timeInput.type = 'time'; timeInput.className = 'habit-time-input';
+    timeInput.value = habitDraft.time || '';
+    timeInput.addEventListener('input', function(){ habitDraft.time = timeInput.value; });
+    timeField.appendChild(timeLabel); timeField.appendChild(timeInput);
+    host.appendChild(timeField);
+
+    // Notifications
+    var notifyField = document.createElement('div'); notifyField.className = 'habit-sheet-field';
+    var notifyRow = document.createElement('div'); notifyRow.className = 'habit-switch-row';
+    var notifyLabel = document.createElement('label'); notifyLabel.textContent = tr('habitNotifyLabel');
+    var switchWrap = document.createElement('label'); switchWrap.className = 'switch';
+    var notifyInput = document.createElement('input'); notifyInput.type = 'checkbox'; notifyInput.checked = !!habitDraft.notify;
+    var slider = document.createElement('span'); slider.className = 'slider';
+    notifyInput.addEventListener('change', function(){
+      habitDraft.notify = notifyInput.checked;
+      if(habitDraft.notify) requestNotifyPermissionIfNeeded();
+    });
+    switchWrap.appendChild(notifyInput); switchWrap.appendChild(slider);
+    notifyRow.appendChild(notifyLabel); notifyRow.appendChild(switchWrap);
+    var notifyNote = document.createElement('div'); notifyNote.className = 'habit-notify-note';
+    notifyNote.textContent = tr('habitNotifyNote');
+    notifyField.appendChild(notifyRow); notifyField.appendChild(notifyNote);
+    host.appendChild(notifyField);
+  }
+
+  function requestNotifyPermissionIfNeeded(){
+    if(!('Notification' in window)) return;
+    if(Notification.permission === 'default' && !notifyPermissionAsked){
+      notifyPermissionAsked = true;
+      Notification.requestPermission();
+    }
+  }
+
+  function openHabitSheet(habitId){
+    var lang = state.profile.lang;
+    if(habitId){
+      var habit = state.habits.find(function(h){ return h.id===habitId; });
+      if(!habit) return;
+      editingHabitId = habitId;
+      habitDraft = {
+        id: habit.id, name: habit.name, trackMode: habit.trackMode, frequency: habit.frequency,
+        daysOfWeek: (habit.daysOfWeek||[]).slice(), intervalDays: habit.intervalDays||2,
+        time: habit.time||'', notify: !!habit.notify,
+        lastDoneAt: habit.lastDoneAt||null, completions: (habit.completions||[]).slice(), createdAt: habit.createdAt
+      };
+      document.getElementById('habit-sheet-title').textContent = tr('habitEditTitle');
+      document.getElementById('habit-delete-btn').style.display = '';
+    } else {
+      editingHabitId = null;
+      habitDraft = defaultHabitDraft();
+      document.getElementById('habit-sheet-title').textContent = tr('habitNewTitle');
+      document.getElementById('habit-delete-btn').style.display = 'none';
+    }
+    document.getElementById('habit-save-btn').textContent = tr('habitSave');
+    document.getElementById('habit-delete-btn').textContent = tr('habitDelete');
+    document.getElementById('habit-sheet-close-btn').textContent = tr('close');
+    renderHabitSheetBody();
+    document.getElementById('sheet-backdrop').classList.add('open');
+    document.getElementById('habit-sheet').classList.add('open');
+  }
+
+  function closeHabitSheet(){
+    document.getElementById('habit-sheet').classList.remove('open');
+    closeBackdropIfNoSheetsOpen();
+  }
+
+  function saveHabitFromSheet(){
+    var name = (habitDraft.name||'').trim();
+    if(!name) return;
+    if(habitDraft.frequency === 'days' && !(habitDraft.daysOfWeek||[]).length) return;
+    if(editingHabitId){
+      var habit = state.habits.find(function(h){ return h.id===editingHabitId; });
+      if(!habit) return;
+      habit.name = name;
+      habit.trackMode = habitDraft.trackMode;
+      habit.frequency = habitDraft.frequency;
+      habit.daysOfWeek = habitDraft.daysOfWeek;
+      habit.intervalDays = habitDraft.intervalDays;
+      habit.time = habitDraft.time;
+      habit.notify = habitDraft.notify;
+      habit.editedAt = Date.now();
+    } else {
+      state.habits.push({
+        id: 'hb'+Date.now(), name: name, trackMode: habitDraft.trackMode, frequency: habitDraft.frequency,
+        daysOfWeek: habitDraft.daysOfWeek, intervalDays: habitDraft.intervalDays, time: habitDraft.time,
+        notify: habitDraft.notify, lastDoneAt: null, completions: [], notifiedDates: {},
+        createdAt: Date.now(), editedAt: Date.now()
+      });
+    }
+    saveState();
+    renderHabits();
+    closeHabitSheet();
+  }
+
+  function deleteHabit(){
+    if(!editingHabitId) return;
+    if(!confirm(tr('habitDeleteConfirm'))) return;
+    state.habits = state.habits.filter(function(h){ return h.id !== editingHabitId; });
+    saveState();
+    renderHabits();
+    closeHabitSheet();
+  }
+
+  document.getElementById('habit-add-btn').addEventListener('click', function(){ openHabitSheet(null); });
+  document.getElementById('habit-save-btn').addEventListener('click', saveHabitFromSheet);
+  document.getElementById('habit-delete-btn').addEventListener('click', deleteHabit);
+  document.getElementById('habit-sheet-close-btn').addEventListener('click', closeHabitSheet);
+
+  function checkHabitNotifications(){
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+    var now = new Date();
+    var hh = String(now.getHours()).padStart(2,'0');
+    var mm = String(now.getMinutes()).padStart(2,'0');
+    var nowHM = hh+':'+mm;
+    var today = todayStr();
+    state.habits.forEach(function(habit){
+      if(!habit.notify || !habit.time) return;
+      if(habit.time !== nowHM) return;
+      habit.notifiedDates = habit.notifiedDates || {};
+      if(habit.notifiedDates[today]) return;
+      var due = habit.trackMode === 'elapsed' ? true : isHabitDueToday(habit, now);
+      if(!due) return;
+      if(habit.trackMode !== 'elapsed' && habitDoneToday(habit)) return;
+      habit.notifiedDates[today] = true;
+      saveState();
+      var title = 'Ofek';
+      var body = habit.name;
+      if(navigator.serviceWorker && navigator.serviceWorker.controller){
+        navigator.serviceWorker.ready.then(function(reg){ reg.showNotification(title, {body: body, icon: 'icon-192.png'}); }).catch(function(){
+          try{ new Notification(title, {body: body, icon: 'icon-192.png'}); }catch(e){}
+        });
+      } else {
+        try{ new Notification(title, {body: body, icon: 'icon-192.png'}); }catch(e){}
+      }
+    });
+  }
+  setInterval(checkHabitNotifications, 30000);
+
   /* ============ Ribbon ============ */
   function updateRibbon(){
     var today = todayStr();
@@ -2232,7 +2685,7 @@
     document.getElementById('sheet-backdrop').classList.add('open');
   }
   function closeBackdropIfNoSheetsOpen(){
-    var anyOpen = ['settings-sheet','edit-entry-sheet','grounding-disclaimer-sheet'].some(function(id){
+    var anyOpen = ['settings-sheet','edit-entry-sheet','grounding-disclaimer-sheet','habit-sheet'].some(function(id){
       var el = document.getElementById(id);
       return el && el.classList.contains('open');
     });
@@ -2533,9 +2986,11 @@
     if(confirm(tr('clearConfirm'))){
       state.entries = [];
       state.weeklyCache = {};
+      state.habits = [];
       saveState();
       renderHistory();
       renderInsights();
+      renderHabits();
       updateRibbon();
     }
   });
@@ -2703,10 +3158,23 @@
       if(remoteTime > localTime) byId[e.id] = e;
     });
     var mergedEntries = Object.keys(byId).map(function(k){ return byId[k]; });
+
+    var habitsById = {};
+    (local.habits||[]).forEach(function(h){ habitsById[h.id] = h; });
+    (remote.habits||[]).forEach(function(h){
+      var existing = habitsById[h.id];
+      if(!existing){ habitsById[h.id] = h; return; }
+      var localTime = existing.editedAt || existing.createdAt || 0;
+      var remoteTime = h.editedAt || h.createdAt || 0;
+      if(remoteTime > localTime) habitsById[h.id] = h;
+    });
+    var mergedHabits = Object.keys(habitsById).map(function(k){ return habitsById[k]; });
+
     var remoteNewer = (remote.lastModified||0) > (local.lastModified||0);
     return {
       profile: remoteNewer ? (remote.profile || local.profile) : local.profile,
       entries: mergedEntries,
+      habits: mergedHabits,
       weeklyCache: remoteNewer ? (remote.weeklyCache || local.weeklyCache) : local.weeklyCache,
       lastModified: Math.max(local.lastModified||0, remote.lastModified||0, Date.now())
     };
@@ -2731,15 +3199,17 @@
         var remote = await driveDownload(found.id);
         var merged = mergeDriveState(state, remote || {});
         var changed = JSON.stringify(merged.entries) !== JSON.stringify(state.entries) ||
+                      JSON.stringify(merged.habits) !== JSON.stringify(state.habits) ||
                       JSON.stringify(merged.profile) !== JSON.stringify(state.profile);
         state.profile = merged.profile;
         state.entries = merged.entries;
+        state.habits = merged.habits;
         state.weeklyCache = merged.weeklyCache;
         state.lastModified = merged.lastModified;
         try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
         if(changed){
           applyLangDir(); renderStaticLabels(); renderGreeting(); renderFlowChips();
-          renderHistory(); renderInsights(); updateRibbon();
+          renderHistory(); renderInsights(); renderHabits(); updateRibbon();
         }
         await driveUpload(state, found.id);
       } else {
@@ -2805,6 +3275,7 @@
         state.profile = incoming.profile;
         state.entries = incoming.entries;
         state.weeklyCache = incoming.weeklyCache || {};
+        state.habits = incoming.habits || [];
         saveState();
         applyLangDir();
         renderStaticLabels();
@@ -2812,6 +3283,7 @@
         renderFlowChips();
         renderHistory();
         renderInsights();
+        renderHabits();
         highlightLangToggle();
         renderSettingsLangRow();
         updateRibbon();
