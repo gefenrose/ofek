@@ -411,7 +411,7 @@
   .entry-row .entry-text{font-size:0.88rem; line-height:1.5;}
   .empty-state{padding:40px 20px; text-align:center; color:var(--ink-faint); font-size:0.9rem; display:flex; flex-direction:column; align-items:center; gap:14px;}
   .empty-state .empty-icon{font-size:1.8rem; opacity:.45;}
-  .empty-state .add-entry-btn{
+  .add-entry-btn{
     display:inline-flex; align-items:center; gap:6px;
     padding:10px 18px; border-radius:999px;
     background:var(--ink); color:var(--paper-raised);
@@ -419,9 +419,10 @@
     transition:transform .12s ease, box-shadow .15s ease;
     box-shadow:0 4px 14px rgba(31,46,51,.18);
   }
-  .empty-state .add-entry-btn:hover{box-shadow:0 6px 18px rgba(31,46,51,.22);}
-  .empty-state .add-entry-btn:active{transform:scale(.96);}
-  .empty-state .add-entry-btn svg{width:16px; height:16px;}
+  .add-entry-btn:hover{box-shadow:0 6px 18px rgba(31,46,51,.22);}
+  .add-entry-btn:active{transform:scale(.96);}
+  .add-entry-btn svg{width:16px; height:16px;}
+  .day-add-row{display:flex; justify-content:center; padding:18px 0 6px;}
 
   /* ---------- Insights ---------- */
   .stat-row{display:flex; gap:10px; margin:14px 0;}
@@ -1143,6 +1144,7 @@
   var currentFlow = null;
   var activeEntryId = null;
   var conversation = [];
+  var backfillDate = null; // when set, the active conversation is being logged for a past date, not today
 
   function addBubble(role, text, image){
     var div = document.createElement('div');
@@ -1224,14 +1226,16 @@
     distressCloseBtn.addEventListener('click', dismissDistressCard);
   }
 
-  function openFlow(flow){
+  function openFlow(flow, dateKey){
     currentFlow = flow;
     conversation = [];
     activeEntryId = 'e'+Date.now();
+    backfillDate = dateKey || null;
     resetDistressCard();
     document.getElementById('thread').innerHTML = '';
     document.getElementById('mood-picker-host').innerHTML = '';
     document.getElementById('endflow-row').style.display = 'none';
+    if(backfillDate) switchToPanel('chat');
     // Re-render chips so the active pill updates immediately.
     renderFlowChips();
 
@@ -1289,6 +1293,13 @@
         ? ' זו שיחת קרקוע לרגעים של מצוקה או חרדה. הציעו תרגיל קרקוע אחד בכל פעם — נשימה איטית, או תרגיל 5-4-3-2-1 חושי — בקצב רגוע ובלי למהר. שאלו שאלה קצרה אחת כדי להבין מה קורה, ואז הציעו תרגיל מתאים. אינך מטפל/ת מוסמך/ת ואל תתחזה/י לכזה. אם נשמע שהמצב חריף או מסוכן, הזכיר/י בעדינות שאפשר להתקשר לער"ן (1201) או לפנות לעזרה מקצועית.'
         : " This is a grounding chat for moments of distress or anxiety. Offer one grounding technique at a time — slow breathing, or the 5-4-3-2-1 senses exercise — at an unhurried pace. Ask one short question to understand what's going on, then offer a fitting technique. You are not a licensed therapist and must not claim to be one. If things sound severe or unsafe, gently remind them they can call ER'N (1201) or reach out for professional help."
     };
+    var backfillNote = '';
+    if(backfillDate){
+      var bfDateLabel = formatDate(backfillDate);
+      backfillNote = lang==='he'
+        ? (' זו רשומה רטרואקטיבית על יום מהעבר — '+bfDateLabel+'. שאל/י מה קרה באותו יום עצמו, לא על היום הנוכחי, ואל תתייחס/י אליו כאילו הוא היום.')
+        : (' This is a retroactive entry about a past day — '+bfDateLabel+'. Ask about what happened on that specific day, not about today, and don\'t treat it as if it were today.');
+    }
     var memory = recentEntriesDigest();
     var memoryNote = '';
     if(memory){
@@ -1296,7 +1307,7 @@
         ? ('\n\nלידיעתך, כמה דברים מיומנו של '+name+' מהתקופה האחרונה (מהחדש לישן). אפשר להתייחס אליהם בעדינות אם רלוונטי לשיחה הנוכחית, אך אין חובה להזכיר את כולם, ואל תציפו את השיחה בפרטים מהעבר:\n'+memory)
         : ('\n\nFor your awareness, some recent things from '+name+"'s journal (newest first). You can gently reference these if relevant to the current conversation, but there's no need to bring them all up, and don't flood the conversation with past details:\n"+memory);
     }
-    return base + (notes[flow] || '') + memoryNote;
+    return base + (notes[flow] || '') + backfillNote + memoryNote;
   }
 
   async function askCompanion(system, messages){
@@ -1360,7 +1371,7 @@
     var now = new Date();
     var entry = state.entries.find(function(e){ return e.id===activeEntryId; });
     if(!entry){
-      entry = { id: activeEntryId, date: todayStr(now), time: timeStr(now), flow: currentFlow, mood: null, messages: [], createdAt: Date.now() };
+      entry = { id: activeEntryId, date: backfillDate || todayStr(now), time: timeStr(now), flow: currentFlow, mood: null, messages: [], createdAt: Date.now() };
       state.entries.push(entry);
     }
     entry.messages = conversation.slice();
@@ -1413,12 +1424,17 @@
   function closeFlow(){
     var entryIdToSummarize = activeEntryId;
     var convoToSummarize = conversation.slice();
-    currentFlow = null; activeEntryId = null; conversation = [];
+    var wasBackfillDate = backfillDate;
+    currentFlow = null; activeEntryId = null; conversation = []; backfillDate = null;
     document.getElementById('thread').innerHTML = '';
     document.getElementById('mood-picker-host').innerHTML = '';
     document.getElementById('composer-row').style.display = 'none';
     document.getElementById('endflow-row').style.display = 'none';
     renderFlowChips();
+    if(wasBackfillDate){
+      selectedDate = wasBackfillDate;
+      switchToPanel('history');
+    }
     renderHistory();
     renderInsights();
     maybeSummarizeEntry(entryIdToSummarize, convoToSummarize);
@@ -1601,17 +1617,17 @@
   }
 
   /* ============ Nav (bottom bar + sidebar) ============ */
-  document.querySelectorAll('.nav-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var targetPanel = btn.dataset.panel;
-      document.querySelectorAll('.nav-btn').forEach(function(b){
-        b.classList.toggle('active', b.dataset.panel === targetPanel);
-      });
-      document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
-      document.getElementById('panel-'+targetPanel).classList.add('active');
-      if(targetPanel==='history') renderHistory();
-      if(targetPanel==='insights') renderInsights();
+  function switchToPanel(targetPanel){
+    document.querySelectorAll('.nav-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.panel === targetPanel);
     });
+    document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+    document.getElementById('panel-'+targetPanel).classList.add('active');
+    if(targetPanel==='history') renderHistory();
+    if(targetPanel==='insights') renderInsights();
+  }
+  document.querySelectorAll('.nav-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ switchToPanel(btn.dataset.panel); });
   });
 
   /* ============ Calendar ============ */
@@ -1727,6 +1743,17 @@
   }
 
   /* ============ History ============ */
+  function buildAddEntryButton(dateKey){
+    var lang = state.profile.lang;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'add-entry-btn';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>'+
+                     '<span>'+(lang==='he' ? 'הוספת רשומה' : 'Add entry')+'</span>';
+    btn.addEventListener('click', function(){ openAddEntry(dateKey); });
+    return btn;
+  }
+
   function renderHistory(){
     renderCalendar();
     var list = document.getElementById('history-list');
@@ -1760,14 +1787,19 @@
       if(!dayEnts.length){
         var empty = document.createElement('div');
         empty.className = 'empty-state';
-        empty.textContent = lang === 'he'
-          ? 'לא רשומים דברים מהיום הזה. אפשר להתחיל שיחה מהכרטיסייה למעלה.'
-          : 'Nothing logged for this day yet. Start a chat from the chips above.';
+        var emptyMsg = document.createElement('div');
+        emptyMsg.textContent = lang === 'he' ? 'לא רשומים דברים מהיום הזה.' : 'Nothing logged for this day yet.';
+        empty.appendChild(emptyMsg);
+        empty.appendChild(buildAddEntryButton(selectedDate));
         list.appendChild(empty);
         return;
       }
       // Render only the selected day
       renderDayCards(list, [selectedDate], dayEnts);
+      var addRow = document.createElement('div');
+      addRow.className = 'day-add-row';
+      addRow.appendChild(buildAddEntryButton(selectedDate));
+      list.appendChild(addRow);
       return;
     }
     if(!state.entries.length){
@@ -2187,6 +2219,14 @@
   var editingMode = 'edit'; // 'edit' or 'add'
   var editingTargetDate = null; // for add mode, the YYYY-MM-DD to write the entry to
 
+  function updateAddEntrySaveLabel(flow){
+    var lang = state.profile.lang;
+    var btn = document.getElementById('edit-save-btn');
+    btn.textContent = flow === 'mood'
+      ? (lang === 'he' ? 'הוסף רשומה' : 'Add entry')
+      : (lang === 'he' ? 'התחלת שיחה' : 'Start conversation');
+  }
+
   function renderEditFlowRow(activeFlow){
     var row = document.getElementById('edit-flow-row');
     row.innerHTML = '';
@@ -2198,9 +2238,11 @@
       b.addEventListener('click', function(){
         row.querySelectorAll('.pill').forEach(function(p){ p.classList.remove('active'); });
         b.classList.add('active');
+        updateAddEntrySaveLabel(f);
       });
       row.appendChild(b);
     });
+    updateAddEntrySaveLabel(activeFlow);
   }
 
   function openEditEntry(entryId){
@@ -2266,7 +2308,6 @@
     document.getElementById('edit-note-label').textContent = lang === 'he' ? 'הערה' : 'Note';
     document.getElementById('edit-image-label').textContent = lang === 'he' ? 'תמונה' : 'Image';
     document.getElementById('edit-image-btn-label').textContent = lang === 'he' ? 'הוסף תמונה' : 'Add photo';
-    document.getElementById('edit-save-btn').textContent = lang === 'he' ? 'הוסף רשומה' : 'Add entry';
     document.getElementById('edit-delete-btn').style.display = 'none';
     document.getElementById('edit-sheet-close-btn').textContent = lang === 'he' ? 'ביטול' : 'Cancel';
     document.getElementById('edit-note').placeholder = lang === 'he' ? 'הערה (לא חובה)' : 'Note (optional)';
@@ -2316,6 +2357,15 @@
       var activePill = flowRow.querySelector('.pill.active');
       var flow = activePill ? FLOWS.find(function(f){ return tr(FLOW_KEY[f]) === activePill.textContent; }) : null;
       if(!flow) flow = 'chat';
+
+      if(flow !== 'mood'){
+        // Real conversation about that day, instead of a blank static entry.
+        var targetDate = editingTargetDate;
+        closeEditEntry();
+        openFlow(flow, targetDate);
+        return;
+      }
+
       var now = new Date();
       var entry = {
         id: 'e'+Date.now(),
