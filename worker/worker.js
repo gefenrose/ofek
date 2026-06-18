@@ -14,12 +14,14 @@ const ALLOWED_ORIGINS = new Set([
   'http://localhost'                   // Capacitor Android (pre-v6 default scheme)
 ]);
 
-// Chosen for Hebrew quality + reasoning. OpenRouter's free catalog rotates,
-// so if this model gets retired/renamed (upstream returns 400/404), the
-// code below automatically retries with the auto-selecting free router.
-// Re-check current free model IDs at https://openrouter.ai/models?max_price=0
-const PRIMARY_MODEL = 'google/gemini-2.0-flash-exp:free';
-const FALLBACK_MODEL = 'openrouter/free';
+// Currently pointed back at Groq's llama-3.3-70b-versatile: the OpenRouter
+// free Gemini route was producing garbled, nonexistent-word output for
+// Hebrew - likely because that specific free model ID is no longer live
+// and requests were silently landing on the auto-selecting free router,
+// which can pick small models (1-2B params) with weak Hebrew. Revisit
+// OpenRouter once a specific, verified-live model ID is confirmed.
+const PRIMARY_MODEL = 'llama-3.3-70b-versatile';
+const FALLBACK_MODEL = 'llama-3.3-70b-versatile';
 
 function corsHeaders(origin) {
   return {
@@ -31,14 +33,11 @@ function corsHeaders(origin) {
 }
 
 function callOpenRouter(model, messages, apiKey) {
-  return fetch('https://openrouter.ai/api/v1/chat/completions', {
+  return fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      // OpenRouter asks for these on free-tier requests for attribution/priority
-      'HTTP-Referer': 'https://gefenrose.github.io',
-      'X-Title': 'Serenity & Ofek'
+      'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({ model, messages })
   });
@@ -72,12 +71,12 @@ export default {
       ...body.messages
     ];
 
-    let upstream = await callOpenRouter(PRIMARY_MODEL, messages, env.OPENROUTER_API_KEY);
+    let upstream = await callOpenRouter(PRIMARY_MODEL, messages, env.GROQ_API_KEY);
 
-    // If the primary free model was retired/renamed upstream, fall back
-    // to OpenRouter's auto-selecting free router rather than failing outright
+    // Harmless retry-once on transient errors; both constants point at the
+    // same model for now (see comment above PRIMARY_MODEL)
     if (upstream.status === 400 || upstream.status === 404) {
-      upstream = await callOpenRouter(FALLBACK_MODEL, messages, env.OPENROUTER_API_KEY);
+      upstream = await callOpenRouter(FALLBACK_MODEL, messages, env.GROQ_API_KEY);
     }
 
     if (!upstream.ok) {
