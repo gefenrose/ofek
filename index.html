@@ -218,7 +218,7 @@
 }
 .flowchip.active .flowchip-label{color:var(--paper-raised);}
 .flowchip.highlight{
-    border-color:var(--accent); background:#5B7A8C14;
+    border-color:var(--accent); background:rgba(255,255,255,.85);
     box-shadow:inset 0 0 0 1px var(--accent);
 }
 .flowchip.highlight::before{
@@ -245,15 +245,16 @@
   .flowchip-icon svg{width:100%; height:100%;}
   .flowchip-time .flowchip-icon{color:var(--accent);}
   .flowchip-time.highlight{
-    background:linear-gradient(90deg, var(--h-mid2)22, var(--h-high)22);
+    background:rgba(255,255,255,.85);
     border-color:var(--accent);
   }
   .flowchip-chat .flowchip-icon{color:var(--accent);}
 
   .distress-card{
     margin:6px 2px 4px; padding:11px 14px; border-radius:var(--radius-md);
-    background:#B5564A0F; border:1px solid #B5564A26; display:flex; flex-direction:column; gap:10px;
+    background:rgba(255,247,246,.92); border:1px solid #B5564A40; display:flex; flex-direction:column; gap:10px;
     overflow:hidden; transition:max-height .3s ease, opacity .3s ease, margin .3s ease, padding .3s ease, border-color .3s ease;
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   }
   .distress-top{display:flex; align-items:center; gap:10px;}
   .distress-top > svg{flex:0 0 auto; color:var(--danger); width:18px; height:18px;}
@@ -284,7 +285,11 @@
   @keyframes typingPulse{0%,100%{opacity:.45;} 50%{opacity:1;}}
   .bubble.ai{align-self:flex-start; background:var(--paper-raised); border:1px solid var(--line); border-start-start-radius:6px;}
   .bubble.user{align-self:flex-end; background:var(--ink); color:var(--paper); border-end-end-radius:6px;}
-  .bubble.system{align-self:center; background:none; color:var(--ink-faint); font-size:0.78rem; max-width:100%; text-align:center;}
+  .bubble.system{
+    align-self:center; color:var(--ink-soft); font-size:0.78rem; max-width:100%; text-align:center;
+    background:rgba(255,255,255,.78); border-radius:999px; padding:5px 14px;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  }
 
   .composer{
     position:sticky; bottom:0; display:flex; align-items:flex-end; gap:8px;
@@ -303,7 +308,11 @@
   .send-btn:active:not(:disabled){transform:scale(.9);}
   .send-btn:disabled{opacity:.35;}
   .endflow-row{display:flex; justify-content:center; padding:6px 0 2px;}
-  .endflow-row button{font-size:0.82rem; color:var(--ink-soft); text-decoration:underline; text-decoration-color:var(--line);}
+  .endflow-row button{
+    font-size:0.82rem; color:var(--ink-soft); text-decoration:underline; text-decoration-color:var(--line);
+    background:rgba(255,255,255,.78); padding:6px 14px; border-radius:999px;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  }
 
   /* ---------- Mood slider ---------- */
   .moodpicker{padding:18px 4px 8px; text-align:center;}
