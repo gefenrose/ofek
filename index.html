@@ -176,7 +176,7 @@
   .settings-credit{text-align:center; margin-top:18px;}
   .settings-credit span{font-size:0.7rem; color:var(--ink-faint);}
 
-  main{flex:1; overflow-y:auto; display:flex; flex-direction:column; min-height:0;}
+  main{flex:1; overflow-y:auto; display:flex; flex-direction:column; min-height:0; padding-bottom:calc(82px + var(--safe-b));}
   .panel{display:none; padding:6px 18px 0;}
   .panel.active{display:block; animation:panelIn .28s ease; flex:1 0 auto;}
   @keyframes panelIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
@@ -1386,6 +1386,30 @@
     distressCloseBtn.addEventListener('click', dismissDistressCard);
   }
 
+  function updateHorizonVisibility(){
+    // The ambient footer-horizon decoration is a flex sibling inside <main>,
+    // always reserving its own ~226px of height below the active panel.
+    // That's a nice touch for finite-content panels (History/Insights/
+    // Habits), but while actively chatting it sits below the composer and
+    // silently extends main's scrollable area past it - so "scroll new
+    // message into view" lands short of the true bottom, leaving an empty
+    // gap the user has to scroll through manually. Hide it only while
+    // panel-chat is the active panel AND its composer is in use; every
+    // other case keeps the decoration.
+    var horizon = document.querySelector('.footer-horizon');
+    if(!horizon) return;
+    var chatPanel = document.getElementById('panel-chat');
+    var composer = document.getElementById('composer-row');
+    var chatIsActive = chatPanel && chatPanel.classList.contains('active');
+    var composerIsOpen = composer && composer.style.display !== 'none';
+    horizon.style.display = (chatIsActive && composerIsOpen) ? 'none' : '';
+  }
+
+  function setComposerVisible(visible){
+    document.getElementById('composer-row').style.display = visible ? 'flex' : 'none';
+    updateHorizonVisibility();
+  }
+
   function openFlow(flow, dateKey){
     currentFlow = flow;
     conversation = [];
@@ -1400,12 +1424,12 @@
     renderFlowChips();
 
     if(flow === 'mood'){
-      document.getElementById('composer-row').style.display = 'none';
+      setComposerVisible(false);
       document.getElementById('thread').style.display = 'none';
       renderMoodPicker();
     } else {
       document.getElementById('thread').style.display = '';
-      document.getElementById('composer-row').style.display = 'flex';
+      setComposerVisible(true);
       document.getElementById('endflow-row').style.display = 'flex';
       addBubble('system', tr(FLOW_KEY[flow]));
       kickoffFlow(flow);
@@ -1588,7 +1612,7 @@
     currentFlow = null; activeEntryId = null; conversation = []; backfillDate = null;
     document.getElementById('thread').innerHTML = '';
     document.getElementById('mood-picker-host').innerHTML = '';
-    document.getElementById('composer-row').style.display = 'none';
+    setComposerVisible(false);
     document.getElementById('endflow-row').style.display = 'none';
     renderFlowChips();
     if(wasBackfillDate){
@@ -1772,7 +1796,7 @@
   function closeMoodPickerUI(){
     document.getElementById('mood-picker-host').innerHTML = '';
     document.getElementById('thread').style.display = '';
-    document.getElementById('composer-row').style.display = 'flex';
+    setComposerVisible(true);
     document.getElementById('endflow-row').style.display = 'flex';
   }
 
@@ -1783,6 +1807,7 @@
     });
     document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
     document.getElementById('panel-'+targetPanel).classList.add('active');
+    updateHorizonVisibility();
     if(targetPanel==='history') renderHistory();
     if(targetPanel==='insights') renderInsights();
     if(targetPanel==='habits') renderHabits();
