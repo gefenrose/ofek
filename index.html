@@ -60,8 +60,9 @@
     min-height:100vh;
     min-height:100dvh;
     position:relative;
-    background:var(--paper);
   }
+  #onboarding{background:var(--paper);}
+  #app{background:transparent;}
 
   /* ---------- Onboarding ---------- */
   #onboarding{
@@ -124,7 +125,7 @@
   .lang-toggle button{padding:6px 11px; font-size:0.78rem; color:var(--ink-soft); transition:background .15s ease, color .15s ease;}
   .lang-toggle button.active{background:var(--ink); color:var(--paper);}
 
-  .ribbon{height:10px; margin:6px 18px; border-radius:999px; background:linear-gradient(90deg, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high)); box-shadow:0 4px 18px rgba(143,184,201,.22); transition:background 1s ease, filter .6s;}
+  .ribbon{height:10px; margin:6px 18px; border-radius:999px; background:linear-gradient(90deg, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high)); box-shadow:0 2px 6px rgba(143,184,201,.18); transition:background 1s ease, filter .6s;}
   @media (prefers-reduced-motion: no-preference){
     .ribbon.ambient{ animation:ribbonDrift 18s ease-in-out infinite; }
   }
@@ -133,19 +134,18 @@
     50%{filter:hue-rotate(6deg) saturate(1.08);}
   }
 
-  .footer-horizon{
-    height:calc(140px + 86px + var(--safe-b)); margin-top:48px; flex-shrink:0;
-    background:linear-gradient(180deg, transparent 0%, var(--h-low) 16%, var(--h-mid1) 32%, var(--h-mid2) 46%, var(--h-high) 60%, var(--h-high) 100%);
-    position:relative; overflow:hidden;
+  .sky-bg{
+    position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+    background:
+      radial-gradient(ellipse 130% 42% at 50% 100%, rgba(255,225,140,.92) 0%, rgba(255,205,110,.55) 30%, rgba(255,205,110,0) 65%),
+      linear-gradient(180deg,
+        #02202A 0%, #002A3D 10%, #003C58 20%, #00527A 30%, #0069A0 40%,
+        #0486BA 50%, #2D91C5 55%, #6398CC 60%, #879BD0 63%, #A9A0CF 66%,
+        #CFACCA 70%, #EAB9BF 75%, #F9C0AC 80%, #FECF9B 85%, #FEDC92 90%,
+        #FFE382 95%, #FFDA79 100%);
   }
-  .horizon-line{position:absolute; left:0; top:92px; width:100%; height:24px; pointer-events:none;}
-  .horizon-line path{fill:none; stroke:rgba(255,255,255,.5); stroke-width:1.5;}
-  .horizon-dot{
-    position:absolute; top:98px; left:50%; width:10px; height:10px; border-radius:50%;
-    background:#FFF7E6; box-shadow:0 0 10px rgba(255,247,230,.85);
-    transform:translate(-50%, 0);
-    animation:horizonDotIn 4s linear both;
-  }
+  .sky-stars{position:absolute; left:0; top:0; width:100%; height:64%; overflow:hidden;}
+  .star{position:absolute; border-radius:50%; background:#fff;}
   @keyframes horizonDotIn{
     0%{left:-60%; transform:translate(-50%, 7px); opacity:0;}
     18%{opacity:1;}
@@ -195,7 +195,11 @@
   nav.bottomnav button.active{color:var(--accent);}
 
   /* ---------- Chat ---------- */
-  .greeting{padding:8px 2px 4px;}
+  .greeting{
+    padding:10px 14px; margin:4px 0;
+    background:rgba(255,255,255,.82); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    border-radius:16px; width:fit-content;
+  }
   .greeting h1{font-size:1.3rem; margin:0 0 2px;}
   .greeting p{margin:0; color:var(--ink-soft); font-size:0.9rem;}
   .flowrow{display:flex; gap:8px; overflow-x:auto; padding:4px 2px 6px; scrollbar-width:none;}
@@ -359,7 +363,12 @@
   .entry-image img{width:100%; max-height:240px; object-fit:cover; display:block;}
 
   /* ---------- Calendar ---------- */
-  .cal-header{display:flex; align-items:center; justify-content:space-between; padding:8px 2px 12px;}
+  .cal-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px; margin-bottom:6px;
+    background:rgba(255,255,255,.82); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    border-radius:14px;
+  }
   .cal-title{font-weight:700; font-size:1rem;}
   .cal-nav{display:flex; align-items:center; gap:4px;}
   .cal-nav-btn svg{width:19px; height:19px;}
@@ -367,7 +376,7 @@
   .cal-today-btn{font-size:0.74rem; color:var(--accent); padding:5px 11px; border-radius:999px; border:1px solid var(--line); margin-inline-end:2px; transition:background .15s ease;}
   .cal-today-btn:hover{background:var(--line);}
   .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:24px;}
-  .cal-wd{text-align:center; font-size:0.66rem; color:var(--ink-faint); padding-bottom:4px;}
+  .cal-wd{text-align:center; font-size:0.66rem; color:var(--ink-faint); padding:3px 0 5px; background:rgba(255,255,255,.82); border-radius:8px;}
   .cal-cell{
     aspect-ratio:1; border-radius:9px; display:flex; align-items:center; justify-content:center;
     font-size:0.78rem; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink-soft);
@@ -426,7 +435,7 @@
   .day-body{max-height:0; overflow:hidden; padding:0 15px 14px; transition:max-height .35s ease;}
   .day-card.open .day-body{max-height:2000px;}
   .entry-row .entry-text{font-size:0.88rem; line-height:1.5;}
-  .empty-state{padding:40px 20px; text-align:center; color:var(--ink-faint); font-size:0.9rem; display:flex; flex-direction:column; align-items:center; gap:14px;}
+  .empty-state{padding:40px 20px; text-align:center; color:var(--ink-faint); font-size:0.9rem; display:flex; flex-direction:column; align-items:center; gap:14px; background:rgba(255,255,255,.85); border-radius:18px; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);}
   .empty-state .empty-icon{font-size:1.8rem; opacity:.45;}
   .add-entry-btn{
     display:inline-flex; align-items:center; gap:6px;
@@ -498,7 +507,7 @@
   }
   .stat-card .num{font-size:1.6rem; font-weight:700; font-family:'Frank Ruhl Libre', serif;}
   .stat-card .lbl{font-size:0.72rem; color:var(--ink-soft); margin-top:2px;}
-  .section-title{font-size:0.95rem; font-weight:700; margin:22px 0 10px;}
+  .section-title{font-size:0.95rem; font-weight:700; margin:22px 0 10px; padding:6px 12px; background:rgba(255,255,255,.85); border-radius:10px; display:inline-block; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);}
   .horizon-chart{display:flex; align-items:flex-end; gap:3px; height:90px; padding:10px 0;}
   .horizon-bar{flex:1; border-radius:4px 4px 2px 2px; min-height:6px; background:var(--line); position:relative; transition:height .5s ease, background .5s ease;}
   .reflect-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius-md); padding:16px;}
@@ -640,12 +649,7 @@
     .app-shell .ribbon{margin:20px 32px 8px;}
     .app-shell main{padding:0;}
     .app-shell .panel{max-width:640px; margin:0 auto; padding:6px 32px 0;}
-    .app-shell .footer-horizon{
-      margin-top:48px; height:140px;
-      background:linear-gradient(180deg, transparent 0%, var(--h-low) 26%, var(--h-mid1) 52%, var(--h-mid2) 74%, var(--h-high) 100%);
-    }
-    .app-shell .horizon-line{top:88px;}
-    .app-shell .horizon-dot{top:94px;}
+    .sky-bg{display:none;}
     nav.bottomnav{display:none;}
 
     .sheet{
@@ -663,6 +667,56 @@
 </style>
 </head>
 <body>
+
+<div class="sky-bg" aria-hidden="true">
+  <div class="sky-stars">
+  <div class="star" style="left:87.6%;top:10.2%;width:1.6px;height:1.6px;opacity:0.45"></div>
+  <div class="star" style="left:21.1%;top:3.4%;width:2.6px;height:2.6px;opacity:0.58"></div>
+  <div class="star" style="left:34.7%;top:7.1%;width:1.7px;height:1.7px;opacity:0.79"></div>
+  <div class="star" style="left:60.0%;top:36.4%;width:2.9px;height:2.9px;opacity:0.37"></div>
+  <div class="star" style="left:81.6%;top:30.8%;width:2.5px;height:2.5px;opacity:0.48"></div>
+  <div class="star" style="left:29.8%;top:50.5%;width:1.5px;height:1.5px;opacity:0.13"></div>
+  <div class="star" style="left:37.5%;top:6.0%;width:1.8px;height:1.8px;opacity:0.39"></div>
+  <div class="star" style="left:38.4%;top:21.9%;width:3.2px;height:3.2px;opacity:0.47"></div>
+  <div class="star" style="left:24.0%;top:15.1%;width:1.5px;height:1.5px;opacity:0.36"></div>
+  <div class="star" style="left:40.0%;top:21.0%;width:3.0px;height:3.0px;opacity:0.4"></div>
+  <div class="star" style="left:58.1%;top:13.9%;width:3.0px;height:3.0px;opacity:0.41"></div>
+  <div class="star" style="left:6.5%;top:13.3%;width:1.6px;height:1.6px;opacity:0.54"></div>
+  <div class="star" style="left:97.6%;top:54.8%;width:2.4px;height:2.4px;opacity:0.24"></div>
+  <div class="star" style="left:63.5%;top:34.2%;width:1.6px;height:1.6px;opacity:0.29"></div>
+  <div class="star" style="left:89.6%;top:23.2%;width:3.0px;height:3.0px;opacity:0.31"></div>
+  <div class="star" style="left:53.8%;top:44.7%;width:2.8px;height:2.8px;opacity:0.24"></div>
+  <div class="star" style="left:86.4%;top:1.8%;width:2.9px;height:2.9px;opacity:0.44"></div>
+  <div class="star" style="left:75.0%;top:5.5%;width:2.8px;height:2.8px;opacity:0.31"></div>
+  <div class="star" style="left:42.6%;top:32.6%;width:1.8px;height:1.8px;opacity:0.34"></div>
+  <div class="star" style="left:51.7%;top:13.5%;width:1.6px;height:1.6px;opacity:0.32"></div>
+  <div class="star" style="left:8.8%;top:27.9%;width:2.5px;height:2.5px;opacity:0.25"></div>
+  <div class="star" style="left:14.7%;top:4.3%;width:3.1px;height:3.1px;opacity:0.59"></div>
+  <div class="star" style="left:42.7%;top:42.1%;width:2.2px;height:2.2px;opacity:0.32"></div>
+  <div class="star" style="left:34.6%;top:49.0%;width:3.0px;height:3.0px;opacity:0.14"></div>
+  <div class="star" style="left:26.0%;top:14.0%;width:3.1px;height:3.1px;opacity:0.44"></div>
+  <div class="star" style="left:90.9%;top:2.1%;width:2.9px;height:2.9px;opacity:0.35"></div>
+  <div class="star" style="left:38.4%;top:27.8%;width:3.2px;height:3.2px;opacity:0.27"></div>
+  <div class="star" style="left:97.6%;top:41.4%;width:2.4px;height:2.4px;opacity:0.32"></div>
+  <div class="star" style="left:7.5%;top:9.8%;width:2.5px;height:2.5px;opacity:0.5"></div>
+  <div class="star" style="left:13.5%;top:8.6%;width:3.0px;height:3.0px;opacity:0.36"></div>
+  <div class="star" style="left:52.2%;top:32.0%;width:3.1px;height:3.1px;opacity:0.22"></div>
+  <div class="star" style="left:30.8%;top:38.6%;width:2.0px;height:2.0px;opacity:0.36"></div>
+  <div class="star" style="left:27.5%;top:19.1%;width:3.1px;height:3.1px;opacity:0.61"></div>
+  <div class="star" style="left:96.8%;top:7.2%;width:2.6px;height:2.6px;opacity:0.23"></div>
+  <div class="star" style="left:12.3%;top:46.6%;width:2.4px;height:2.4px;opacity:0.16"></div>
+  <div class="star" style="left:27.3%;top:40.8%;width:2.3px;height:2.3px;opacity:0.38"></div>
+  <div class="star" style="left:63.2%;top:57.1%;width:1.9px;height:1.9px;opacity:0.17"></div>
+  <div class="star" style="left:54.4%;top:12.9%;width:2.9px;height:2.9px;opacity:0.52"></div>
+  <div class="star" style="left:78.4%;top:14.6%;width:2.9px;height:2.9px;opacity:0.67"></div>
+  <div class="star" style="left:86.9%;top:28.8%;width:2.1px;height:2.1px;opacity:0.4"></div>
+  <div class="star" style="left:79.8%;top:4.3%;width:3.0px;height:3.0px;opacity:0.25"></div>
+  <div class="star" style="left:27.6%;top:21.1%;width:2.8px;height:2.8px;opacity:0.23"></div>
+  <div class="star" style="left:46.2%;top:52.0%;width:1.9px;height:1.9px;opacity:0.23"></div>
+  <div class="star" style="left:28.8%;top:5.2%;width:2.6px;height:2.6px;opacity:0.47"></div>
+  <div class="star" style="left:60.2%;top:5.1%;width:2.3px;height:2.3px;opacity:0.47"></div>
+  </div>
+</div>
 
 <div id="splash-screen">
   <div class="splash-horizon">
@@ -797,11 +851,6 @@
       <div id="habits-list"></div>
       <div class="habits-add-row"><button type="button" class="add-entry-btn" id="habit-add-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span id="habit-add-btn-label">הוספת הרגל</span></button></div>
     </section>
-
-    <div class="footer-horizon">
-      <svg class="horizon-line" viewBox="0 0 400 24" preserveAspectRatio="none"><path d="M0,18 Q200,4 400,18"></path></svg>
-      <div class="horizon-dot"></div>
-    </div>
   </main>
 
   <nav class="bottomnav">
@@ -1386,28 +1435,8 @@
     distressCloseBtn.addEventListener('click', dismissDistressCard);
   }
 
-  function updateHorizonVisibility(){
-    // The ambient footer-horizon decoration is a flex sibling inside <main>,
-    // always reserving its own ~226px of height below the active panel.
-    // That's a nice touch for finite-content panels (History/Insights/
-    // Habits), but while actively chatting it sits below the composer and
-    // silently extends main's scrollable area past it - so "scroll new
-    // message into view" lands short of the true bottom, leaving an empty
-    // gap the user has to scroll through manually. Hide it only while
-    // panel-chat is the active panel AND its composer is in use; every
-    // other case keeps the decoration.
-    var horizon = document.querySelector('.footer-horizon');
-    if(!horizon) return;
-    var chatPanel = document.getElementById('panel-chat');
-    var composer = document.getElementById('composer-row');
-    var chatIsActive = chatPanel && chatPanel.classList.contains('active');
-    var composerIsOpen = composer && composer.style.display !== 'none';
-    horizon.style.display = (chatIsActive && composerIsOpen) ? 'none' : '';
-  }
-
   function setComposerVisible(visible){
     document.getElementById('composer-row').style.display = visible ? 'flex' : 'none';
-    updateHorizonVisibility();
   }
 
   function openFlow(flow, dateKey){
@@ -1807,7 +1836,6 @@
     });
     document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
     document.getElementById('panel-'+targetPanel).classList.add('active');
-    updateHorizonVisibility();
     if(targetPanel==='history') renderHistory();
     if(targetPanel==='insights') renderInsights();
     if(targetPanel==='habits') renderHabits();
