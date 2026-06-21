@@ -412,14 +412,14 @@
   .moodimage-row{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
   .moodimage-btn{
     flex:0 0 auto; display:inline-flex; align-items:center; gap:6px;
-    padding:10px 14px; border-radius:999px; border:1px dashed var(--line);
-    background:transparent; color:var(--ink-soft); font-size:0.85rem; font-weight:500;
-    transition:border-color .15s ease, color .15s ease, background .15s ease;
+    padding:9px 16px; border-radius:999px; border:1px solid var(--line);
+    background:var(--paper-raised); color:var(--ink-soft); font-size:0.85rem; font-weight:500;
+    transition:border-color .15s ease, color .15s ease, background .15s ease, transform .12s ease;
   }
   .moodimage-btn:hover{border-color:var(--accent); color:var(--ink);}
   .moodimage-btn:active{transform:scale(.97);}
   .moodimage-btn svg{width:16px; height:16px;}
-  .moodimage-btn.has-image{border-style:solid; border-color:var(--accent); color:var(--accent);}
+  .moodimage-btn.has-image{border-color:var(--accent); color:var(--ink); background:#fff;}
   .moodimage-preview{
     width:56px; height:56px; border-radius:12px; overflow:hidden;
     background:var(--line); flex:0 0 auto; position:relative;
