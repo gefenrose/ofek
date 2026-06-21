@@ -363,6 +363,37 @@
   .composer-actions{display:flex; justify-content:center; margin-top:4px;}
   .composer-actions .btn-primary{width:100%; max-width:320px;}
 
+  /* ---------- Grounding chat (real-time, distinct from the composer) ---------- */
+  .grounding-thread{display:flex; flex-direction:column; gap:10px; padding:6px 2px 16px; min-height:80px;}
+  .g-bubble{max-width:84%; padding:11px 15px; border-radius:18px; font-size:0.95rem; line-height:1.45; animation:bubbleIn .25s ease;}
+  @media (prefers-reduced-motion: reduce){ .g-bubble{animation:none;} }
+  .g-bubble.assistant{align-self:flex-start; background:var(--paper-raised); border:1px solid var(--line); border-start-start-radius:6px;}
+  .g-bubble.user{align-self:flex-end; background:var(--ink); color:var(--paper); border-end-end-radius:6px;}
+  .g-bubble.g-typing{animation:bubbleIn .25s ease, typingPulse 1.2s ease-in-out infinite;}
+  @keyframes typingPulse{0%,100%{opacity:.45;} 50%{opacity:1;}}
+  .grounding-input-row{
+    position:sticky; bottom:0; display:flex; align-items:flex-end; gap:8px;
+    padding:10px 2px 2px; background:transparent;
+  }
+  .grounding-input{
+    flex:1; resize:none; max-height:120px; padding:12px 16px; border-radius:var(--radius-md);
+    background:var(--paper-raised); border:1px solid var(--line); font:inherit; font-size:0.97rem;
+  }
+  .grounding-send-btn{
+    width:44px; height:44px; border-radius:50%; background:var(--ink); color:var(--paper);
+    display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+    transition:opacity .15s ease, transform .12s ease;
+  }
+  .grounding-send-btn svg{width:20px; height:20px; flex:0 0 auto;}
+  .grounding-send-btn:active:not(:disabled){transform:scale(.9);}
+  .grounding-send-btn:disabled{opacity:.35;}
+  .grounding-finish-row{margin-top:10px;}
+  .grounding-finish-btn{
+    font-size:0.82rem; color:var(--ink-soft); text-decoration:underline; text-decoration-color:var(--line);
+    background:rgba(255,255,255,.78); padding:6px 14px; border-radius:999px;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); display:block; margin:0 auto;
+  }
+
   /* ---------- Mood slider ---------- */
   .moodpicker{padding:18px 4px 8px; text-align:center;}
   .moodpicker .moodlabel{font-size:1.4rem; font-weight:700; margin-bottom:4px; transition:color .2s;}
@@ -1483,9 +1514,11 @@
     composerPickedImage = null;
     resetDistressCard();
     if(backfillDate) switchToPanel('chat');
-    // Re-render chips so the active pill updates immediately.
-    renderFlowChips();
-    renderComposer(flow);
+    if(flow === 'grounding'){
+      renderGroundingChat();
+    } else {
+      renderComposer(flow);
+    }
   }
 
   function recentEntriesDigest(){
@@ -1817,6 +1850,144 @@
     host.appendChild(validationEl);
     host.appendChild(actionsRow);
   }
+
+  /* ============ Grounding chat (real-time, distinct from the freeform composer) ============ */
+  // The crisis-support flow stays a genuine back-and-forth conversation, since
+  // following someone's pace in the moment matters more here than anywhere
+  // else in the app - unlike every other flow, this one isn't a fit for
+  // "write freely, optionally get one suggestion."
+  var groundingMessages = []; // {role:'user'|'assistant', content}
+
+  function buildGroundingChatSystemMessage(){
+    var lang = state.profile.lang;
+    var name = state.profile.name;
+    return lang==='he'
+      ? ('את/ה אופק, נוכחות רגועה ותומכת עבור '+name+' ברגע של מצוקה או חרדה. דבר/י בקצרה ובחום - משפט או שניים בכל פעם - ושאל/י שאלה אחת או הצע/י דבר אחד בכל תגובה, לא יותר. אפשר להציע טכניקות קרקוע פשוטות (נשימה איטית, תרגיל חושי של 5-4-3-2-1) אבל רק כשזה מתאים, בלי לכפות. עקוב/י אחרי הקצב של '+name+'. את/ה לא מטפל/ת מוסמך/ת ולא מספק/ת אבחון או טיפול - אם נשמע שהמצב חמור, אפשר להזכיר בעדינות שער"ן זמינים בחינם ב-1201.')
+      : ("You are Ofek, a calm, supportive presence for "+name+" during a moment of distress or anxiety. Speak briefly and warmly - one or two sentences at a time - and ask one question or offer one suggestion per reply, no more. You can suggest simple grounding techniques (slow breathing, the 5-4-3-2-1 senses exercise) but only when it fits, never forced. Follow "+name+"'s pace. You are not a licensed therapist and don't diagnose or treat - if things sound serious, you can gently mention that ER'N is free to call at 1201.");
+  }
+
+  function addGroundingBubble(role, text){
+    var thread = document.getElementById('grounding-thread');
+    if(!thread) return null;
+    var b = document.createElement('div');
+    b.className = 'g-bubble ' + role;
+    b.textContent = text;
+    thread.appendChild(b);
+    b.scrollIntoView({behavior:'smooth', block:'end'});
+    return b;
+  }
+
+  function setGroundingSending(loading){
+    var sendBtn = document.getElementById('grounding-send-btn');
+    if(sendBtn) sendBtn.disabled = loading;
+    var thread = document.getElementById('grounding-thread');
+    var typing = document.getElementById('grounding-typing');
+    if(loading && !typing && thread){
+      typing = document.createElement('div');
+      typing.id = 'grounding-typing';
+      typing.className = 'g-bubble assistant g-typing';
+      typing.textContent = '…';
+      thread.appendChild(typing);
+      typing.scrollIntoView({behavior:'smooth', block:'end'});
+    } else if(!loading && typing){
+      typing.remove();
+    }
+  }
+
+  async function sendGroundingMessage(){
+    var input = document.getElementById('grounding-input');
+    var text = input.value.trim();
+    if(!text) return;
+    addGroundingBubble('user', text);
+    groundingMessages.push({role:'user', content:text});
+    input.value = '';
+    autoGrowTextarea(input);
+    setGroundingSending(true);
+    try{
+      var reply = await askCompanion(buildGroundingChatSystemMessage(), groundingMessages);
+      setGroundingSending(false);
+      addGroundingBubble('assistant', reply);
+      groundingMessages.push({role:'assistant', content:reply});
+    }catch(e){
+      setGroundingSending(false);
+      addGroundingBubble('assistant', tr('aiError'));
+    }
+  }
+
+  async function finishGroundingChat(){
+    if(groundingMessages.length){
+      var lang = state.profile.lang;
+      var transcript = groundingMessages.map(function(m){
+        var who = m.role === 'user' ? (state.profile.name || (lang==='he' ? 'אני' : 'Me')) : 'Ofek';
+        return who + ': ' + m.content;
+      }).join('\n');
+      var entryIdToSummarize = activeEntryId;
+      persistEntry(null, transcript, null);
+      closeFlow();
+      generateEntrySummary(entryIdToSummarize, transcript, null);
+    } else {
+      closeFlow();
+    }
+  }
+
+  function renderGroundingChat(){
+    var host = document.getElementById('composer-host');
+    host.innerHTML = '';
+    groundingMessages = [];
+
+    var thread = document.createElement('div');
+    thread.className = 'grounding-thread';
+    thread.id = 'grounding-thread';
+
+    var inputRow = document.createElement('div');
+    inputRow.className = 'grounding-input-row';
+    var input = document.createElement('textarea');
+    input.id = 'grounding-input';
+    input.className = 'grounding-input';
+    input.rows = 1;
+    input.placeholder = tr('composerPh');
+    var sendBtn = document.createElement('button');
+    sendBtn.type = 'button';
+    sendBtn.id = 'grounding-send-btn';
+    sendBtn.className = 'grounding-send-btn';
+    sendBtn.setAttribute('aria-label', state.profile.lang==='he' ? 'שליחה' : 'Send');
+    sendBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>';
+    input.addEventListener('input', function(){ autoGrowTextarea(input); });
+    input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendGroundingMessage(); }
+    });
+    sendBtn.addEventListener('click', sendGroundingMessage);
+    inputRow.appendChild(input);
+    inputRow.appendChild(sendBtn);
+
+    var finishRow = document.createElement('div');
+    finishRow.className = 'composer-actions grounding-finish-row';
+    var finishBtn = document.createElement('button');
+    finishBtn.type = 'button';
+    finishBtn.className = 'grounding-finish-btn';
+    finishBtn.textContent = tr('endFlow');
+    finishBtn.addEventListener('click', finishGroundingChat);
+    finishRow.appendChild(finishBtn);
+
+    host.appendChild(thread);
+    host.appendChild(inputRow);
+    host.appendChild(finishRow);
+
+    // AI opens the conversation gently, rather than waiting on the person
+    // to find the first words during a hard moment.
+    setGroundingSending(true);
+    var lang = state.profile.lang;
+    var kickoffAsk = lang==='he' ? 'פתח/י את השיחה בעדינות.' : 'Open the conversation gently.';
+    askCompanion(buildGroundingChatSystemMessage(), [{role:'user', content: kickoffAsk}]).then(function(reply){
+      setGroundingSending(false);
+      addGroundingBubble('assistant', reply);
+      groundingMessages.push({role:'assistant', content:reply});
+    }).catch(function(){
+      setGroundingSending(false);
+      addGroundingBubble('assistant', tr('aiError'));
+    });
+  }
+
 
 
   /* ============ Nav (bottom bar + sidebar) ============ */
@@ -2834,32 +3005,6 @@
   var editingMode = 'edit'; // 'edit' or 'add'
   var editingTargetDate = null; // for add mode, the YYYY-MM-DD to write the entry to
 
-  function updateAddEntrySaveLabel(flow){
-    var lang = state.profile.lang;
-    var btn = document.getElementById('edit-save-btn');
-    btn.textContent = flow === 'mood'
-      ? (lang === 'he' ? 'הוסף רשומה' : 'Add entry')
-      : (lang === 'he' ? 'התחלת שיחה' : 'Start conversation');
-  }
-
-  function renderEditFlowRow(activeFlow){
-    var row = document.getElementById('edit-flow-row');
-    row.innerHTML = '';
-    FLOWS.forEach(function(f){
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'pill'+(f===activeFlow?' active':'');
-      b.textContent = tr(FLOW_KEY[f]);
-      b.addEventListener('click', function(){
-        row.querySelectorAll('.pill').forEach(function(p){ p.classList.remove('active'); });
-        b.classList.add('active');
-        updateAddEntrySaveLabel(f);
-      });
-      row.appendChild(b);
-    });
-    updateAddEntrySaveLabel(activeFlow);
-  }
-
   function openEditEntry(entryId){
     var entry = state.entries.find(function(e){ return e.id === entryId; });
     if(!entry) return;
@@ -2910,21 +3055,17 @@
     var sheet = document.getElementById('edit-entry-sheet');
     document.getElementById('sheet-backdrop').classList.add('open');
     sheet.classList.add('open');
-    // show flow picker for new entries
-    document.getElementById('edit-flow-field').style.display = '';
-    // default flow: chat or mood depending on hour
-    var part = dayPart(new Date().getHours());
-    var defaultFlow = part==='morning' ? 'morning' : (part==='evening' || part==='night') ? 'evening' : 'mood';
-    renderEditFlowRow(defaultFlow);
+    // Flow picker is deprecated - entries no longer need a type chosen up front.
+    document.getElementById('edit-flow-field').style.display = 'none';
     // localize
     document.getElementById('edit-entry-title').textContent = lang === 'he' ? 'רשומה חדשה ליום הזה' : 'New entry for this day';
-    document.getElementById('edit-flow-label').textContent = lang === 'he' ? 'סוג' : 'Type';
     document.getElementById('edit-mood-label').textContent = lang === 'he' ? 'מצב רוח' : 'Mood';
     document.getElementById('edit-note-label').textContent = lang === 'he' ? 'הערה' : 'Note';
     document.getElementById('edit-image-label').textContent = lang === 'he' ? 'תמונה' : 'Image';
     document.getElementById('edit-image-btn-label').textContent = lang === 'he' ? 'הוסף תמונה' : 'Add photo';
     document.getElementById('edit-delete-btn').style.display = 'none';
     document.getElementById('edit-sheet-close-btn').textContent = lang === 'he' ? 'ביטול' : 'Cancel';
+    document.getElementById('edit-save-btn').textContent = lang === 'he' ? 'הוסף רשומה' : 'Add entry';
     document.getElementById('edit-note').placeholder = lang === 'he' ? 'הערה (לא חובה)' : 'Note (optional)';
     // meta - just show the date
     document.getElementById('edit-entry-meta').textContent = (lang === 'he' ? 'ליום ' : 'For ') + formatDate(dateKey);
@@ -2968,28 +3109,15 @@
     var noteText = document.getElementById('edit-note').value.trim();
     if(editingMode === 'add'){
       if(!editingTargetDate) return;
-      var flowRow = document.getElementById('edit-flow-row');
-      var activePill = flowRow.querySelector('.pill.active');
-      var flow = activePill ? FLOWS.find(function(f){ return tr(FLOW_KEY[f]) === activePill.textContent; }) : null;
-      if(!flow) flow = 'chat';
-
-      if(flow !== 'mood'){
-        // Open the composer for that past date, instead of a blank static entry.
-        var targetDate = editingTargetDate;
-        closeEditEntry();
-        openFlow(flow, targetDate);
-        return;
-      }
-
       var now = new Date();
+      var newEntryId = 'e'+Date.now();
       var entry = {
-        id: 'e'+Date.now(),
+        id: newEntryId,
         date: editingTargetDate,
         time: timeStr(now),
-        flow: flow,
+        flow: 'chat',
         mood: (Number.isFinite(moodVal)) ? moodVal : null,
         note: noteText || undefined,
-        messages: [],
         createdAt: Date.now()
       };
       if(editingImage) entry.image = editingImage;
@@ -3002,6 +3130,9 @@
       renderHistory();
       renderInsights();
       closeEditEntry();
+      if(noteText){
+        generateEntrySummary(newEntryId, noteText, Number.isFinite(moodVal) ? moodVal : null);
+      }
       return;
     }
     if(!editingEntryId) return;
