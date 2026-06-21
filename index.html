@@ -184,7 +184,7 @@
   .lock-mark img{width:100%; height:100%; display:block;}
   .lock-title{font-size:1.3rem; font-weight:700; margin:0 0 4px; color:#fff;}
   .lock-sub{color:rgba(255,255,255,.78); margin:0 0 26px; font-size:0.92rem;}
-  .pin-dots{display:flex; gap:16px; margin-bottom:14px;}
+  .pin-dots{display:flex; gap:16px; margin-bottom:14px; direction:ltr;}
   .pin-dot{
     width:14px; height:14px; border-radius:50%; border:1.5px solid rgba(255,255,255,.55);
     background:transparent; transition:background .15s ease, transform .15s ease;
@@ -196,7 +196,7 @@
     40%{transform:translateX(8px);} 60%{transform:translateX(-6px);} 80%{transform:translateX(6px);}
   }
   .pin-error{min-height:18px; color:#FFB4A8; font-size:0.82rem; margin-bottom:18px;}
-  .pin-keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; width:100%; max-width:260px;}
+  .pin-keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; width:100%; max-width:260px; direction:ltr;}
   .pin-key{
     aspect-ratio:1; border-radius:50%; background:rgba(255,255,255,.12);
     color:#fff; font-size:1.3rem; font-weight:600; display:flex; align-items:center; justify-content:center;
@@ -208,6 +208,7 @@
   .pin-key-bio:active{background:rgba(255,255,255,.1);}
   .pin-key-back svg{width:20px; height:20px;}
 
+  #pin-setup-sheet{z-index:42;}
   .pin-setup-sheet .pin-dots, .pin-setup-sheet .pin-keypad{margin-left:auto; margin-right:auto;}
   .pin-setup-sheet .pin-dot{border-color:var(--line); }
   .pin-setup-sheet .pin-dot.filled{background:var(--ink);}
@@ -952,6 +953,18 @@
   <div class="field">
     <label id="settings-lang-label">שפה</label>
     <div class="pillrow" id="settings-lang-row"></div>
+  </div>
+  <div class="field">
+    <div class="habit-switch-row">
+      <label id="lock-settings-label">נעילת אפליקציה</label>
+      <label class="switch"><input type="checkbox" id="lock-enable-toggle"><span class="slider"></span></label>
+    </div>
+    <div class="habit-notify-note" id="lock-settings-note">דרוש/י קוד או זיהוי ביומטרי לפתיחת האפליקציה.</div>
+    <button class="data-btn" id="lock-change-pin-btn" style="display:none; margin-top:10px;">שינוי קוד</button>
+    <div class="habit-switch-row" id="lock-biometric-row" style="display:none; margin-top:14px;">
+      <label id="lock-biometric-label-el">פתיחה עם זיהוי ביומטרי</label>
+      <label class="switch"><input type="checkbox" id="lock-biometric-toggle"><span class="slider"></span></label>
+    </div>
   </div>
   <div class="field">
     <label id="drive-sync-label">סנכרון בעננה</label>
@@ -2832,9 +2845,10 @@
   function openSettings(){
     document.getElementById('settings-sheet').classList.add('open');
     document.getElementById('sheet-backdrop').classList.add('open');
+    renderLockSettingsUI();
   }
   function closeBackdropIfNoSheetsOpen(){
-    var anyOpen = ['settings-sheet','edit-entry-sheet','grounding-disclaimer-sheet','habit-sheet'].some(function(id){
+    var anyOpen = ['settings-sheet','edit-entry-sheet','grounding-disclaimer-sheet','habit-sheet','pin-setup-sheet'].some(function(id){
       var el = document.getElementById(id);
       return el && el.classList.contains('open');
     });
@@ -3126,7 +3140,12 @@
 
   // Backdrop closes whichever sheet is open
   document.getElementById('sheet-backdrop').addEventListener('click', function(){
-    if(document.getElementById('edit-entry-sheet').classList.contains('open')) closeEditEntry();
+    if(document.getElementById('pin-setup-sheet').classList.contains('open')){
+      if(!state.security.pinHash) state.security.lockEnabled = false;
+      closePinSetup();
+      renderLockSettingsUI();
+    }
+    else if(document.getElementById('edit-entry-sheet').classList.contains('open')) closeEditEntry();
     else if(document.getElementById('grounding-disclaimer-sheet').classList.contains('open')) closeGroundingDisclaimer();
     else if(document.getElementById('settings-sheet').classList.contains('open')) closeSettings();
   });
@@ -3461,6 +3480,303 @@
     }
   }
 
+  /* ============ App Lock (PIN + biometric) ============ */
+  var lockUnlocked = false; // true once unlocked for this session; re-armed when the app is backgrounded
+  var pinBuffer = '';
+  var PIN_LENGTH = 4;
+  var pendingSetupPin = null; // holds the first entry during two-step PIN setup, until confirmed
+  var lockSetupMode = null;   // null | 'setup' | 'confirm'
+
+  var BIOMETRIC_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11v3.5a2.5 2.5 0 0 1-2.5 2.5"></path><path d="M6.5 9.5a5.5 5.5 0 0 1 11 0V12"></path><path d="M4 12V9.5a8 8 0 0 1 15.9-1.2"></path><path d="M9 9.5v3.5a3 3 0 0 0 5.2 2"></path><path d="M16.5 9.5v4a6.5 6.5 0 0 1-1.4 4.1"></path><path d="M3.5 14a8 8 0 0 0 2.6 5.3"></path></svg>';
+
+  function bufToBase64(buf){
+    var bytes = new Uint8Array(buf);
+    var binary = '';
+    for(var i=0;i<bytes.byteLength;i++){ binary += String.fromCharCode(bytes[i]); }
+    return btoa(binary);
+  }
+  function base64ToBuf(b64){
+    var binary = atob(b64);
+    var bytes = new Uint8Array(binary.length);
+    for(var i=0;i<binary.length;i++){ bytes[i] = binary.charCodeAt(i); }
+    return bytes.buffer;
+  }
+  function randomBytesBase64(len){
+    var arr = new Uint8Array(len);
+    crypto.getRandomValues(arr);
+    return bufToBase64(arr.buffer);
+  }
+  function hashPin(pin, saltB64){
+    var enc = new TextEncoder();
+    var data = enc.encode(saltB64 + ':' + pin);
+    return crypto.subtle.digest('SHA-256', data).then(bufToBase64);
+  }
+
+  function isBiometricApiPresent(){
+    return !!(window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable);
+  }
+  function biometricCheckAvailable(){
+    if(!isBiometricApiPresent()) return Promise.resolve(false);
+    return PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(function(){ return false; });
+  }
+
+  function registerBiometric(){
+    if(!isBiometricApiPresent()) return Promise.reject(new Error('unavailable'));
+    var userIdB64 = state.security.credentialUserId || randomBytesBase64(16);
+    var challenge = crypto.getRandomValues(new Uint8Array(32));
+    return navigator.credentials.create({
+      publicKey: {
+        challenge: challenge,
+        rp: { name: 'Ofek' },
+        user: {
+          id: base64ToBuf(userIdB64),
+          name: state.profile.name || 'ofek-user',
+          displayName: state.profile.name || 'Ofek user'
+        },
+        pubKeyCredParams: [{type:'public-key', alg:-7}, {type:'public-key', alg:-257}],
+        authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required' },
+        timeout: 60000
+      }
+    }).then(function(cred){
+      state.security.credentialId = bufToBase64(cred.rawId);
+      state.security.credentialUserId = userIdB64;
+      state.security.biometricEnabled = true;
+      saveState();
+      return true;
+    });
+  }
+
+  function verifyBiometric(){
+    if(!state.security.credentialId) return Promise.reject(new Error('no-credential'));
+    var challenge = crypto.getRandomValues(new Uint8Array(32));
+    return navigator.credentials.get({
+      publicKey: {
+        challenge: challenge,
+        allowCredentials: [{ type:'public-key', id: base64ToBuf(state.security.credentialId) }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    }).then(function(assertion){
+      return !!assertion;
+    });
+  }
+
+  function renderPinDots(hostId){
+    var host = document.getElementById(hostId);
+    if(!host) return;
+    var dots = host.querySelectorAll('.pin-dot');
+    dots.forEach(function(d, i){ d.classList.toggle('filled', i < pinBuffer.length); });
+  }
+
+  function buildKeypad(hostId, onDigit, onBackspace, onBiometric, showBiometric){
+    var host = document.getElementById(hostId);
+    if(!host) return;
+    host.innerHTML = '';
+    var layout = ['1','2','3','4','5','6','7','8','9','bio','0','back'];
+    layout.forEach(function(key){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pin-key';
+      if(key === 'bio'){
+        btn.className += ' pin-key-bio';
+        btn.innerHTML = BIOMETRIC_ICON_SVG;
+        if(!showBiometric){ btn.style.visibility = 'hidden'; }
+        btn.addEventListener('click', function(){ if(onBiometric) onBiometric(); });
+      } else if(key === 'back'){
+        btn.className += ' pin-key-back';
+        btn.setAttribute('aria-label', state.profile.lang==='he' ? 'מחיקה' : 'Backspace');
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>';
+        btn.addEventListener('click', onBackspace);
+      } else {
+        btn.textContent = key;
+        btn.addEventListener('click', function(){ onDigit(key); });
+      }
+      host.appendChild(btn);
+    });
+  }
+
+  /* ---- Unlock screen ---- */
+  function showLockScreen(){
+    document.getElementById('lock-screen').style.display = 'flex';
+    document.getElementById('lock-title-text').textContent = tr('lockTitle');
+    document.getElementById('lock-sub-text').textContent = tr('lockSub');
+    pinBuffer = '';
+    renderPinDots('lock-pin-dots');
+    document.getElementById('lock-pin-error').textContent = '';
+    var canBio = state.security.biometricEnabled && isBiometricApiPresent();
+    buildKeypad('lock-keypad', handleLockDigit, handleLockBackspace, attemptBiometricUnlock, canBio);
+    if(canBio){
+      setTimeout(attemptBiometricUnlock, 400);
+    }
+  }
+  function hideLockScreen(){
+    document.getElementById('lock-screen').style.display = 'none';
+    lockUnlocked = true;
+    pinBuffer = '';
+  }
+  function attemptBiometricUnlock(){
+    verifyBiometric().then(function(ok){
+      if(ok) hideLockScreen();
+    }).catch(function(){ /* cancelled or failed - PIN remains available */ });
+  }
+  function handleLockDigit(d){
+    if(pinBuffer.length >= PIN_LENGTH) return;
+    pinBuffer += d;
+    renderPinDots('lock-pin-dots');
+    if(pinBuffer.length === PIN_LENGTH) checkLockPin();
+  }
+  function handleLockBackspace(){
+    pinBuffer = pinBuffer.slice(0, -1);
+    renderPinDots('lock-pin-dots');
+  }
+  function checkLockPin(){
+    hashPin(pinBuffer, state.security.pinSalt).then(function(hash){
+      if(hash === state.security.pinHash){
+        hideLockScreen();
+      } else {
+        document.getElementById('lock-pin-error').textContent = tr('lockWrongPin');
+        var dotsHost = document.getElementById('lock-pin-dots');
+        dotsHost.classList.add('shake');
+        setTimeout(function(){ dotsHost.classList.remove('shake'); }, 400);
+        pinBuffer = '';
+        setTimeout(function(){ renderPinDots('lock-pin-dots'); }, 150);
+      }
+    });
+  }
+
+  function checkAndShowLock(){
+    if(state.security && state.security.lockEnabled && !lockUnlocked){
+      showLockScreen();
+      return true;
+    }
+    return false;
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'hidden'){
+      lockUnlocked = false; // re-lock whenever the app leaves the foreground
+    } else if(document.visibilityState === 'visible'){
+      if(state.profile && state.profile.onboarded) checkAndShowLock();
+    }
+  });
+
+  /* ---- PIN setup (from Settings) ---- */
+  function openPinSetup(){
+    lockSetupMode = 'setup';
+    pendingSetupPin = null;
+    pinBuffer = '';
+    document.getElementById('pin-setup-title').textContent = tr('lockSetupTitle');
+    document.getElementById('pin-setup-sub').textContent = tr('lockSetupSub');
+    document.getElementById('pin-setup-error').textContent = '';
+    document.getElementById('pin-setup-cancel-btn').textContent = tr('close');
+    buildKeypad('pin-setup-keypad', handleSetupDigit, handleSetupBackspace, null, false);
+    renderPinDots('pin-setup-dots');
+    document.getElementById('pin-setup-sheet').classList.add('open');
+    document.getElementById('sheet-backdrop').classList.add('open');
+  }
+  function closePinSetup(){
+    document.getElementById('pin-setup-sheet').classList.remove('open');
+    closeBackdropIfNoSheetsOpen();
+    lockSetupMode = null; pendingSetupPin = null; pinBuffer = '';
+  }
+  function handleSetupDigit(d){
+    if(pinBuffer.length >= PIN_LENGTH) return;
+    pinBuffer += d;
+    renderPinDots('pin-setup-dots');
+    if(pinBuffer.length !== PIN_LENGTH) return;
+    if(lockSetupMode === 'setup'){
+      pendingSetupPin = pinBuffer;
+      pinBuffer = '';
+      lockSetupMode = 'confirm';
+      document.getElementById('pin-setup-title').textContent = tr('lockConfirmTitle');
+      document.getElementById('pin-setup-sub').textContent = tr('lockConfirmSub');
+      setTimeout(function(){ renderPinDots('pin-setup-dots'); }, 120);
+    } else if(lockSetupMode === 'confirm'){
+      if(pinBuffer === pendingSetupPin){
+        finalizePinSetup(pinBuffer);
+      } else {
+        document.getElementById('pin-setup-error').textContent = tr('lockMismatch');
+        var dotsHost = document.getElementById('pin-setup-dots');
+        dotsHost.classList.add('shake');
+        setTimeout(function(){ dotsHost.classList.remove('shake'); }, 400);
+        pendingSetupPin = null; pinBuffer = '';
+        lockSetupMode = 'setup';
+        document.getElementById('pin-setup-title').textContent = tr('lockSetupTitle');
+        document.getElementById('pin-setup-sub').textContent = tr('lockSetupSub');
+        setTimeout(function(){ renderPinDots('pin-setup-dots'); }, 200);
+      }
+    }
+  }
+  function handleSetupBackspace(){
+    pinBuffer = pinBuffer.slice(0, -1);
+    renderPinDots('pin-setup-dots');
+  }
+  function finalizePinSetup(pin){
+    var salt = randomBytesBase64(16);
+    hashPin(pin, salt).then(function(hash){
+      state.security.pinSalt = salt;
+      state.security.pinHash = hash;
+      state.security.lockEnabled = true;
+      saveState();
+      closePinSetup();
+      renderLockSettingsUI();
+    });
+  }
+  document.getElementById('pin-setup-cancel-btn').addEventListener('click', function(){
+    // Cancelling setup of a brand-new lock should leave lock disabled, not half-on
+    if(!state.security.pinHash) state.security.lockEnabled = false;
+    closePinSetup();
+    renderLockSettingsUI();
+  });
+
+  /* ---- Settings wiring ---- */
+  function renderLockSettingsUI(){
+    document.getElementById('lock-settings-label').textContent = tr('lockSettingsLabel');
+    document.getElementById('lock-settings-note').textContent = tr('lockSettingsNote');
+    document.getElementById('lock-change-pin-btn').textContent = tr('lockChangePin');
+    document.getElementById('lock-biometric-label-el').textContent = tr('lockBiometricLabel');
+    document.getElementById('lock-enable-toggle').checked = !!state.security.lockEnabled;
+    document.getElementById('lock-change-pin-btn').style.display = state.security.lockEnabled ? '' : 'none';
+    document.getElementById('lock-biometric-row').style.display = state.security.lockEnabled ? '' : 'none';
+    document.getElementById('lock-biometric-toggle').checked = !!state.security.biometricEnabled;
+  }
+
+  document.getElementById('lock-enable-toggle').addEventListener('change', function(e){
+    if(e.target.checked){
+      e.target.checked = false; // becomes true for real once setup actually finishes
+      openPinSetup();
+    } else {
+      state.security.lockEnabled = false;
+      state.security.pinHash = null;
+      state.security.pinSalt = null;
+      state.security.biometricEnabled = false;
+      state.security.credentialId = null;
+      saveState();
+      renderLockSettingsUI();
+    }
+  });
+  document.getElementById('lock-change-pin-btn').addEventListener('click', openPinSetup);
+  document.getElementById('lock-biometric-toggle').addEventListener('change', function(e){
+    if(e.target.checked){
+      e.target.checked = false;
+      biometricCheckAvailable().then(function(avail){
+        if(!avail){
+          alert(tr('lockBiometricUnavailable'));
+          return;
+        }
+        registerBiometric().then(function(){
+          renderLockSettingsUI();
+        }).catch(function(){
+          alert(tr('lockBiometricSetupFail'));
+        });
+      });
+    } else {
+      state.security.biometricEnabled = false;
+      state.security.credentialId = null;
+      saveState();
+      renderLockSettingsUI();
+    }
+  });
+
   function requestPersistentStorage(){
     if(navigator.storage && navigator.storage.persist){
       navigator.storage.persisted().then(function(already){
@@ -3474,6 +3790,7 @@
   if(state.profile && state.profile.onboarded){
     document.getElementById('onboarding').style.display = 'none';
     startApp();
+    checkAndShowLock();
   } else {
     renderOnboarding();
   }
