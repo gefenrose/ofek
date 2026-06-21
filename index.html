@@ -214,7 +214,7 @@
   .settings-credit{text-align:center; margin-top:18px;}
   .settings-credit span{font-size:0.7rem; color:var(--ink-faint);}
 
-  main{flex:1; overflow-y:auto; display:flex; flex-direction:column; min-height:0; padding-bottom:calc(82px + var(--safe-b));}
+  main{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; min-height:0; padding-bottom:calc(82px + var(--safe-b));}
   .panel{display:none; padding:6px 18px 0;}
   .panel.active{display:block; animation:panelIn .28s ease; flex:1 0 auto;}
   @keyframes panelIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
