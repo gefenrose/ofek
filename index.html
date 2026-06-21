@@ -387,6 +387,7 @@
   /* ---------- Mood slider ---------- */
   .moodpicker{padding:18px 4px 8px; text-align:center;}
   .moodpicker .moodlabel{font-size:1.4rem; font-weight:700; margin-bottom:4px; transition:color .2s;}
+  .moodface{display:flex; justify-content:center; margin-bottom:6px;}
   .moodpicker .moodsub{color:var(--ink-faint); font-size:0.8rem; margin-bottom:18px;}
   .moodpicker-saveonly{margin-top:12px; font-size:0.82rem; color:var(--ink-soft); text-decoration:underline; text-decoration-color:var(--line); background:none;}
   input[type=range].moodslider{
@@ -649,6 +650,7 @@
   /* ---- Edit entry sheet ---- */
   .edit-entry-sheet .field{margin-bottom:16px;}
   .edit-entry-sheet .edit-moodlabel{font-size:1.4rem; font-weight:700; margin-bottom:4px; text-align:center; transition:color .2s;}
+  .edit-entry-sheet .edit-moodface{display:flex; justify-content:center; margin-bottom:6px;}
   .edit-entry-sheet .edit-moodsub{color:var(--ink-faint); font-size:0.78rem; margin-bottom:14px; text-align:center;}
   .edit-entry-sheet input[type=range].moodslider{-webkit-appearance:none; appearance:none; width:100%; height:10px; border-radius:999px; background:linear-gradient(to right, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high)); margin-bottom:14px;}
   [dir="rtl"] .edit-entry-sheet input[type=range].moodslider{background:linear-gradient(to left, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high));}
@@ -973,6 +975,7 @@
   </div>
   <div class="field">
     <label id="edit-mood-label">מצב רוח</label>
+    <div class="edit-moodface" id="edit-moodface"></div>
     <div class="edit-moodlabel" id="edit-moodlabel">—</div>
     <input type="range" class="moodslider" id="edit-moodslider" min="0" max="14" value="7">
   </div>
@@ -1243,6 +1246,42 @@
     }
     var last = MOOD_STOPS[MOOD_STOPS.length-1][1];
     return 'rgb('+last[0]+','+last[1]+','+last[2]+')';
+  }
+
+  /* ============ Mood face icon (ported from wellness-journal, same 15-step curve) ============ */
+  function moodFaceSVG(index, color, size){
+    size = size || 24;
+    var steps = MOOD_STEPS - 1;
+    var valence = (index/steps - 0.5) * 2; // -1 (lowest) .. 1 (highest)
+    var cx = 12, cy = 12, r = 9;
+
+    var mouthY = 15.5;
+    var mouthHalfW = 3.6 + Math.abs(valence) * 1.2;
+    var ctrlY = mouthY + valence * 6.4;
+    var mouthPath = 'M'+(cx-mouthHalfW)+' '+mouthY+' Q'+cx+' '+ctrlY+' '+(cx+mouthHalfW)+' '+mouthY;
+
+    var browDroop = Math.max(0, -valence) * 2.2;
+    var browY = 8.3, browInset = 2.6, browSpan = 2.2;
+    var leftBrow  = 'M'+(cx-browInset-browSpan)+' '+(browY+browDroop)+' L'+(cx-browInset)+' '+browY;
+    var rightBrow = 'M'+(cx+browInset)+' '+browY+' L'+(cx+browInset+browSpan)+' '+(browY+browDroop);
+
+    var eyeY = 10.2, eyeOffsetX = 3.6;
+    var eyesSVG;
+    if(index === 0){
+      eyesSVG = '<path d="M'+(cx-eyeOffsetX-1.1)+' '+eyeY+' q1.1 1 2.2 0 M'+(cx+eyeOffsetX-1.1)+' '+eyeY+' q1.1 1 2.2 0" stroke="'+color+'" stroke-width="1.4" stroke-linecap="round" fill="none"/>';
+    } else if(index >= steps - 2){
+      eyesSVG = '<path d="M'+(cx-eyeOffsetX-1.3)+' '+(eyeY+0.5)+' q1.3 -1.5 2.6 0 M'+(cx+eyeOffsetX-1.3)+' '+(eyeY+0.5)+' q1.3 -1.5 2.6 0" stroke="'+color+'" stroke-width="1.4" stroke-linecap="round" fill="none"/>';
+    } else {
+      eyesSVG = '<circle cx="'+(cx-eyeOffsetX)+'" cy="'+eyeY+'" r="0.9" fill="'+color+'"/><circle cx="'+(cx+eyeOffsetX)+'" cy="'+eyeY+'" r="0.9" fill="'+color+'"/>';
+    }
+
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:block">'
+      + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" stroke="'+color+'" stroke-width="1.6"/>'
+      + '<path d="'+leftBrow+'" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round"/>'
+      + '<path d="'+rightBrow+'" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round"/>'
+      + eyesSVG
+      + '<path d="'+mouthPath+'" stroke="'+color+'" stroke-width="1.6" stroke-linecap="round" fill="none"/>'
+      + '</svg>';
   }
 
   /* ============ Date helpers (hardcoded names — avoids toLocaleDateString quirks) ============ */
@@ -1697,17 +1736,20 @@
     moodToggleBtn.innerHTML = '<span class="mood-dot"></span><span>'+tr('addMoodBtn')+'</span>';
     var moodWrap = document.createElement('div');
     moodWrap.style.display = composerMoodEnabled ? '' : 'none';
+    var moodFaceEl = document.createElement('div'); moodFaceEl.className = 'moodface';
     var moodLabelEl = document.createElement('div'); moodLabelEl.className = 'moodlabel';
     var slider = document.createElement('input');
     slider.type = 'range'; slider.min = 0; slider.max = MOOD_STEPS-1; slider.value = 7; slider.className = 'moodslider';
     function updateMoodLabel(){
       var v = Number(slider.value);
+      var c = moodColor(v);
+      moodFaceEl.innerHTML = moodFaceSVG(v, c, 40);
       moodLabelEl.textContent = MOOD_LABELS[lang][v];
-      moodLabelEl.style.color = moodColor(v);
+      moodLabelEl.style.color = c;
     }
     slider.addEventListener('input', updateMoodLabel);
     updateMoodLabel();
-    moodWrap.appendChild(moodLabelEl); moodWrap.appendChild(slider);
+    moodWrap.appendChild(moodFaceEl); moodWrap.appendChild(moodLabelEl); moodWrap.appendChild(slider);
     moodToggleBtn.addEventListener('click', function(){
       composerMoodEnabled = !composerMoodEnabled;
       moodWrap.style.display = composerMoodEnabled ? '' : 'none';
@@ -3006,6 +3048,7 @@
     var labelEl = document.getElementById('edit-moodlabel');
     labelEl.textContent = MOOD_LABELS[lang][moodVal];
     labelEl.style.color = moodColor(moodVal);
+    document.getElementById('edit-moodface').innerHTML = moodFaceSVG(moodVal, moodColor(moodVal), 44);
     // note
     document.getElementById('edit-note').value = entry.note || '';
     autoGrowTextarea(document.getElementById('edit-note'));
@@ -3042,6 +3085,7 @@
     var labelEl = document.getElementById('edit-moodlabel');
     labelEl.textContent = MOOD_LABELS[lang][7];
     labelEl.style.color = moodColor(7);
+    document.getElementById('edit-moodface').innerHTML = moodFaceSVG(7, moodColor(7), 44);
     // clear note
     document.getElementById('edit-note').value = '';
     autoGrowTextarea(document.getElementById('edit-note'));
@@ -3143,9 +3187,11 @@
     editMoodSlider.addEventListener('input', function(){
       var v = Number(this.value);
       var lang = state.profile ? state.profile.lang : 'he';
+      var c = moodColor(v);
       var labelEl = document.getElementById('edit-moodlabel');
       labelEl.textContent = MOOD_LABELS[lang][v];
-      labelEl.style.color = moodColor(v);
+      labelEl.style.color = c;
+      document.getElementById('edit-moodface').innerHTML = moodFaceSVG(v, c, 44);
     });
   }
   var editImageBtn = document.getElementById('edit-image-btn');
