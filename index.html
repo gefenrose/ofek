@@ -325,8 +325,9 @@
 
   .composer-host{padding:6px 2px 24px;}
 
+  .composer-toolbar{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:14px;}
   .prompt-btn{
-    display:inline-flex; align-items:center; gap:7px; margin-bottom:14px;
+    display:inline-flex; align-items:center; gap:7px;
     padding:9px 16px; border-radius:999px; border:1px solid var(--line);
     background:var(--paper-raised); color:var(--ink-soft); font-size:0.85rem; font-weight:500;
     transition:border-color .15s ease, color .15s ease, transform .12s ease;
@@ -344,15 +345,16 @@
   @keyframes bubbleIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
   .prompt-panel.loading{color:var(--ink-faint); font-style:italic;}
 
-  .mood-toggle-row{margin-bottom:16px;}
   .mood-toggle-btn{
     display:inline-flex; align-items:center; gap:7px;
-    padding:9px 16px; border-radius:999px; border:1px dashed var(--line);
-    background:transparent; color:var(--ink-soft); font-size:0.85rem; font-weight:500;
-    transition:border-color .15s ease, color .15s ease;
+    padding:9px 16px; border-radius:999px; border:1px solid var(--line);
+    background:var(--paper-raised); color:var(--ink-soft); font-size:0.85rem; font-weight:500;
+    transition:border-color .15s ease, color .15s ease, transform .12s ease;
   }
   .mood-toggle-btn:hover{border-color:var(--accent); color:var(--ink);}
+  .mood-toggle-btn:active{transform:scale(.97);}
   .mood-toggle-btn svg{width:15px; height:15px;}
+  .mood-toggle-btn.active{border-color:var(--accent); color:var(--ink); background:#fff;}
 
   .entry-textarea{
     width:100%; min-height:140px; padding:14px 16px; border-radius:var(--radius-md);
@@ -1725,7 +1727,6 @@
     });
 
     // --- Mood (optional) ---
-    var moodToggleRow = document.createElement('div'); moodToggleRow.className = 'mood-toggle-row';
     var moodToggleBtn = document.createElement('button');
     moodToggleBtn.type = 'button'; moodToggleBtn.className = 'mood-toggle-btn';
     moodToggleBtn.innerHTML = '<span class="mood-dot"></span><span>'+tr('addMoodBtn')+'</span>';
@@ -1747,7 +1748,6 @@
       moodWrap.style.display = composerMoodEnabled ? '' : 'none';
       moodToggleBtn.classList.toggle('active', composerMoodEnabled);
     });
-    moodToggleRow.appendChild(moodToggleBtn);
 
     // --- Freeform textarea ---
     var textarea = document.createElement('textarea');
@@ -1838,11 +1838,14 @@
     var actionsRow = document.createElement('div'); actionsRow.className = 'composer-actions';
     actionsRow.appendChild(saveBtn);
 
-    host.appendChild(promptBtn);
-    host.appendChild(promptPanel);
+    var toolbar = document.createElement('div'); toolbar.className = 'composer-toolbar';
+    toolbar.appendChild(promptBtn);
     if(flow !== 'mood'){
-      host.appendChild(moodToggleRow);
+      toolbar.appendChild(moodToggleBtn);
     }
+
+    host.appendChild(toolbar);
+    host.appendChild(promptPanel);
     host.appendChild(moodWrap);
     host.appendChild(textarea);
     host.appendChild(imageRow);
