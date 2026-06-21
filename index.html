@@ -1482,12 +1482,26 @@
     return lines.join('\n');
   }
 
+  function genderAddressNote(){
+    var lang = state.profile.lang;
+    var g = state.profile.gender;
+    if(lang === 'he'){
+      if(g === 'm') return ' פנה אל המשתמש בלשון זכר יחיד בלבד (אתה, הולך, מרגיש וכו׳) - לא בלשון נקבה ולא בצורות מקוצרות עם לוכסן (כמו את/ה).';
+      if(g === 'f') return ' פני אל המשתמשת בלשון נקבה יחיד בלבד (את, הולכת, מרגישה וכו׳) - לא בלשון זכר ולא בצורות מקוצרות עם לוכסן (כמו את/ה).';
+      return '';
+    }
+    if(g === 'm') return ' If you refer to the user in the third person for any reason, use he/him.';
+    if(g === 'f') return ' If you refer to the user in the third person for any reason, use she/her.';
+    return '';
+  }
+
   function buildPromptSystemMessage(flow){
     var lang = state.profile.lang;
     var name = state.profile.name;
-    var base = lang==='he'
+    var base = (lang==='he'
       ? ('את/ה עוזר/ת כתיבה עדינה ליומן אישי בשם '+name+'. התפקיד שלך הוא להציע הצעת כתיבה אחת קצרה וחמה שתעזור לפתוח את הכתיבה. משפט או שניים בלבד, פנייה ישירה, בלי קלישאות ובלי להטיף.')
-      : ('You are a gentle journaling-prompt assistant for '+name+'. Your job is to offer one short, warm writing prompt to help them start writing. One or two sentences only, addressed directly to them, no clichés, no lecturing.');
+      : ('You are a gentle journaling-prompt assistant for '+name+'. Your job is to offer one short, warm writing prompt to help them start writing. One or two sentences only, addressed directly to them, no clichés, no lecturing.')
+    ) + genderAddressNote();
     var notes = {
       morning: lang==='he' ? ' זה יומן בוקר — הצעה שקשורה לשינה, אנרגיה או כוונה ליום.' : ' This is a morning journal — suggest something about sleep, energy, or intention for the day.',
       evening: lang==='he' ? ' זה סיכום יום — הצעה שמזמינה להביט אחורה על מה שבלט היום.' : ' This is an evening summary — suggest something inviting reflection on what stood out today.',
@@ -1528,6 +1542,17 @@
     return text;
   }
 
+  function genderFirstPersonNote(){
+    var lang = state.profile.lang;
+    var g = state.profile.gender;
+    if(lang === 'he'){
+      if(g === 'm') return ' כשאתה כותב בגוף ראשון מטעם המשתמש, השתמש בנטיות פועל בלשון זכר (הלכתי, מרגיש, רוצה וכו׳).';
+      if(g === 'f') return ' כשאת כותבת בגוף ראשון מטעם המשתמשת, השתמשי בנטיות פועל בלשון נקבה (הלכתי, מרגישה, רוצה וכו׳).';
+      return '';
+    }
+    return '';
+  }
+
   async function summarizeEntryText(text, moodVal){
     var lang = state.profile.lang;
     var moodNote = '';
@@ -1537,7 +1562,7 @@
     var system = (lang==='he'
       ? 'את/ה עוזר/ת שמסכם/ת רשומות יומן. תקבל/י רשומה חופשית שמישהו/י כתב/ה. כתוב/כתבי משפט אחד או שניים בגוף ראשון שמתעדים את עיקר הרשומה, כמו רשומת יומן קצרה וטבעית. בלי לתאר את הרשומה מבחוץ, בלי לפתוח ב"המשתמש".'
       : 'You summarize journal entries. You will get a freeform entry someone wrote. Write one or two sentences in first person capturing the essence of it, like a brief natural diary note. Do not describe it from the outside, do not start with "The user".'
-    ) + moodNote;
+    ) + moodNote + genderFirstPersonNote();
     return await askCompanion(system, [{role:'user', content: text}]);
   }
 
@@ -1804,9 +1829,10 @@
   function buildGroundingChatSystemMessage(){
     var lang = state.profile.lang;
     var name = state.profile.name;
-    return lang==='he'
+    return (lang==='he'
       ? ('את/ה אופק, נוכחות רגועה ותומכת עבור '+name+' ברגע של מצוקה או חרדה. דבר/י בקצרה ובחום - משפט או שניים בכל פעם - ושאל/י שאלה אחת או הצע/י דבר אחד בכל תגובה, לא יותר. אפשר להציע טכניקות קרקוע פשוטות (נשימה איטית, תרגיל חושי של 5-4-3-2-1) אבל רק כשזה מתאים, בלי לכפות. עקוב/י אחרי הקצב של '+name+'. את/ה לא מטפל/ת מוסמך/ת ולא מספק/ת אבחון או טיפול - אם נשמע שהמצב חמור, אפשר להזכיר בעדינות שער"ן זמינים בחינם ב-1201.')
-      : ("You are Ofek, a calm, supportive presence for "+name+" during a moment of distress or anxiety. Speak briefly and warmly - one or two sentences at a time - and ask one question or offer one suggestion per reply, no more. You can suggest simple grounding techniques (slow breathing, the 5-4-3-2-1 senses exercise) but only when it fits, never forced. Follow "+name+"'s pace. You are not a licensed therapist and don't diagnose or treat - if things sound serious, you can gently mention that ER'N is free to call at 1201.");
+      : ("You are Ofek, a calm, supportive presence for "+name+" during a moment of distress or anxiety. Speak briefly and warmly - one or two sentences at a time - and ask one question or offer one suggestion per reply, no more. You can suggest simple grounding techniques (slow breathing, the 5-4-3-2-1 senses exercise) but only when it fits, never forced. Follow "+name+"'s pace. You are not a licensed therapist and don't diagnose or treat - if things sound serious, you can gently mention that ER'N is free to call at 1201.")
+    ) + genderAddressNote();
   }
 
   function addGroundingBubble(role, text){
