@@ -173,6 +173,51 @@
     animation:horizonDotIn 2.2s linear both;
   }
 
+  #lock-screen{
+    position:fixed; inset:0; z-index:8000; display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    padding:24px; text-align:center;
+    background:rgba(4,14,28,.62); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  }
+  .lock-inner{display:flex; flex-direction:column; align-items:center; max-width:320px; width:100%;}
+  .lock-mark{width:64px; height:64px; border-radius:18px; overflow:hidden; margin-bottom:20px; box-shadow:var(--shadow);}
+  .lock-mark img{width:100%; height:100%; display:block;}
+  .lock-title{font-size:1.3rem; font-weight:700; margin:0 0 4px; color:#fff;}
+  .lock-sub{color:rgba(255,255,255,.78); margin:0 0 26px; font-size:0.92rem;}
+  .pin-dots{display:flex; gap:16px; margin-bottom:14px;}
+  .pin-dot{
+    width:14px; height:14px; border-radius:50%; border:1.5px solid rgba(255,255,255,.55);
+    background:transparent; transition:background .15s ease, transform .15s ease;
+  }
+  .pin-dot.filled{background:#fff; transform:scale(1.1);}
+  .pin-dots.shake{animation:pinShake .4s ease;}
+  @keyframes pinShake{
+    0%,100%{transform:translateX(0);} 20%{transform:translateX(-8px);}
+    40%{transform:translateX(8px);} 60%{transform:translateX(-6px);} 80%{transform:translateX(6px);}
+  }
+  .pin-error{min-height:18px; color:#FFB4A8; font-size:0.82rem; margin-bottom:18px;}
+  .pin-keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; width:100%; max-width:260px;}
+  .pin-key{
+    aspect-ratio:1; border-radius:50%; background:rgba(255,255,255,.12);
+    color:#fff; font-size:1.3rem; font-weight:600; display:flex; align-items:center; justify-content:center;
+    transition:background .12s ease, transform .1s ease;
+  }
+  .pin-key:active{transform:scale(.92); background:rgba(255,255,255,.22);}
+  .pin-key-bio{background:transparent;}
+  .pin-key-bio svg{width:26px; height:26px;}
+  .pin-key-bio:active{background:rgba(255,255,255,.1);}
+  .pin-key-back svg{width:20px; height:20px;}
+
+  .pin-setup-sheet .pin-dots, .pin-setup-sheet .pin-keypad{margin-left:auto; margin-right:auto;}
+  .pin-setup-sheet .pin-dot{border-color:var(--line); }
+  .pin-setup-sheet .pin-dot.filled{background:var(--ink);}
+  .pin-setup-sheet .pin-key{background:var(--paper-raised); color:var(--ink); border:1px solid var(--line);}
+  .pin-setup-sheet .pin-key:active{background:var(--line);}
+  .pin-setup-sheet .pin-key-bio{background:transparent; border:none;}
+  .pin-setup-sub{color:var(--ink-soft); margin:0 0 20px; font-size:0.92rem; text-align:center;}
+  .pin-setup-sheet h2{text-align:center;}
+  .pin-setup-sheet .pin-error{text-align:center;}
+
   .settings-credit{text-align:center; margin-top:18px;}
   .settings-credit span{font-size:0.7rem; color:var(--ink-faint);}
 
@@ -277,42 +322,45 @@
   .grounding-btn:active{transform:scale(.97);}
   .disclaimer-text{font-size:0.92rem; line-height:1.55; color:var(--ink-soft); margin:0 0 18px;}
 
-  .thread{display:flex; flex-direction:column; gap:10px; padding:10px 2px 14px; min-height:80px;}
-  .bubble{max-width:84%; padding:11px 15px; border-radius:18px; font-size:0.95rem; line-height:1.45; animation:bubbleIn .25s ease;}
-  @media (prefers-reduced-motion: reduce){ .bubble{animation:none;} }
+  .composer-host{padding:6px 2px 24px;}
+
+  .prompt-btn{
+    display:inline-flex; align-items:center; gap:7px; margin-bottom:14px;
+    padding:9px 16px; border-radius:999px; border:1px solid var(--line);
+    background:var(--paper-raised); color:var(--ink-soft); font-size:0.85rem; font-weight:500;
+    transition:border-color .15s ease, color .15s ease, transform .12s ease;
+  }
+  .prompt-btn:hover{border-color:var(--accent); color:var(--ink);}
+  .prompt-btn:active{transform:scale(.97);}
+  .prompt-btn svg{width:15px; height:15px; flex:0 0 auto;}
+  .prompt-btn[disabled]{opacity:.55;}
+  .prompt-panel{
+    padding:13px 15px; border-radius:var(--radius-md); background:var(--paper-raised);
+    border:1px solid var(--accent); margin-bottom:14px; font-size:0.9rem; line-height:1.5;
+    color:var(--ink-soft); animation:bubbleIn .25s ease;
+  }
+  @media (prefers-reduced-motion: reduce){ .prompt-panel{animation:none;} }
   @keyframes bubbleIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
-  #typing-bubble{animation:bubbleIn .25s ease, typingPulse 1.2s ease-in-out infinite;}
-  @keyframes typingPulse{0%,100%{opacity:.45;} 50%{opacity:1;}}
-  .bubble.ai{align-self:flex-start; background:var(--paper-raised); border:1px solid var(--line); border-start-start-radius:6px;}
-  .bubble.user{align-self:flex-end; background:var(--ink); color:var(--paper); border-end-end-radius:6px;}
-  .bubble.system{
-    align-self:center; color:var(--ink-soft); font-size:0.78rem; max-width:100%; text-align:center;
-    background:rgba(255,255,255,.78); border-radius:999px; padding:5px 14px;
-    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  .prompt-panel.loading{color:var(--ink-faint); font-style:italic;}
+
+  .mood-toggle-row{margin-bottom:16px;}
+  .mood-toggle-btn{
+    display:inline-flex; align-items:center; gap:7px;
+    padding:9px 16px; border-radius:999px; border:1px dashed var(--line);
+    background:transparent; color:var(--ink-soft); font-size:0.85rem; font-weight:500;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .mood-toggle-btn:hover{border-color:var(--accent); color:var(--ink);}
+  .mood-toggle-btn svg{width:15px; height:15px;}
+
+  .entry-textarea{
+    width:100%; min-height:140px; padding:14px 16px; border-radius:var(--radius-md);
+    background:var(--paper-raised); border:1px solid var(--line); margin-bottom:14px;
+    font:inherit; font-size:0.97rem; line-height:1.5; resize:vertical;
   }
 
-  .composer{
-    position:sticky; bottom:0; display:flex; align-items:flex-end; gap:8px;
-    padding:10px 2px 2px; background:transparent;
-  }
-  .composer textarea{
-    flex:1; resize:none; max-height:120px; padding:12px 16px; border-radius:var(--radius-md);
-    background:var(--paper-raised); border:1px solid var(--line);
-  }
-  .send-btn{
-    width:44px; height:44px; border-radius:50%; background:var(--ink); color:var(--paper);
-    display:flex; align-items:center; justify-content:center; flex:0 0 auto;
-    transition:opacity .15s ease, transform .12s ease;
-  }
-  .send-btn svg{width:20px; height:20px; flex:0 0 auto;}
-  .send-btn:active:not(:disabled){transform:scale(.9);}
-  .send-btn:disabled{opacity:.35;}
-  .endflow-row{display:flex; justify-content:center; padding:6px 0 2px;}
-  .endflow-row button{
-    font-size:0.82rem; color:var(--ink-soft); text-decoration:underline; text-decoration-color:var(--line);
-    background:rgba(255,255,255,.78); padding:6px 14px; border-radius:999px;
-    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
-  }
+  .composer-actions{display:flex; justify-content:center; margin-top:4px;}
+  .composer-actions .btn-primary{width:100%; max-width:320px;}
 
   /* ---------- Mood slider ---------- */
   .moodpicker{padding:18px 4px 8px; text-align:center;}
@@ -741,6 +789,30 @@
   })();
 </script>
 
+<div id="lock-screen">
+  <div class="lock-inner">
+    <div class="lock-mark"><img src="icon-192.png" alt=""></div>
+    <h1 class="lock-title" id="lock-title-text"></h1>
+    <p class="lock-sub" id="lock-sub-text"></p>
+    <div class="pin-dots" id="lock-pin-dots">
+      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+    </div>
+    <div class="pin-error" id="lock-pin-error"></div>
+    <div class="pin-keypad" id="lock-keypad"></div>
+  </div>
+</div>
+
+<div class="sheet pin-setup-sheet" id="pin-setup-sheet">
+  <h2 id="pin-setup-title"></h2>
+  <p class="pin-setup-sub" id="pin-setup-sub"></p>
+  <div class="pin-dots" id="pin-setup-dots">
+    <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+  </div>
+  <div class="pin-error" id="pin-setup-error"></div>
+  <div class="pin-keypad" id="pin-setup-keypad"></div>
+  <button class="sheet-close" id="pin-setup-cancel-btn"></button>
+</div>
+
 <div id="onboarding">
   <div class="ob-mark"><img src="icon-192.png" alt=""></div>
   <h1 class="ob-title display" id="ob-title">נעים להכיר</h1>
@@ -831,17 +903,7 @@
           <span id="grounding-btn-label">שיחת קרקוע</span>
         </button>
       </div>
-      <div class="thread" id="thread"></div>
-      <div id="mood-picker-host"></div>
-      <div class="endflow-row" id="endflow-row" style="display:none;">
-        <button id="endflow-btn">לסיים ולשמור</button>
-      </div>
-      <div class="composer" id="composer-row" style="display:none;">
-        <textarea id="composer-input" rows="1" placeholder="מה שעל הלב…"></textarea>
-        <button class="send-btn" id="send-btn" aria-label="send">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-        </button>
-      </div>
+      <div class="composer-host" id="composer-host"></div>
     </section>
 
     <section class="panel" id="panel-history">
@@ -1015,6 +1077,9 @@
       groundingDisclaimerText:'אופק הוא לא מטפל/ת מוסמך/ת ולא תחליף לטיפול מקצועי — הוא יכול להציע תרגילי נשימה וקרקוע עדינים לרגע הזה. במצב חירום או מצוקה גדולה, אפשר גם להתקשר לער"ן בחינם — 1201.',
       groundingContinue:'להתחיל', groundingCancel:'ביטול',
       composerPh:'מה שעל הלב…',
+      getPromptBtn:'הצעת כתיבה', promptLoading:'חושב/ת על הצעה…',
+      addMoodBtn:'הוספת מצב רוח', composerNeedText:'אפשר לכתוב כמה מילים לפני השמירה?',
+      saving:'שומר/ת…',
       distressText:'אם קשה עכשיו, אפשר להתקשר לער"ן בחינם —',
       endFlow:'לסיים ולשמור',
       moodSub:'גררו לבחירת מצב הרוח',
@@ -1059,7 +1124,18 @@
       habitDaysAgoSuffix:'ימים', habitDaysAgoPrefix:'לפני',
       habitDoneToday:'בוצע היום', habitNotDueToday:'לא היום',
       insightsHabitsTitle:'הרגלים', habitsCompletedToday:'הושלמו היום', habitsBestStreak:'הרצף הטוב',
-      habitsTotalLabel:'הרגלים פעילים'
+      habitsTotalLabel:'הרגלים פעילים',
+      lockTitle:'אופק נעול', lockSub:'הזן/י קוד לפתיחה',
+      lockWrongPin:'קוד שגוי, נסה/י שוב',
+      lockUseBiometric:'זיהוי ביומטרי', lockUseFaceID:'זיהוי פנים', lockUseTouchID:'טביעת אצבע',
+      lockSettingsLabel:'נעילת אפליקציה', lockSettingsNote:'דרוש/י קוד או זיהוי ביומטרי לפתיחת האפליקציה.',
+      lockSetupTitle:'הגדרת קוד', lockSetupSub:'בחר/י קוד בן 4 ספרות',
+      lockConfirmTitle:'אישור קוד', lockConfirmSub:'הזן/י את הקוד שוב',
+      lockMismatch:'הקודים לא תואמים, ננסה שוב',
+      lockChangePin:'שינוי קוד',
+      lockBiometricLabel:'פתיחה עם זיהוי ביומטרי',
+      lockBiometricSetupFail:'לא ניתן להפעיל זיהוי ביומטרי במכשיר הזה',
+      lockBiometricUnavailable:'זיהוי ביומטרי לא זמין במכשיר הזה'
     },
     en: {
       onboardTitle:"Let's set things up", onboardSub:'A couple of quick things first.',
@@ -1074,6 +1150,9 @@
       groundingDisclaimerText:"Ofek isn't a licensed therapist and isn't a substitute for professional care — it can offer gentle breathing and grounding exercises for this moment. In a crisis or significant distress, you can also call ER'N for free — 1201.",
       groundingContinue:'Start', groundingCancel:'Cancel',
       composerPh:"What's on your mind…",
+      getPromptBtn:'Get a prompt', promptLoading:'Thinking of a prompt…',
+      addMoodBtn:'Add mood', composerNeedText:'A few words first, then we can save',
+      saving:'Saving…',
       distressText:"If things feel heavy right now, ER'N is free to call —",
       endFlow:'Finish & save',
       moodSub:'Drag to set your mood',
@@ -1118,7 +1197,18 @@
       habitDaysAgoSuffix:'days ago', habitDaysAgoPrefix:'',
       habitDoneToday:'Done today', habitNotDueToday:'Not today',
       insightsHabitsTitle:'Habits', habitsCompletedToday:'Done today', habitsBestStreak:'Best streak',
-      habitsTotalLabel:'Active habits'
+      habitsTotalLabel:'Active habits',
+      lockTitle:'Ofek is locked', lockSub:'Enter your code to unlock',
+      lockWrongPin:'Wrong code, try again',
+      lockUseBiometric:'Biometric unlock', lockUseFaceID:'Face ID', lockUseTouchID:'Touch ID',
+      lockSettingsLabel:'App lock', lockSettingsNote:'Require a code or biometric unlock to open the app.',
+      lockSetupTitle:'Set a code', lockSetupSub:'Choose a 4-digit code',
+      lockConfirmTitle:'Confirm code', lockConfirmSub:'Enter the code again',
+      lockMismatch:"Codes didn't match, try again",
+      lockChangePin:'Change code',
+      lockBiometricLabel:'Unlock with biometrics',
+      lockBiometricSetupFail:"Couldn't enable biometric unlock on this device",
+      lockBiometricUnavailable:'Biometric unlock isn\u2019t available on this device'
     }
   };
 
@@ -1147,6 +1237,7 @@
   }
   var state = loadState();
   if(!state.habits) state.habits = []; // migration safety for existing users
+  if(!state.security) state.security = { lockEnabled:false, pinHash:null, pinSalt:null, biometricEnabled:false, credentialId:null, credentialUserId:null };
   function saveState(){
     state.lastModified = Date.now();
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
@@ -1281,8 +1372,6 @@
     document.querySelectorAll('[data-nav="habits"]').forEach(function(el){ el.textContent = tr('navHabits'); });
     document.getElementById('habit-add-btn-label').textContent = tr('habitAddBtn');
     document.getElementById('distress-text').innerHTML = tr('distressText')+' <a href="tel:1201">1201</a>';
-    document.getElementById('composer-input').placeholder = tr('composerPh');
-    document.getElementById('endflow-btn').textContent = tr('endFlow');
     document.getElementById('settings-title').textContent = tr('settingsTitle');
     document.getElementById('settings-name-label').textContent = tr('settingsName');
     document.getElementById('settings-lang-label').textContent = tr('settingsLang');
@@ -1358,40 +1447,9 @@
   /* ============ Chat / flows ============ */
   var currentFlow = null;
   var activeEntryId = null;
-  var conversation = [];
-  var backfillDate = null; // when set, the active conversation is being logged for a past date, not today
-
-  function addBubble(role, text, image){
-    var div = document.createElement('div');
-    div.className = 'bubble '+role;
-    if(image){
-      var imgWrap = document.createElement('div');
-      imgWrap.className = 'entry-image';
-      var img = document.createElement('img');
-      img.src = image; img.alt = '';
-      imgWrap.appendChild(img);
-      div.appendChild(imgWrap);
-    }
-    if(text){
-      var t = document.createElement('div');
-      t.textContent = text;
-      div.appendChild(t);
-    }
-    document.getElementById('thread').appendChild(div);
-    div.scrollIntoView({behavior:'smooth', block:'end'});
-  }
-
-  function setSending(loading){
-    document.getElementById('send-btn').disabled = loading;
-    var typing = document.getElementById('typing-bubble');
-    if(loading && !typing){
-      typing = document.createElement('div');
-      typing.id = 'typing-bubble'; typing.className = 'bubble ai'; typing.textContent = '…';
-      document.getElementById('thread').appendChild(typing);
-    } else if(!loading && typing){
-      typing.remove();
-    }
-  }
+  var backfillDate = null; // when set, the active entry is being logged for a past date, not today
+  var composerMoodEnabled = false;
+  var composerPickedImage = null;
 
   function resetDistressCard(){
     var card = document.getElementById('distress-card');
@@ -1441,34 +1499,17 @@
     distressCloseBtn.addEventListener('click', dismissDistressCard);
   }
 
-  function setComposerVisible(visible){
-    document.getElementById('composer-row').style.display = visible ? 'flex' : 'none';
-  }
-
   function openFlow(flow, dateKey){
     currentFlow = flow;
-    conversation = [];
     activeEntryId = 'e'+Date.now();
     backfillDate = dateKey || null;
+    composerMoodEnabled = (flow === 'mood');
+    composerPickedImage = null;
     resetDistressCard();
-    document.getElementById('thread').innerHTML = '';
-    document.getElementById('mood-picker-host').innerHTML = '';
-    document.getElementById('endflow-row').style.display = 'none';
     if(backfillDate) switchToPanel('chat');
     // Re-render chips so the active pill updates immediately.
     renderFlowChips();
-
-    if(flow === 'mood'){
-      setComposerVisible(false);
-      document.getElementById('thread').style.display = 'none';
-      renderMoodPicker();
-    } else {
-      document.getElementById('thread').style.display = '';
-      setComposerVisible(true);
-      document.getElementById('endflow-row').style.display = 'flex';
-      addBubble('system', tr(FLOW_KEY[flow]));
-      kickoffFlow(flow);
-    }
+    renderComposer(flow);
   }
 
   function recentEntriesDigest(){
@@ -1490,41 +1531,35 @@
     return lines.join('\n');
   }
 
-  function buildSystemPrompt(flow){
+  function buildPromptSystemMessage(flow){
     var lang = state.profile.lang;
     var name = state.profile.name;
-    var genderNote = '';
-    if(lang==='he'){
-      genderNote = state.profile.gender==='m' ? ' פנה/י אליו בלשון זכר.' :
-                   state.profile.gender==='f' ? ' פנה/י אליה בלשון נקבה.' :
-                   ' פנה/י בלשון נטרלית.';
-    }
     var base = lang==='he'
-      ? ('את/ה אופק — מלווה יומי שקט, חם ולא שיפוטי. השם של מי שמדבר/ת אליך הוא '+name+'.'+genderNote+' תשובות קצרות (1–3 משפטים), שאלה אחת בכל פעם, בלי קלישאות ובלי להטיף.')
-      : ('You are Ofek, a quiet, warm, non-judgmental daily companion. The person you are talking to is named '+name+'. Keep replies short (1-3 sentences), ask one question at a time, no clichés, no lecturing.');
+      ? ('את/ה עוזר/ת כתיבה עדינה ליומן אישי בשם '+name+'. התפקיד שלך הוא להציע הצעת כתיבה אחת קצרה וחמה שתעזור לפתוח את הכתיבה. משפט או שניים בלבד, פנייה ישירה, בלי קלישאות ובלי להטיף.')
+      : ('You are a gentle journaling-prompt assistant for '+name+'. Your job is to offer one short, warm writing prompt to help them start writing. One or two sentences only, addressed directly to them, no clichés, no lecturing.');
     var notes = {
-      morning: lang==='he' ? ' זה צ\u2019ק-אין בוקר — שאל/י על השינה והאנרגיה ליום.' : ' This is a morning check-in — ask about sleep and energy for the day.',
-      evening: lang==='he' ? ' זה סיכום יום — שאל/י מה בלט היום, טוב או קשה.' : ' This is an evening summary — ask what stood out today, good or hard.',
-      gratitude: lang==='he' ? ' זה יומן תודות — בקש/י דבר אחד או שניים שיש תודה עליהם היום.' : ' This is a gratitude check-in — ask for one or two things they are thankful for today.',
-      chat: lang==='he' ? ' זו שיחה חופשית — תן/י למשתמש/ת לכוון.' : ' This is open chat — let the person lead.',
-      mood: lang==='he' ? ' המשתמש/ת רשמ/ה מצב רוח. אם יבחר/תבחר להמשיך לדבר על זה, התייחס/י בטבעיות לשיחה המתפתחת.' : ' The user just logged a mood. If they choose to keep talking about it, respond naturally as the conversation develops.',
+      morning: lang==='he' ? ' זה יומן בוקר — הצעה שקשורה לשינה, אנרגיה או כוונה ליום.' : ' This is a morning journal — suggest something about sleep, energy, or intention for the day.',
+      evening: lang==='he' ? ' זה סיכום יום — הצעה שמזמינה להביט אחורה על מה שבלט היום.' : ' This is an evening summary — suggest something inviting reflection on what stood out today.',
+      gratitude: lang==='he' ? ' זה יומן תודות — הצעה שמזמינה לחשוב על דבר אחד או שניים שיש תודה עליהם.' : ' This is a gratitude journal — suggest something inviting one or two things to be thankful for.',
+      chat: lang==='he' ? ' זו כתיבה חופשית — הצעה פתוחה שיכולה להתאים לכל מצב רוח.' : ' This is free writing — offer an open suggestion that could fit any mood.',
+      mood: lang==='he' ? ' המשתמש/ת רושמ/ת מצב רוח — הצעה שמזמינה לתאר במילים מה עומד מאחורי המצב הזה.' : " The user is logging a mood — suggest something inviting them to put into words what's behind that mood.",
       grounding: lang==='he'
-        ? ' זו שיחת קרקוע לרגעים של מצוקה או חרדה. הציעו תרגיל קרקוע אחד בכל פעם — נשימה איטית, או תרגיל 5-4-3-2-1 חושי — בקצב רגוע ובלי למהר. שאלו שאלה קצרה אחת כדי להבין מה קורה, ואז הציעו תרגיל מתאים. אינך מטפל/ת מוסמך/ת ואל תתחזה/י לכזה. אם נשמע שהמצב חריף או מסוכן, הזכיר/י בעדינות שאפשר להתקשר לער"ן (1201) או לפנות לעזרה מקצועית.'
-        : " This is a grounding chat for moments of distress or anxiety. Offer one grounding technique at a time — slow breathing, or the 5-4-3-2-1 senses exercise — at an unhurried pace. Ask one short question to understand what's going on, then offer a fitting technique. You are not a licensed therapist and must not claim to be one. If things sound severe or unsafe, gently remind them they can call ER'N (1201) or reach out for professional help."
+        ? ' זו כתיבה לרגעי מצוקה או חרדה. הצעה עדינה שעוזרת לתאר מה קורה עכשיו, או טכניקת קרקוע פשוטה אחת (נשימה איטית, או תרגיל 5-4-3-2-1 חושי) לתאר תוך כדי תרגול. את/ה לא מטפל/ת מוסמך/ת ואל תתחזה/י לכזה.'
+        : " This is writing for moments of distress or anxiety. A gentle suggestion to help describe what's happening right now, or one simple grounding technique (slow breathing, or the 5-4-3-2-1 senses exercise) to describe while practicing it. You are not a licensed therapist and must not claim to be one."
     };
     var backfillNote = '';
     if(backfillDate){
       var bfDateLabel = formatDate(backfillDate);
       backfillNote = lang==='he'
-        ? (' זו רשומה רטרואקטיבית על יום מהעבר — '+bfDateLabel+'. שאל/י מה קרה באותו יום עצמו, לא על היום הנוכחי, ואל תתייחס/י אליו כאילו הוא היום.')
-        : (' This is a retroactive entry about a past day — '+bfDateLabel+'. Ask about what happened on that specific day, not about today, and don\'t treat it as if it were today.');
+        ? (' זו רשומה רטרואקטיבית על יום מהעבר — '+bfDateLabel+'. ההצעה צריכה להתייחס לאותו יום, לא להיום.')
+        : (' This is a retroactive entry about a past day — '+bfDateLabel+'. The suggestion should relate to that day, not today.');
     }
     var memory = recentEntriesDigest();
     var memoryNote = '';
     if(memory){
       memoryNote = lang==='he'
-        ? ('\n\nלידיעתך, כמה דברים מיומנו של '+name+' מהתקופה האחרונה (מהחדש לישן). אפשר להתייחס אליהם בעדינות אם רלוונטי לשיחה הנוכחית, אך אין חובה להזכיר את כולם, ואל תציפו את השיחה בפרטים מהעבר:\n'+memory)
-        : ('\n\nFor your awareness, some recent things from '+name+"'s journal (newest first). You can gently reference these if relevant to the current conversation, but there's no need to bring them all up, and don't flood the conversation with past details:\n"+memory);
+        ? ('\n\nלידיעתך, כמה דברים מיומנו של '+name+' מהתקופה האחרונה (מהחדש לישן). אפשר להתייחס אליהם בעדינות אם רלוונטי, אך אין חובה:\n'+memory)
+        : ('\n\nFor your awareness, some recent things from '+name+"'s journal (newest first). You can gently reference these if relevant, but there's no need to:\n"+memory);
     }
     return base + (notes[flow] || '') + backfillNote + memoryNote;
   }
@@ -1542,58 +1577,40 @@
     return text;
   }
 
-  async function summarizeEntryConversation(messages){
+  async function summarizeEntryText(text, moodVal){
     var lang = state.profile.lang;
-    var transcript = messages.map(function(m){
-      var who = m.role === 'user' ? (lang==='he' ? 'משתמש' : 'User') : (lang==='he' ? 'אופק' : 'Ofek');
-      return who + ': ' + m.text;
-    }).join('\n');
-    var system = lang==='he'
-      ? 'את/ה עוזר/ת שמסכם/ת רשומות יומן. תקבל/י שיחה בין מישהו/י לבין אופק, מלווה יומי. כתוב/כתבי משפט אחד או שניים בגוף ראשון שמתעדים מה היה בשיחה, כמו רשומת יומן קצרה וטבעית. בלי לפתוח ב"המשתמש", בלי לתאר את השיחה מבחוץ, בלי לחזור על השם אופק.'
-      : 'You summarize journal entries. You will get a conversation between someone and Ofek, their daily companion. Write one or two sentences in first person capturing what this entry was about, like a brief natural diary note. Do not start with "The user", do not describe the conversation from the outside, do not mention Ofek by name.';
-    return await askCompanion(system, [{role:'user', content: transcript}]);
+    var moodNote = '';
+    if(typeof moodVal === 'number'){
+      moodNote = lang==='he' ? (' מצב הרוח שצוין: '+MOOD_LABELS.he[moodVal]+'.') : (' Stated mood: '+MOOD_LABELS.en[moodVal]+'.');
+    }
+    var system = (lang==='he'
+      ? 'את/ה עוזר/ת שמסכם/ת רשומות יומן. תקבל/י רשומה חופשית שמישהו/י כתב/ה. כתוב/כתבי משפט אחד או שניים בגוף ראשון שמתעדים את עיקר הרשומה, כמו רשומת יומן קצרה וטבעית. בלי לתאר את הרשומה מבחוץ, בלי לפתוח ב"המשתמש".'
+      : 'You summarize journal entries. You will get a freeform entry someone wrote. Write one or two sentences in first person capturing the essence of it, like a brief natural diary note. Do not describe it from the outside, do not start with "The user".'
+    ) + moodNote;
+    return await askCompanion(system, [{role:'user', content: text}]);
   }
 
-  async function maybeSummarizeEntry(entryId, convo){
-    if(!entryId || !convo || convo.length < 2) return;
-    var hasUser = convo.some(function(m){ return m.role==='user'; });
-    var hasAi = convo.some(function(m){ return m.role==='ai'; });
-    if(!hasUser || !hasAi) return; // only worth summarizing an actual back-and-forth
+  async function generateEntrySummary(entryId, text, moodVal){
+    if(!entryId || !text) return;
     try{
-      var summary = await summarizeEntryConversation(convo);
+      var summary = await summarizeEntryText(text, moodVal);
       var entry = state.entries.find(function(e){ return e.id===entryId; });
       if(!entry) return; // may have been deleted while the summary was generating
       entry.summary = summary;
       saveState();
       renderHistory();
     }catch(e){
-      // Quiet failure: the raw conversation remains visible as a fallback, no need to alarm the user.
+      // Quiet failure: the raw text remains visible as a fallback, no need to alarm the user.
     }
-  }
-
-  async function kickoffFlow(flow){
-    var lang = state.profile.lang;
-    var system = buildSystemPrompt(flow);
-    var kickoffMsg = lang==='he' ? 'פתח/י את השיחה בשאלה אחת קצרה, בלי הקדמות.' : 'Open the conversation with one short question, no preamble.';
-    setSending(true);
-    try{
-      var reply = await askCompanion(system, [{role:'user', content: kickoffMsg}]);
-      conversation.push({role:'ai', text: reply});
-      addBubble('ai', reply);
-    }catch(e){
-      addBubble('ai', tr('aiError'));
-    }
-    setSending(false);
   }
 
   function persistEntry(moodVal, note, image){
     var now = new Date();
     var entry = state.entries.find(function(e){ return e.id===activeEntryId; });
     if(!entry){
-      entry = { id: activeEntryId, date: backfillDate || todayStr(now), time: timeStr(now), flow: currentFlow, mood: null, messages: [], createdAt: Date.now() };
+      entry = { id: activeEntryId, date: backfillDate || todayStr(now), time: timeStr(now), flow: currentFlow, mood: null, createdAt: Date.now() };
       state.entries.push(entry);
     }
-    entry.messages = conversation.slice();
     if(typeof moodVal === 'number') entry.mood = moodVal;
     if(note) entry.note = note;
     if(image) entry.image = image;
@@ -1601,54 +1618,18 @@
     updateRibbon();
   }
 
-  async function sendComposer(){
-    var input = document.getElementById('composer-input');
-    var text = input.value.trim();
-    if(!text) return;
-    input.value = '';
-    input.style.height = 'auto';
-    conversation.push({role:'user', text: text});
-    addBubble('user', text);
-    persistEntry();
-    setSending(true);
-    try{
-      var system = buildSystemPrompt(currentFlow);
-      var msgs = conversation.map(function(c){ return { role: c.role==='ai' ? 'assistant' : 'user', content: c.text }; });
-      var reply = await askCompanion(system, msgs);
-      conversation.push({role:'ai', text: reply});
-      addBubble('ai', reply);
-      persistEntry();
-    }catch(e){
-      addBubble('ai', tr('aiError'));
-    }
-    setSending(false);
-  }
-  document.getElementById('send-btn').addEventListener('click', sendComposer);
   function autoGrowTextarea(el){
     el.style.height = 'auto';
     el.style.height = Math.min(el.scrollHeight, 120) + 'px';
   }
-
-  document.getElementById('composer-input').addEventListener('keydown', function(e){
-    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendComposer(); }
-  });
-  document.getElementById('composer-input').addEventListener('input', function(){
-    autoGrowTextarea(this);
-  });
   document.getElementById('edit-note').addEventListener('input', function(){
     autoGrowTextarea(this);
   });
 
-  document.getElementById('endflow-btn').addEventListener('click', closeFlow);
   function closeFlow(){
-    var entryIdToSummarize = activeEntryId;
-    var convoToSummarize = conversation.slice();
     var wasBackfillDate = backfillDate;
-    currentFlow = null; activeEntryId = null; conversation = []; backfillDate = null;
-    document.getElementById('thread').innerHTML = '';
-    document.getElementById('mood-picker-host').innerHTML = '';
-    setComposerVisible(false);
-    document.getElementById('endflow-row').style.display = 'none';
+    currentFlow = null; activeEntryId = null; backfillDate = null; composerPickedImage = null;
+    document.getElementById('composer-host').innerHTML = '';
     renderFlowChips();
     if(wasBackfillDate){
       selectedDate = wasBackfillDate;
@@ -1656,10 +1637,8 @@
     }
     renderHistory();
     renderInsights();
-    maybeSummarizeEntry(entryIdToSummarize, convoToSummarize);
   }
-
-  /* ============ Mood picker ============ */
+  /* ============ Composer (freeform entry + optional prompt/mood/summary) ============ */
   // Local helper: read an image File, downscale via canvas, return base64 JPEG dataURL
   var MOOD_IMAGE_MAX_DIM = 1200;   // resize so the longest edge is at most this
   var MOOD_IMAGE_QUALITY = 0.82;   // JPEG quality
@@ -1704,27 +1683,74 @@
     });
   }
 
-  function renderMoodPicker(){
-    var host = document.getElementById('mood-picker-host');
+  function renderComposer(flow){
+    var host = document.getElementById('composer-host');
     host.innerHTML = '';
     var lang = state.profile.lang;
-    var wrap = document.createElement('div'); wrap.className = 'moodpicker';
-    var labelEl = document.createElement('div'); labelEl.className = 'moodlabel';
-    var subEl = document.createElement('div'); subEl.className = 'moodsub'; subEl.textContent = tr('moodSub');
+
+    // --- Get a prompt (optional, one-shot AI suggestion - not a conversation) ---
+    var promptBtn = document.createElement('button');
+    promptBtn.type = 'button'; promptBtn.className = 'prompt-btn';
+    promptBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"></path></svg><span>'+tr('getPromptBtn')+'</span>';
+    var promptPanel = document.createElement('div');
+    promptPanel.className = 'prompt-panel';
+    promptPanel.style.display = 'none';
+    promptBtn.addEventListener('click', async function(){
+      promptBtn.disabled = true;
+      promptPanel.style.display = '';
+      promptPanel.classList.add('loading');
+      promptPanel.textContent = tr('promptLoading');
+      try{
+        var system = buildPromptSystemMessage(flow);
+        var ask = lang==='he' ? 'תן/י לי הצעת כתיבה אחת קצרה.' : 'Give me one short writing prompt.';
+        var text = await askCompanion(system, [{role:'user', content: ask}]);
+        promptPanel.classList.remove('loading');
+        promptPanel.textContent = text;
+      }catch(e){
+        promptPanel.classList.remove('loading');
+        promptPanel.textContent = tr('aiError');
+      }
+      promptBtn.disabled = false;
+    });
+
+    // --- Mood (optional) ---
+    var moodToggleRow = document.createElement('div'); moodToggleRow.className = 'mood-toggle-row';
+    var moodToggleBtn = document.createElement('button');
+    moodToggleBtn.type = 'button'; moodToggleBtn.className = 'mood-toggle-btn';
+    moodToggleBtn.innerHTML = '<span class="mood-dot"></span><span>'+tr('addMoodBtn')+'</span>';
+    var moodWrap = document.createElement('div');
+    moodWrap.style.display = composerMoodEnabled ? '' : 'none';
+    var moodLabelEl = document.createElement('div'); moodLabelEl.className = 'moodlabel';
     var slider = document.createElement('input');
     slider.type = 'range'; slider.min = 0; slider.max = MOOD_STEPS-1; slider.value = 7; slider.className = 'moodslider';
-    var note = document.createElement('textarea');
-    note.rows = 1; note.className = 'moodnote'; note.placeholder = tr('moodNotePh');
-    note.addEventListener('input', function(){ autoGrowTextarea(note); });
+    function updateMoodLabel(){
+      var v = Number(slider.value);
+      moodLabelEl.textContent = MOOD_LABELS[lang][v];
+      moodLabelEl.style.color = moodColor(v);
+    }
+    slider.addEventListener('input', updateMoodLabel);
+    updateMoodLabel();
+    moodWrap.appendChild(moodLabelEl); moodWrap.appendChild(slider);
+    moodToggleBtn.addEventListener('click', function(){
+      composerMoodEnabled = !composerMoodEnabled;
+      moodWrap.style.display = composerMoodEnabled ? '' : 'none';
+      moodToggleBtn.classList.toggle('active', composerMoodEnabled);
+    });
+    moodToggleRow.appendChild(moodToggleBtn);
 
-    // Image attachment UI
-    var pickedImage = null;       // data URL string (the thing we save)
+    // --- Freeform textarea ---
+    var textarea = document.createElement('textarea');
+    textarea.className = 'entry-textarea'; textarea.rows = 6;
+    textarea.placeholder = tr('composerPh');
+
+    // --- Image attachment ---
+    var pickedImage = null;
     var imageRow = document.createElement('div'); imageRow.className = 'moodimage-row';
     var imgBtn = document.createElement('button');
     imgBtn.type = 'button';
     imgBtn.className = 'moodimage-btn';
     imgBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="12" cy="12" r="3.5"></circle><path d="M7 5l1.5-2h7L17 5"></path></svg>'+
-                      '<span>'+(lang==='he' ? 'הוסף תמונה' : 'Add photo')+'</span>';
+                        '<span>'+(lang==='he' ? 'הוסף תמונה' : 'Add photo')+'</span>';
     var fileInput = document.createElement('input');
     fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.style.display = 'none';
     var previewWrap = document.createElement('div'); previewWrap.className = 'moodimage-preview'; previewWrap.style.display = 'none';
@@ -1744,6 +1770,7 @@
 
     function setPickedImage(dataUrl){
       pickedImage = dataUrl;
+      composerPickedImage = dataUrl;
       if(dataUrl){
         previewImg.src = dataUrl;
         previewWrap.style.display = '';
@@ -1774,66 +1801,45 @@
       setPickedImage(null);
     });
 
-    var saveBtn = document.createElement('button'); saveBtn.className = 'btn-primary'; saveBtn.textContent = tr('moodSaveTalk');
-    var saveOnlyBtn = document.createElement('button');
-    saveOnlyBtn.type = 'button';
-    saveOnlyBtn.className = 'moodpicker-saveonly';
-    saveOnlyBtn.textContent = tr('moodSaveOnly');
+    // --- Validation note (shown if trying to save with no text) ---
+    var validationEl = document.createElement('div'); validationEl.className = 'moodimage-error'; validationEl.style.display = 'none';
 
-    function update(){
-      var v = Number(slider.value);
-      labelEl.textContent = MOOD_LABELS[lang][v];
-      labelEl.style.color = moodColor(v);
-    }
-    slider.addEventListener('input', update);
-    update();
-
-    saveBtn.addEventListener('click', async function(){
-      var v = Number(slider.value);
-      var noteText = note.value.trim();
-      var moodLine = MOOD_LABELS[lang][v] + (noteText ? ' — '+noteText : '');
-      activeEntryId = 'e'+Date.now();
-      conversation = [{role:'user', text: moodLine}];
-      persistEntry(v, noteText, pickedImage);
-      var savedImage = pickedImage;
-      closeMoodPickerUI();
-      addBubble('user', moodLine, savedImage);
-      setSending(true);
-      try{
-        var system = buildSystemPrompt('mood') + (lang==='he' ? ' המשתמש/ת דירג/ה מצב רוח: '+MOOD_LABELS.he[v]+'.' : ' The user rated their mood: '+MOOD_LABELS.en[v]+'.');
-        var ackMsg = lang==='he' ? 'הגב/י בקצרה על מצב הרוח הזה.' : 'Respond briefly to this mood.';
-        var reply = await askCompanion(system, [{role:'user', content: ackMsg}]);
-        conversation.push({role:'ai', text: reply});
-        addBubble('ai', reply);
-        persistEntry(v);
-      }catch(e){
-        addBubble('ai', tr('aiError'));
+    // --- Save (one tap: persists the entry and kicks off an AI summary) ---
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'button'; saveBtn.className = 'btn-primary'; saveBtn.textContent = tr('endFlow');
+    saveBtn.addEventListener('click', function(){
+      var text = textarea.value.trim();
+      if(!text){
+        validationEl.textContent = tr('composerNeedText');
+        validationEl.style.display = '';
+        textarea.focus();
+        return;
       }
-      setSending(false);
-    });
-
-    saveOnlyBtn.addEventListener('click', function(){
-      var v = Number(slider.value);
-      var noteText = note.value.trim();
-      var moodLine = MOOD_LABELS[lang][v] + (noteText ? ' — '+noteText : '');
-      activeEntryId = 'e'+Date.now();
-      conversation = [{role:'user', text: moodLine}];
-      persistEntry(v, noteText, pickedImage);
+      validationEl.style.display = 'none';
+      saveBtn.disabled = true;
+      saveBtn.textContent = tr('saving');
+      var moodVal = composerMoodEnabled ? Number(slider.value) : null;
+      var entryIdToSummarize = activeEntryId;
+      persistEntry(moodVal, text, pickedImage);
       closeFlow();
+      generateEntrySummary(entryIdToSummarize, text, moodVal);
     });
+    var actionsRow = document.createElement('div'); actionsRow.className = 'composer-actions';
+    actionsRow.appendChild(saveBtn);
 
-    wrap.appendChild(labelEl); wrap.appendChild(subEl); wrap.appendChild(slider); wrap.appendChild(note);
-    wrap.appendChild(imageRow); wrap.appendChild(errorEl);
-    wrap.appendChild(saveBtn); wrap.appendChild(saveOnlyBtn);
-    host.appendChild(wrap);
+    host.appendChild(promptBtn);
+    host.appendChild(promptPanel);
+    if(flow !== 'mood'){
+      host.appendChild(moodToggleRow);
+    }
+    host.appendChild(moodWrap);
+    host.appendChild(textarea);
+    host.appendChild(imageRow);
+    host.appendChild(errorEl);
+    host.appendChild(validationEl);
+    host.appendChild(actionsRow);
   }
 
-  function closeMoodPickerUI(){
-    document.getElementById('mood-picker-host').innerHTML = '';
-    document.getElementById('thread').style.display = '';
-    setComposerVisible(true);
-    document.getElementById('endflow-row').style.display = 'flex';
-  }
 
   /* ============ Nav (bottom bar + sidebar) ============ */
   function switchToPanel(targetPanel){
@@ -2989,7 +2995,7 @@
       if(!flow) flow = 'chat';
 
       if(flow !== 'mood'){
-        // Real conversation about that day, instead of a blank static entry.
+        // Open the composer for that past date, instead of a blank static entry.
         var targetDate = editingTargetDate;
         closeEditEntry();
         openFlow(flow, targetDate);
