@@ -1277,7 +1277,7 @@
       eyesSVG = '<circle cx="'+(cx-eyeOffsetX)+'" cy="'+eyeY+'" r="0.9" fill="'+color+'"/><circle cx="'+(cx+eyeOffsetX)+'" cy="'+eyeY+'" r="0.9" fill="'+color+'"/>';
     }
 
-    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:block">'
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:block;width:'+size+'px;height:'+size+'px;flex-shrink:0">'
       + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" stroke="'+color+'" stroke-width="1.6"/>'
       + '<path d="'+leftBrow+'" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round"/>'
       + '<path d="'+rightBrow+'" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round"/>'
