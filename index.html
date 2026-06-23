@@ -38,7 +38,8 @@
     --safe-b:env(safe-area-inset-bottom, 0px);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0; padding:0; height:100%; background:var(--paper); color:var(--ink); overflow:hidden;}
+  html{margin:0; padding:0; height:100%;}
+  body{margin:0; padding:0; height:100%; background:var(--paper); color:var(--ink); overflow:hidden;}
   body{
     font-family:'Assistant', system-ui, sans-serif;
     font-size:16px;
@@ -63,6 +64,12 @@
   }
   #onboarding{background:var(--paper);}
   #app{background:transparent;}
+  /* mobile: give #app.live a fixed height so the flex column scroll chain works */
+  #app.live{
+    display:flex; flex-direction:column;
+    height:100vh; height:100dvh;
+    min-height:0;
+  }
 
   /* ---------- Onboarding ---------- */
   #onboarding{
@@ -214,7 +221,7 @@
   .settings-credit{text-align:center; margin-top:18px;}
   .settings-credit span{font-size:0.7rem; color:var(--ink-faint);}
 
-  main{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; min-height:0; padding-bottom:calc(82px + var(--safe-b));}
+  main{flex:1 1 0; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y; display:flex; flex-direction:column; min-height:0; padding-bottom:calc(82px + var(--safe-b));}
   .panel{display:none; padding:6px 18px 0;}
   .panel.active{display:block; animation:panelIn .28s ease; flex:1 0 auto;}
   @keyframes panelIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
@@ -229,7 +236,7 @@
     flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
     padding:6px 0; color:var(--ink-faint); font-size:0.72rem; transition:color .2s ease;
   }
-  nav.bottomnav button svg{width:22px; height:22px;}
+  nav.bottomnav button svg{width:22px; height:22px; flex:0 0 auto;}
   nav.bottomnav button.active{color:var(--accent);}
 
   /* ---------- Chat ---------- */
@@ -387,6 +394,7 @@
   /* ---------- Mood slider ---------- */
   .moodpicker{padding:18px 4px 8px; text-align:center;}
   .moodpicker .moodlabel{font-size:1.4rem; font-weight:700; margin-bottom:4px; transition:color .2s;}
+  .moodface{display:flex; justify-content:center; margin-bottom:6px;}
   .moodpicker .moodsub{color:var(--ink-faint); font-size:0.8rem; margin-bottom:18px;}
   .moodpicker-saveonly{margin-top:12px; font-size:0.82rem; color:var(--ink-soft); text-decoration:underline; text-decoration-color:var(--line); background:none;}
   input[type=range].moodslider{
@@ -649,6 +657,7 @@
   /* ---- Edit entry sheet ---- */
   .edit-entry-sheet .field{margin-bottom:16px;}
   .edit-entry-sheet .edit-moodlabel{font-size:1.4rem; font-weight:700; margin-bottom:4px; text-align:center; transition:color .2s;}
+  .edit-entry-sheet .edit-moodface{display:flex; justify-content:center; margin-bottom:6px;}
   .edit-entry-sheet .edit-moodsub{color:var(--ink-faint); font-size:0.78rem; margin-bottom:14px; text-align:center;}
   .edit-entry-sheet input[type=range].moodslider{-webkit-appearance:none; appearance:none; width:100%; height:10px; border-radius:999px; background:linear-gradient(to right, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high)); margin-bottom:14px;}
   [dir="rtl"] .edit-entry-sheet input[type=range].moodslider{background:linear-gradient(to left, var(--h-low), var(--h-mid1), var(--h-mid2), var(--h-high));}
@@ -700,10 +709,10 @@
   .sidenav .settings-btn svg{width:20px; height:20px; flex:0 0 auto;}
   .sidenav .settings-btn:hover{background:var(--line);}
 
-  /* ---------- Desktop layout ---------- */
-  @media (min-width:860px){
+  /* ---------- iPad layout (≥768 px — covers all iPads in portrait) ---------- */
+  @media (min-width:768px){
     body{
-      background:var(--line); min-height:100vh;
+      background:var(--line); min-height:100dvh;
       display:flex; align-items:center; justify-content:center;
     }
     #onboarding{
@@ -712,19 +721,23 @@
       background:var(--paper);
     }
     #app{
-      max-width:1080px; height:calc(100vh - 64px); min-height:0; margin:0;
-      border-radius:24px; overflow:hidden; box-shadow:var(--shadow); background:var(--paper);
+      max-width:960px; min-height:0; margin:0;
+      border-radius:20px; overflow:hidden;
+      box-shadow:0 4px 32px rgba(43,46,51,.10); background:var(--paper);
     }
-    #app.live{display:flex; flex-direction:row; align-items:stretch; width:min(1080px, calc(100% - 64px)); height:calc(100vh - 64px);}
+    #app.live{
+      display:flex; flex-direction:row; align-items:stretch;
+      width:min(960px, calc(100% - 40px)); height:calc(100dvh - 40px);
+    }
     .sidenav{
-      display:flex; flex-direction:column; width:230px; flex:0 0 230px;
-      padding:26px 18px; border-inline-end:1px solid var(--line); background:var(--paper-raised);
+      display:flex; flex-direction:column; width:186px; flex:0 0 186px;
+      padding:22px 12px; border-inline-end:1px solid var(--line); background:var(--paper-raised);
     }
     .app-shell{min-height:0;}
     .app-shell header.topbar{display:none;}
-    .app-shell .ribbon{margin:20px 32px 8px;}
-    .app-shell main{padding:0;}
-    .app-shell .panel{max-width:640px; margin:0 auto; padding:6px 32px 0;}
+    .app-shell .ribbon{margin:14px 18px 6px;}
+    .app-shell main{padding-bottom:20px;}
+    .app-shell .panel{max-width:none; margin:0; padding:6px 20px 20px;}
     .sky-bg{display:none;}
     nav.bottomnav{display:none;}
 
@@ -734,6 +747,17 @@
       transition:transform .25s ease, opacity .25s ease;
     }
     .sheet.open{transform:translate(-50%,-50%); opacity:1; pointer-events:auto;}
+  }
+
+  /* ---------- Desktop layout (≥1024 px — iPad landscape + desktop) ---------- */
+  @media (min-width:1024px){
+    #app{max-width:1080px; border-radius:24px;}
+    #app.live{
+      width:min(1080px, calc(100% - 64px)); height:calc(100dvh - 64px);
+    }
+    .sidenav{width:224px; flex:0 0 224px; padding:26px 18px;}
+    .app-shell .ribbon{margin:20px 32px 8px;}
+    .app-shell .panel{max-width:640px; margin:0 auto; padding:6px 32px 32px;}
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -931,7 +955,7 @@
       <label id="lock-settings-label">נעילת אפליקציה</label>
       <label class="switch"><input type="checkbox" id="lock-enable-toggle"><span class="slider"></span></label>
     </div>
-    <div class="habit-notify-note" id="lock-settings-note">דרוש/י קוד או זיהוי ביומטרי לפתיחת האפליקציה.</div>
+    <div class="habit-notify-note" id="lock-settings-note">נדרש קוד או זיהוי ביומטרי לפתיחת האפליקציה.</div>
     <button class="data-btn" id="lock-change-pin-btn" style="display:none; margin-top:10px;">שינוי קוד</button>
     <div class="habit-switch-row" id="lock-biometric-row" style="display:none; margin-top:14px;">
       <label id="lock-biometric-label-el">פתיחה עם זיהוי ביומטרי</label>
@@ -973,6 +997,7 @@
   </div>
   <div class="field">
     <label id="edit-mood-label">מצב רוח</label>
+    <div class="edit-moodface" id="edit-moodface"></div>
     <div class="edit-moodlabel" id="edit-moodlabel">—</div>
     <input type="range" class="moodslider" id="edit-moodslider" min="0" max="14" value="7">
   </div>
@@ -1059,12 +1084,12 @@
       flowMorning:'יומן בוקר', flowEvening:'סיכום יום', flowMood:'מצב רוח', flowGratitude:'יומן תודות', flowChat:'שיחה חופשית',
       flowGrounding:'שיחת קרקוע',
       groundingDisclaimerTitle:'לפני שמתחילים',
-      groundingDisclaimerText:'אופק הוא לא מטפל/ת מוסמך/ת ולא תחליף לטיפול מקצועי — הוא יכול להציע תרגילי נשימה וקרקוע עדינים לרגע הזה. במצב חירום או מצוקה גדולה, אפשר גם להתקשר לער"ן בחינם — 1201.',
+      groundingDisclaimerText:'אופק הוא לא מטפל מוסמך ולא תחליף לטיפול מקצועי — הוא יכול להציע תרגילי נשימה וקרקוע עדינים לרגע הזה. במצב חירום או מצוקה גדולה, אפשר גם להתקשר לער"ן בחינם — 1201.',
       groundingContinue:'להתחיל', groundingCancel:'ביטול',
       composerPh:'מה שעל הלב…',
-      getPromptBtn:'הצעת כתיבה', promptLoading:'חושב/ת על הצעה…',
+      getPromptBtn:'הצעת כתיבה', promptLoading:'חושב על הצעה…',
       addMoodBtn:'הוספת מצב רוח', composerNeedText:'אפשר לכתוב כמה מילים לפני השמירה?',
-      saving:'שומר/ת…',
+      saving:'שמירה…',
       distressText:'אם קשה עכשיו, אפשר להתקשר לער"ן בחינם —',
       endFlow:'לסיים ולשמור',
       moodSub:'גררו לבחירת מצב הרוח',
@@ -1113,7 +1138,7 @@
       lockTitle:'אופק נעול', lockSub:'הזן/י קוד לפתיחה',
       lockWrongPin:'קוד שגוי, נסה/י שוב',
       lockUseBiometric:'זיהוי ביומטרי', lockUseFaceID:'זיהוי פנים', lockUseTouchID:'טביעת אצבע',
-      lockSettingsLabel:'נעילת אפליקציה', lockSettingsNote:'דרוש/י קוד או זיהוי ביומטרי לפתיחת האפליקציה.',
+      lockSettingsLabel:'נעילת אפליקציה', lockSettingsNote:'נדרש קוד או זיהוי ביומטרי לפתיחת האפליקציה.',
       lockSetupTitle:'הגדרת קוד', lockSetupSub:'בחר/י קוד בן 4 ספרות',
       lockConfirmTitle:'אישור קוד', lockConfirmSub:'הזן/י את הקוד שוב',
       lockMismatch:'הקודים לא תואמים, ננסה שוב',
@@ -1204,6 +1229,11 @@
     var lang = langOverride || (state.profile && state.profile.lang) || 'he';
     return (STRINGS[lang] && STRINGS[lang][key] !== undefined) ? STRINGS[lang][key] : key;
   }
+  // Returns the correct gendered Hebrew form: m (masculine), f (feminine), or the neutral x form for users who prefer not to specify.
+  function gv(m, f, x){
+    var g = state.profile && state.profile.gender;
+    return g === 'm' ? m : (g === 'f' ? f : (x !== undefined ? x : m + '/' + f));
+  }
 
   /* ============ State ============ */
   function loadState(){
@@ -1221,7 +1251,8 @@
     return { profile:null, entries:[], weeklyCache:{}, habits:[] };
   }
   var state = loadState();
-  if(!state.habits) state.habits = []; // migration safety for existing users
+  if(!state.habits) state.habits = [];
+  if(!state.weeklyCache) state.weeklyCache = {};
   if(!state.security) state.security = { lockEnabled:false, pinHash:null, pinSalt:null, biometricEnabled:false, credentialId:null, credentialUserId:null };
   function saveState(){
     state.lastModified = Date.now();
@@ -1243,6 +1274,42 @@
     }
     var last = MOOD_STOPS[MOOD_STOPS.length-1][1];
     return 'rgb('+last[0]+','+last[1]+','+last[2]+')';
+  }
+
+  /* ============ Mood face icon (ported from wellness-journal, same 15-step curve) ============ */
+  function moodFaceSVG(index, color, size){
+    size = size || 24;
+    var steps = MOOD_STEPS - 1;
+    var valence = (index/steps - 0.5) * 2; // -1 (lowest) .. 1 (highest)
+    var cx = 12, cy = 12, r = 9;
+
+    var mouthY = 15.5;
+    var mouthHalfW = 3.6 + Math.abs(valence) * 1.2;
+    var ctrlY = mouthY + valence * 6.4;
+    var mouthPath = 'M'+(cx-mouthHalfW)+' '+mouthY+' Q'+cx+' '+ctrlY+' '+(cx+mouthHalfW)+' '+mouthY;
+
+    var browDroop = Math.max(0, -valence) * 2.2;
+    var browY = 8.3, browInset = 2.6, browSpan = 2.2;
+    var leftBrow  = 'M'+(cx-browInset-browSpan)+' '+(browY+browDroop)+' L'+(cx-browInset)+' '+browY;
+    var rightBrow = 'M'+(cx+browInset)+' '+browY+' L'+(cx+browInset+browSpan)+' '+(browY+browDroop);
+
+    var eyeY = 10.2, eyeOffsetX = 3.6;
+    var eyesSVG;
+    if(index === 0){
+      eyesSVG = '<path d="M'+(cx-eyeOffsetX-1.1)+' '+eyeY+' q1.1 1 2.2 0 M'+(cx+eyeOffsetX-1.1)+' '+eyeY+' q1.1 1 2.2 0" stroke="'+color+'" stroke-width="1.4" stroke-linecap="round" fill="none"/>';
+    } else if(index >= steps - 2){
+      eyesSVG = '<path d="M'+(cx-eyeOffsetX-1.3)+' '+(eyeY+0.5)+' q1.3 -1.5 2.6 0 M'+(cx+eyeOffsetX-1.3)+' '+(eyeY+0.5)+' q1.3 -1.5 2.6 0" stroke="'+color+'" stroke-width="1.4" stroke-linecap="round" fill="none"/>';
+    } else {
+      eyesSVG = '<circle cx="'+(cx-eyeOffsetX)+'" cy="'+eyeY+'" r="0.9" fill="'+color+'"/><circle cx="'+(cx+eyeOffsetX)+'" cy="'+eyeY+'" r="0.9" fill="'+color+'"/>';
+    }
+
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:block;width:'+size+'px;height:'+size+'px;flex-shrink:0">'
+      + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" stroke="'+color+'" stroke-width="1.6"/>'
+      + '<path d="'+leftBrow+'" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round"/>'
+      + '<path d="'+rightBrow+'" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round"/>'
+      + eyesSVG
+      + '<path d="'+mouthPath+'" stroke="'+color+'" stroke-width="1.6" stroke-linecap="round" fill="none"/>'
+      + '</svg>';
   }
 
   /* ============ Date helpers (hardcoded names — avoids toLocaleDateString quirks) ============ */
@@ -1486,13 +1553,13 @@
     var lang = state.profile.lang;
     var g = state.profile.gender;
     if(lang === 'he'){
-      if(g === 'm') return ' פנה אל המשתמש בלשון זכר יחיד בלבד (אתה, הולך, מרגיש וכו׳) - לא בלשון נקבה ולא בצורות מקוצרות עם לוכסן (כמו את/ה).';
-      if(g === 'f') return ' פני אל המשתמשת בלשון נקבה יחיד בלבד (את, הולכת, מרגישה וכו׳) - לא בלשון זכר ולא בצורות מקוצרות עם לוכסן (כמו את/ה).';
-      return '';
+      if(g === 'm') return ' פנה אל המשתמש בלשון זכר יחיד בלבד (אתה, הולך, מרגיש וכו׳) — לא בלשון נקבה ולא בצורות מקוצרות עם לוכסן (כמו את/ה).';
+      if(g === 'f') return ' פני אל המשתמשת בלשון נקבה יחיד בלבד (את, הולכת, מרגישה וכו׳) — לא בלשון זכר ולא בצורות מקוצרות עם לוכסן (כמו את/ה).';
+      return ' פנה/י אל המשתמש/ת בצורות ניטרליות — עדיפות לנסח בלי פנייה מגדרית ישירה, להשתמש בשם בלבד, או בצורות עם לוכסן (את/ה, הולך/ת). אל תפנה/י בצורה חד-מגדרית בלבד.';
     }
-    if(g === 'm') return ' If you refer to the user in the third person for any reason, use he/him.';
-    if(g === 'f') return ' If you refer to the user in the third person for any reason, use she/her.';
-    return '';
+    if(g === 'm') return ' Address the user using he/him pronouns.';
+    if(g === 'f') return ' Address the user using she/her pronouns.';
+    return ' Use gender-neutral language when addressing the user.';
   }
 
   function buildPromptSystemMessage(flow){
@@ -1507,7 +1574,7 @@
       evening: lang==='he' ? ' זה סיכום יום — הצעה שמזמינה להביט אחורה על מה שבלט היום.' : ' This is an evening summary — suggest something inviting reflection on what stood out today.',
       gratitude: lang==='he' ? ' זה יומן תודות — הצעה שמזמינה לחשוב על דבר אחד או שניים שיש תודה עליהם.' : ' This is a gratitude journal — suggest something inviting one or two things to be thankful for.',
       chat: lang==='he' ? ' זו כתיבה חופשית — הצעה פתוחה שיכולה להתאים לכל מצב רוח.' : ' This is free writing — offer an open suggestion that could fit any mood.',
-      mood: lang==='he' ? ' המשתמש/ת רושמ/ת מצב רוח — הצעה שמזמינה לתאר במילים מה עומד מאחורי המצב הזה.' : " The user is logging a mood — suggest something inviting them to put into words what's behind that mood.",
+      mood: lang==='he' ? ' ' + (state.profile.gender==='m' ? 'המשתמש רושם' : state.profile.gender==='f' ? 'המשתמשת רושמת' : 'המשתמש/ת רושמ/ת') + ' מצב רוח — הצעה שמזמינה לתאר במילים מה עומד מאחורי המצב הזה.' : " The user is logging a mood — suggest something inviting them to put into words what's behind that mood.",
       grounding: lang==='he'
         ? ' זו כתיבה לרגעי מצוקה או חרדה. הצעה עדינה שעוזרת לתאר מה קורה עכשיו, או טכניקת קרקוע פשוטה אחת (נשימה איטית, או תרגיל 5-4-3-2-1 חושי) לתאר תוך כדי תרגול. את/ה לא מטפל/ת מוסמך/ת ואל תתחזה/י לכזה.'
         : " This is writing for moments of distress or anxiety. A gentle suggestion to help describe what's happening right now, or one simple grounding technique (slow breathing, or the 5-4-3-2-1 senses exercise) to describe while practicing it. You are not a licensed therapist and must not claim to be one."
@@ -1548,7 +1615,7 @@
     if(lang === 'he'){
       if(g === 'm') return ' כשאתה כותב בגוף ראשון מטעם המשתמש, השתמש בנטיות פועל בלשון זכר (הלכתי, מרגיש, רוצה וכו׳).';
       if(g === 'f') return ' כשאת כותבת בגוף ראשון מטעם המשתמשת, השתמשי בנטיות פועל בלשון נקבה (הלכתי, מרגישה, רוצה וכו׳).';
-      return '';
+      return ' כשכותבים בגוף ראשון מטעם המשתמש/ת, השתמש/י בצורות ניטרליות ככל האפשר — "הרגשתי", "חשבתי", "רציתי" הן ניטרליות. הימנע/י מנטיות מגדריות מובהקות כמו "מרגיש" לעומת "מרגישה".';
     }
     return '';
   }
@@ -1697,17 +1764,20 @@
     moodToggleBtn.innerHTML = '<span class="mood-dot"></span><span>'+tr('addMoodBtn')+'</span>';
     var moodWrap = document.createElement('div');
     moodWrap.style.display = composerMoodEnabled ? '' : 'none';
+    var moodFaceEl = document.createElement('div'); moodFaceEl.className = 'moodface';
     var moodLabelEl = document.createElement('div'); moodLabelEl.className = 'moodlabel';
     var slider = document.createElement('input');
     slider.type = 'range'; slider.min = 0; slider.max = MOOD_STEPS-1; slider.value = 7; slider.className = 'moodslider';
     function updateMoodLabel(){
       var v = Number(slider.value);
+      var c = moodColor(v);
+      moodFaceEl.innerHTML = moodFaceSVG(v, c, 40);
       moodLabelEl.textContent = MOOD_LABELS[lang][v];
-      moodLabelEl.style.color = moodColor(v);
+      moodLabelEl.style.color = c;
     }
     slider.addEventListener('input', updateMoodLabel);
     updateMoodLabel();
-    moodWrap.appendChild(moodLabelEl); moodWrap.appendChild(slider);
+    moodWrap.appendChild(moodFaceEl); moodWrap.appendChild(moodLabelEl); moodWrap.appendChild(slider);
     moodToggleBtn.addEventListener('click', function(){
       composerMoodEnabled = !composerMoodEnabled;
       moodWrap.style.display = composerMoodEnabled ? '' : 'none';
@@ -1768,7 +1838,7 @@
         setPickedImage(dataUrl);
         fileInput.value = '';
       }).catch(function(){
-        errorEl.textContent = lang==='he' ? 'לא הצלחתי לטעון את התמונה. נסה/י שוב.' : "Couldn't load that image. Try another one.";
+        errorEl.textContent = lang==='he' ? 'לא הצלחתי לטעון את התמונה. ' + gv('נסה','נסי','נסה/י') + ' שוב.' : "Couldn't load that image. Try another one.";
         errorEl.style.display = '';
         fileInput.value = '';
       });
@@ -2375,9 +2445,10 @@
       return moodPart+textPart;
     }).filter(Boolean).join('\n');
 
-    var system = lang==='he'
+    var system = (lang==='he'
       ? ('את/ה אופק. הנה רשומות של '+state.profile.name+' מהשבוע האחרון. כתוב/כתבי פסקה קצרה (2–4 משפטים), חמה ולא שיפוטית, שמשקפת דפוס או תובנה אחת — לא רשימה, לא סיכום מכני.')
-      : ("You are Ofek. Here are "+state.profile.name+"'s entries from the past week. Write one short, warm, non-judgmental paragraph (2-4 sentences) reflecting a single pattern or insight — not a list, not a mechanical summary.");
+      : ("You are Ofek. Here are "+state.profile.name+"'s entries from the past week. Write one short, warm, non-judgmental paragraph (2-4 sentences) reflecting a single pattern or insight — not a list, not a mechanical summary."))
+      + genderAddressNote();
 
     var userMsg = summary || (lang==='he' ? 'אין הרבה לעבוד איתו השבוע.' : 'Not much to go on this week.');
     return await askCompanion(system, [{role:'user', content: userMsg}]);
@@ -3006,6 +3077,7 @@
     var labelEl = document.getElementById('edit-moodlabel');
     labelEl.textContent = MOOD_LABELS[lang][moodVal];
     labelEl.style.color = moodColor(moodVal);
+    document.getElementById('edit-moodface').innerHTML = moodFaceSVG(moodVal, moodColor(moodVal), 44);
     // note
     document.getElementById('edit-note').value = entry.note || '';
     autoGrowTextarea(document.getElementById('edit-note'));
@@ -3042,6 +3114,7 @@
     var labelEl = document.getElementById('edit-moodlabel');
     labelEl.textContent = MOOD_LABELS[lang][7];
     labelEl.style.color = moodColor(7);
+    document.getElementById('edit-moodface').innerHTML = moodFaceSVG(7, moodColor(7), 44);
     // clear note
     document.getElementById('edit-note').value = '';
     autoGrowTextarea(document.getElementById('edit-note'));
@@ -3143,9 +3216,11 @@
     editMoodSlider.addEventListener('input', function(){
       var v = Number(this.value);
       var lang = state.profile ? state.profile.lang : 'he';
+      var c = moodColor(v);
       var labelEl = document.getElementById('edit-moodlabel');
       labelEl.textContent = MOOD_LABELS[lang][v];
-      labelEl.style.color = moodColor(v);
+      labelEl.style.color = c;
+      document.getElementById('edit-moodface').innerHTML = moodFaceSVG(v, c, 44);
     });
   }
   var editImageBtn = document.getElementById('edit-image-btn');
@@ -3662,7 +3737,7 @@
   function showLockScreen(){
     document.getElementById('lock-screen').style.display = 'flex';
     document.getElementById('lock-title-text').textContent = tr('lockTitle');
-    document.getElementById('lock-sub-text').textContent = tr('lockSub');
+    document.getElementById('lock-sub-text').textContent = state.profile.lang==='he' ? gv('הזן קוד לפתיחה','הזיני קוד לפתיחה',tr('lockSub')) : tr('lockSub');
     pinBuffer = '';
     renderPinDots('lock-pin-dots');
     document.getElementById('lock-pin-error').textContent = '';
@@ -3697,7 +3772,7 @@
       if(hash === state.security.pinHash){
         hideLockScreen();
       } else {
-        document.getElementById('lock-pin-error').textContent = tr('lockWrongPin');
+        document.getElementById('lock-pin-error').textContent = state.profile.lang==='he' ? gv('קוד שגוי, נסה שוב','קוד שגוי, נסי שוב',tr('lockWrongPin')) : tr('lockWrongPin');
         var dotsHost = document.getElementById('lock-pin-dots');
         dotsHost.classList.add('shake');
         setTimeout(function(){ dotsHost.classList.remove('shake'); }, 400);
@@ -3728,7 +3803,7 @@
     pendingSetupPin = null;
     pinBuffer = '';
     document.getElementById('pin-setup-title').textContent = tr('lockSetupTitle');
-    document.getElementById('pin-setup-sub').textContent = tr('lockSetupSub');
+    document.getElementById('pin-setup-sub').textContent = state.profile.lang==='he' ? gv('בחר קוד בן 4 ספרות','בחרי קוד בן 4 ספרות',tr('lockSetupSub')) : tr('lockSetupSub');
     document.getElementById('pin-setup-error').textContent = '';
     document.getElementById('pin-setup-cancel-btn').textContent = tr('close');
     buildKeypad('pin-setup-keypad', handleSetupDigit, handleSetupBackspace, null, false);
@@ -3751,7 +3826,7 @@
       pinBuffer = '';
       lockSetupMode = 'confirm';
       document.getElementById('pin-setup-title').textContent = tr('lockConfirmTitle');
-      document.getElementById('pin-setup-sub').textContent = tr('lockConfirmSub');
+      document.getElementById('pin-setup-sub').textContent = state.profile.lang==='he' ? gv('הזן את הקוד שוב','הזיני את הקוד שוב',tr('lockConfirmSub')) : tr('lockConfirmSub');
       setTimeout(function(){ renderPinDots('pin-setup-dots'); }, 120);
     } else if(lockSetupMode === 'confirm'){
       if(pinBuffer === pendingSetupPin){
@@ -3764,7 +3839,7 @@
         pendingSetupPin = null; pinBuffer = '';
         lockSetupMode = 'setup';
         document.getElementById('pin-setup-title').textContent = tr('lockSetupTitle');
-        document.getElementById('pin-setup-sub').textContent = tr('lockSetupSub');
+        document.getElementById('pin-setup-sub').textContent = state.profile.lang==='he' ? gv('בחר קוד בן 4 ספרות','בחרי קוד בן 4 ספרות',tr('lockSetupSub')) : tr('lockSetupSub');
         setTimeout(function(){ renderPinDots('pin-setup-dots'); }, 200);
       }
     }
