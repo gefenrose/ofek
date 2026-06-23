@@ -1225,7 +1225,8 @@
     return { profile:null, entries:[], weeklyCache:{}, habits:[] };
   }
   var state = loadState();
-  if(!state.habits) state.habits = []; // migration safety for existing users
+  if(!state.habits) state.habits = [];
+  if(!state.weeklyCache) state.weeklyCache = {};
   if(!state.security) state.security = { lockEnabled:false, pinHash:null, pinSalt:null, biometricEnabled:false, credentialId:null, credentialUserId:null };
   function saveState(){
     state.lastModified = Date.now();
