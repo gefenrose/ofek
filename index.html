@@ -703,10 +703,10 @@
   .sidenav .settings-btn svg{width:20px; height:20px; flex:0 0 auto;}
   .sidenav .settings-btn:hover{background:var(--line);}
 
-  /* ---------- Desktop layout ---------- */
-  @media (min-width:860px){
+  /* ---------- iPad layout (≥768 px — covers all iPads in portrait) ---------- */
+  @media (min-width:768px){
     body{
-      background:var(--line); min-height:100vh;
+      background:var(--line); min-height:100dvh;
       display:flex; align-items:center; justify-content:center;
     }
     #onboarding{
@@ -715,19 +715,23 @@
       background:var(--paper);
     }
     #app{
-      max-width:1080px; height:calc(100vh - 64px); min-height:0; margin:0;
-      border-radius:24px; overflow:hidden; box-shadow:var(--shadow); background:var(--paper);
+      max-width:960px; min-height:0; margin:0;
+      border-radius:20px; overflow:hidden;
+      box-shadow:0 4px 32px rgba(43,46,51,.10); background:var(--paper);
     }
-    #app.live{display:flex; flex-direction:row; align-items:stretch; width:min(1080px, calc(100% - 64px)); height:calc(100vh - 64px);}
+    #app.live{
+      display:flex; flex-direction:row; align-items:stretch;
+      width:min(960px, calc(100% - 40px)); height:calc(100dvh - 40px);
+    }
     .sidenav{
-      display:flex; flex-direction:column; width:230px; flex:0 0 230px;
-      padding:26px 18px; border-inline-end:1px solid var(--line); background:var(--paper-raised);
+      display:flex; flex-direction:column; width:186px; flex:0 0 186px;
+      padding:22px 12px; border-inline-end:1px solid var(--line); background:var(--paper-raised);
     }
     .app-shell{min-height:0;}
     .app-shell header.topbar{display:none;}
-    .app-shell .ribbon{margin:20px 32px 8px;}
-    .app-shell main{padding:0;}
-    .app-shell .panel{max-width:640px; margin:0 auto; padding:6px 32px 0;}
+    .app-shell .ribbon{margin:14px 18px 6px;}
+    .app-shell main{padding-bottom:20px;}
+    .app-shell .panel{max-width:none; margin:0; padding:6px 20px 20px;}
     .sky-bg{display:none;}
     nav.bottomnav{display:none;}
 
@@ -737,6 +741,17 @@
       transition:transform .25s ease, opacity .25s ease;
     }
     .sheet.open{transform:translate(-50%,-50%); opacity:1; pointer-events:auto;}
+  }
+
+  /* ---------- Desktop layout (≥1024 px — iPad landscape + desktop) ---------- */
+  @media (min-width:1024px){
+    #app{max-width:1080px; border-radius:24px;}
+    #app.live{
+      width:min(1080px, calc(100% - 64px)); height:calc(100dvh - 64px);
+    }
+    .sidenav{width:224px; flex:0 0 224px; padding:26px 18px;}
+    .app-shell .ribbon{margin:20px 32px 8px;}
+    .app-shell .panel{max-width:640px; margin:0 auto; padding:6px 32px 32px;}
   }
 
   @media (prefers-reduced-motion: reduce){
