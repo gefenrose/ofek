@@ -955,7 +955,7 @@
       <label id="lock-settings-label">נעילת אפליקציה</label>
       <label class="switch"><input type="checkbox" id="lock-enable-toggle"><span class="slider"></span></label>
     </div>
-    <div class="habit-notify-note" id="lock-settings-note">דרוש/י קוד או זיהוי ביומטרי לפתיחת האפליקציה.</div>
+    <div class="habit-notify-note" id="lock-settings-note">נדרש קוד או זיהוי ביומטרי לפתיחת האפליקציה.</div>
     <button class="data-btn" id="lock-change-pin-btn" style="display:none; margin-top:10px;">שינוי קוד</button>
     <div class="habit-switch-row" id="lock-biometric-row" style="display:none; margin-top:14px;">
       <label id="lock-biometric-label-el">פתיחה עם זיהוי ביומטרי</label>
@@ -1084,12 +1084,12 @@
       flowMorning:'יומן בוקר', flowEvening:'סיכום יום', flowMood:'מצב רוח', flowGratitude:'יומן תודות', flowChat:'שיחה חופשית',
       flowGrounding:'שיחת קרקוע',
       groundingDisclaimerTitle:'לפני שמתחילים',
-      groundingDisclaimerText:'אופק הוא לא מטפל/ת מוסמך/ת ולא תחליף לטיפול מקצועי — הוא יכול להציע תרגילי נשימה וקרקוע עדינים לרגע הזה. במצב חירום או מצוקה גדולה, אפשר גם להתקשר לער"ן בחינם — 1201.',
+      groundingDisclaimerText:'אופק הוא לא מטפל מוסמך ולא תחליף לטיפול מקצועי — הוא יכול להציע תרגילי נשימה וקרקוע עדינים לרגע הזה. במצב חירום או מצוקה גדולה, אפשר גם להתקשר לער"ן בחינם — 1201.',
       groundingContinue:'להתחיל', groundingCancel:'ביטול',
       composerPh:'מה שעל הלב…',
-      getPromptBtn:'הצעת כתיבה', promptLoading:'חושב/ת על הצעה…',
+      getPromptBtn:'הצעת כתיבה', promptLoading:'חושב על הצעה…',
       addMoodBtn:'הוספת מצב רוח', composerNeedText:'אפשר לכתוב כמה מילים לפני השמירה?',
-      saving:'שומר/ת…',
+      saving:'שמירה…',
       distressText:'אם קשה עכשיו, אפשר להתקשר לער"ן בחינם —',
       endFlow:'לסיים ולשמור',
       moodSub:'גררו לבחירת מצב הרוח',
@@ -1138,7 +1138,7 @@
       lockTitle:'אופק נעול', lockSub:'הזן/י קוד לפתיחה',
       lockWrongPin:'קוד שגוי, נסה/י שוב',
       lockUseBiometric:'זיהוי ביומטרי', lockUseFaceID:'זיהוי פנים', lockUseTouchID:'טביעת אצבע',
-      lockSettingsLabel:'נעילת אפליקציה', lockSettingsNote:'דרוש/י קוד או זיהוי ביומטרי לפתיחת האפליקציה.',
+      lockSettingsLabel:'נעילת אפליקציה', lockSettingsNote:'נדרש קוד או זיהוי ביומטרי לפתיחת האפליקציה.',
       lockSetupTitle:'הגדרת קוד', lockSetupSub:'בחר/י קוד בן 4 ספרות',
       lockConfirmTitle:'אישור קוד', lockConfirmSub:'הזן/י את הקוד שוב',
       lockMismatch:'הקודים לא תואמים, ננסה שוב',
@@ -1228,6 +1228,11 @@
   function tr(key, langOverride){
     var lang = langOverride || (state.profile && state.profile.lang) || 'he';
     return (STRINGS[lang] && STRINGS[lang][key] !== undefined) ? STRINGS[lang][key] : key;
+  }
+  // Returns the correct gendered Hebrew form: m (masculine), f (feminine), or the neutral x form for users who prefer not to specify.
+  function gv(m, f, x){
+    var g = state.profile && state.profile.gender;
+    return g === 'm' ? m : (g === 'f' ? f : (x !== undefined ? x : m + '/' + f));
   }
 
   /* ============ State ============ */
@@ -1548,13 +1553,13 @@
     var lang = state.profile.lang;
     var g = state.profile.gender;
     if(lang === 'he'){
-      if(g === 'm') return ' פנה אל המשתמש בלשון זכר יחיד בלבד (אתה, הולך, מרגיש וכו׳) - לא בלשון נקבה ולא בצורות מקוצרות עם לוכסן (כמו את/ה).';
-      if(g === 'f') return ' פני אל המשתמשת בלשון נקבה יחיד בלבד (את, הולכת, מרגישה וכו׳) - לא בלשון זכר ולא בצורות מקוצרות עם לוכסן (כמו את/ה).';
-      return '';
+      if(g === 'm') return ' פנה אל המשתמש בלשון זכר יחיד בלבד (אתה, הולך, מרגיש וכו׳) — לא בלשון נקבה ולא בצורות מקוצרות עם לוכסן (כמו את/ה).';
+      if(g === 'f') return ' פני אל המשתמשת בלשון נקבה יחיד בלבד (את, הולכת, מרגישה וכו׳) — לא בלשון זכר ולא בצורות מקוצרות עם לוכסן (כמו את/ה).';
+      return ' פנה/י אל המשתמש/ת בצורות ניטרליות — עדיפות לנסח בלי פנייה מגדרית ישירה, להשתמש בשם בלבד, או בצורות עם לוכסן (את/ה, הולך/ת). אל תפנה/י בצורה חד-מגדרית בלבד.';
     }
-    if(g === 'm') return ' If you refer to the user in the third person for any reason, use he/him.';
-    if(g === 'f') return ' If you refer to the user in the third person for any reason, use she/her.';
-    return '';
+    if(g === 'm') return ' Address the user using he/him pronouns.';
+    if(g === 'f') return ' Address the user using she/her pronouns.';
+    return ' Use gender-neutral language when addressing the user.';
   }
 
   function buildPromptSystemMessage(flow){
@@ -1569,7 +1574,7 @@
       evening: lang==='he' ? ' זה סיכום יום — הצעה שמזמינה להביט אחורה על מה שבלט היום.' : ' This is an evening summary — suggest something inviting reflection on what stood out today.',
       gratitude: lang==='he' ? ' זה יומן תודות — הצעה שמזמינה לחשוב על דבר אחד או שניים שיש תודה עליהם.' : ' This is a gratitude journal — suggest something inviting one or two things to be thankful for.',
       chat: lang==='he' ? ' זו כתיבה חופשית — הצעה פתוחה שיכולה להתאים לכל מצב רוח.' : ' This is free writing — offer an open suggestion that could fit any mood.',
-      mood: lang==='he' ? ' המשתמש/ת רושמ/ת מצב רוח — הצעה שמזמינה לתאר במילים מה עומד מאחורי המצב הזה.' : " The user is logging a mood — suggest something inviting them to put into words what's behind that mood.",
+      mood: lang==='he' ? ' ' + (state.profile.gender==='m' ? 'המשתמש רושם' : state.profile.gender==='f' ? 'המשתמשת רושמת' : 'המשתמש/ת רושמ/ת') + ' מצב רוח — הצעה שמזמינה לתאר במילים מה עומד מאחורי המצב הזה.' : " The user is logging a mood — suggest something inviting them to put into words what's behind that mood.",
       grounding: lang==='he'
         ? ' זו כתיבה לרגעי מצוקה או חרדה. הצעה עדינה שעוזרת לתאר מה קורה עכשיו, או טכניקת קרקוע פשוטה אחת (נשימה איטית, או תרגיל 5-4-3-2-1 חושי) לתאר תוך כדי תרגול. את/ה לא מטפל/ת מוסמך/ת ואל תתחזה/י לכזה.'
         : " This is writing for moments of distress or anxiety. A gentle suggestion to help describe what's happening right now, or one simple grounding technique (slow breathing, or the 5-4-3-2-1 senses exercise) to describe while practicing it. You are not a licensed therapist and must not claim to be one."
@@ -1610,7 +1615,7 @@
     if(lang === 'he'){
       if(g === 'm') return ' כשאתה כותב בגוף ראשון מטעם המשתמש, השתמש בנטיות פועל בלשון זכר (הלכתי, מרגיש, רוצה וכו׳).';
       if(g === 'f') return ' כשאת כותבת בגוף ראשון מטעם המשתמשת, השתמשי בנטיות פועל בלשון נקבה (הלכתי, מרגישה, רוצה וכו׳).';
-      return '';
+      return ' כשכותבים בגוף ראשון מטעם המשתמש/ת, השתמש/י בצורות ניטרליות ככל האפשר — "הרגשתי", "חשבתי", "רציתי" הן ניטרליות. הימנע/י מנטיות מגדריות מובהקות כמו "מרגיש" לעומת "מרגישה".';
     }
     return '';
   }
@@ -1833,7 +1838,7 @@
         setPickedImage(dataUrl);
         fileInput.value = '';
       }).catch(function(){
-        errorEl.textContent = lang==='he' ? 'לא הצלחתי לטעון את התמונה. נסה/י שוב.' : "Couldn't load that image. Try another one.";
+        errorEl.textContent = lang==='he' ? 'לא הצלחתי לטעון את התמונה. ' + gv('נסה','נסי','נסה/י') + ' שוב.' : "Couldn't load that image. Try another one.";
         errorEl.style.display = '';
         fileInput.value = '';
       });
@@ -2440,9 +2445,10 @@
       return moodPart+textPart;
     }).filter(Boolean).join('\n');
 
-    var system = lang==='he'
+    var system = (lang==='he'
       ? ('את/ה אופק. הנה רשומות של '+state.profile.name+' מהשבוע האחרון. כתוב/כתבי פסקה קצרה (2–4 משפטים), חמה ולא שיפוטית, שמשקפת דפוס או תובנה אחת — לא רשימה, לא סיכום מכני.')
-      : ("You are Ofek. Here are "+state.profile.name+"'s entries from the past week. Write one short, warm, non-judgmental paragraph (2-4 sentences) reflecting a single pattern or insight — not a list, not a mechanical summary.");
+      : ("You are Ofek. Here are "+state.profile.name+"'s entries from the past week. Write one short, warm, non-judgmental paragraph (2-4 sentences) reflecting a single pattern or insight — not a list, not a mechanical summary."))
+      + genderAddressNote();
 
     var userMsg = summary || (lang==='he' ? 'אין הרבה לעבוד איתו השבוע.' : 'Not much to go on this week.');
     return await askCompanion(system, [{role:'user', content: userMsg}]);
@@ -3731,7 +3737,7 @@
   function showLockScreen(){
     document.getElementById('lock-screen').style.display = 'flex';
     document.getElementById('lock-title-text').textContent = tr('lockTitle');
-    document.getElementById('lock-sub-text').textContent = tr('lockSub');
+    document.getElementById('lock-sub-text').textContent = state.profile.lang==='he' ? gv('הזן קוד לפתיחה','הזיני קוד לפתיחה',tr('lockSub')) : tr('lockSub');
     pinBuffer = '';
     renderPinDots('lock-pin-dots');
     document.getElementById('lock-pin-error').textContent = '';
@@ -3766,7 +3772,7 @@
       if(hash === state.security.pinHash){
         hideLockScreen();
       } else {
-        document.getElementById('lock-pin-error').textContent = tr('lockWrongPin');
+        document.getElementById('lock-pin-error').textContent = state.profile.lang==='he' ? gv('קוד שגוי, נסה שוב','קוד שגוי, נסי שוב',tr('lockWrongPin')) : tr('lockWrongPin');
         var dotsHost = document.getElementById('lock-pin-dots');
         dotsHost.classList.add('shake');
         setTimeout(function(){ dotsHost.classList.remove('shake'); }, 400);
@@ -3797,7 +3803,7 @@
     pendingSetupPin = null;
     pinBuffer = '';
     document.getElementById('pin-setup-title').textContent = tr('lockSetupTitle');
-    document.getElementById('pin-setup-sub').textContent = tr('lockSetupSub');
+    document.getElementById('pin-setup-sub').textContent = state.profile.lang==='he' ? gv('בחר קוד בן 4 ספרות','בחרי קוד בן 4 ספרות',tr('lockSetupSub')) : tr('lockSetupSub');
     document.getElementById('pin-setup-error').textContent = '';
     document.getElementById('pin-setup-cancel-btn').textContent = tr('close');
     buildKeypad('pin-setup-keypad', handleSetupDigit, handleSetupBackspace, null, false);
@@ -3820,7 +3826,7 @@
       pinBuffer = '';
       lockSetupMode = 'confirm';
       document.getElementById('pin-setup-title').textContent = tr('lockConfirmTitle');
-      document.getElementById('pin-setup-sub').textContent = tr('lockConfirmSub');
+      document.getElementById('pin-setup-sub').textContent = state.profile.lang==='he' ? gv('הזן את הקוד שוב','הזיני את הקוד שוב',tr('lockConfirmSub')) : tr('lockConfirmSub');
       setTimeout(function(){ renderPinDots('pin-setup-dots'); }, 120);
     } else if(lockSetupMode === 'confirm'){
       if(pinBuffer === pendingSetupPin){
@@ -3833,7 +3839,7 @@
         pendingSetupPin = null; pinBuffer = '';
         lockSetupMode = 'setup';
         document.getElementById('pin-setup-title').textContent = tr('lockSetupTitle');
-        document.getElementById('pin-setup-sub').textContent = tr('lockSetupSub');
+        document.getElementById('pin-setup-sub').textContent = state.profile.lang==='he' ? gv('בחר קוד בן 4 ספרות','בחרי קוד בן 4 ספרות',tr('lockSetupSub')) : tr('lockSetupSub');
         setTimeout(function(){ renderPinDots('pin-setup-dots'); }, 200);
       }
     }
