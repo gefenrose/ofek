@@ -64,6 +64,12 @@
   }
   #onboarding{background:var(--paper);}
   #app{background:transparent;}
+  /* mobile: give #app.live a fixed height so the flex column scroll chain works */
+  #app.live{
+    display:flex; flex-direction:column;
+    height:100vh; height:100dvh;
+    min-height:0;
+  }
 
   /* ---------- Onboarding ---------- */
   #onboarding{
