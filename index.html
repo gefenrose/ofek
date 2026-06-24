@@ -15,6 +15,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  /* Apply saved theme before first paint to avoid flash */
+  (function(){
+    try{
+      var s = JSON.parse(localStorage.getItem('ofek_state_v1'));
+      document.documentElement.setAttribute('data-theme', (s && s.theme) || 'auto');
+    }catch(e){ document.documentElement.setAttribute('data-theme','auto'); }
+  })();
+</script>
 <style>
   :root{
     --paper:#FAF8F4;
@@ -37,6 +46,25 @@
     --safe-t:env(safe-area-inset-top, 0px);
     --safe-b:env(safe-area-inset-bottom, 0px);
   }
+  /* Dark palette — applied when data-theme="dark" is set on <html>,
+     or automatically when system is dark and data-theme="auto". */
+  html[data-theme="dark"],
+  html[data-theme="auto"]{--_dark:1;}
+  html[data-theme="dark"]{
+    --paper:#1B1C22; --paper-raised:#252530;
+    --ink:#EAE7DF; --ink-soft:#8A8C96; --ink-faint:#53555E;
+    --line:#2E3040; --accent:#5D8FA6; --accent-ink:#FFFFFF;
+    --danger:#C9685C; --shadow:0 2px 18px rgba(0,0,0,.30);
+  }
+  @media(prefers-color-scheme:dark){
+    html[data-theme="auto"]{
+      --paper:#1B1C22; --paper-raised:#252530;
+      --ink:#EAE7DF; --ink-soft:#8A8C96; --ink-faint:#53555E;
+      --line:#2E3040; --accent:#5D8FA6; --accent-ink:#FFFFFF;
+      --danger:#C9685C; --shadow:0 2px 18px rgba(0,0,0,.30);
+    }
+  }
+
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html{margin:0; padding:0; height:100%;}
   body{margin:0; padding:0; height:100%; background:var(--paper); color:var(--ink); overflow:hidden;}
@@ -144,6 +172,10 @@
   .sky-bg{
     position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
     background:linear-gradient(180deg, #FFFFFF 0%, #F7F7F8 45%, #ECEDEF 100%);
+  }
+  html[data-theme="dark"] .sky-bg{background:linear-gradient(180deg,#13141A 0%,#1B1C22 60%,#23242C 100%);}
+  @media(prefers-color-scheme:dark){
+    html[data-theme="auto"] .sky-bg{background:linear-gradient(180deg,#13141A 0%,#1B1C22 60%,#23242C 100%);}
   }
   @keyframes horizonDotIn{
     0%{left:-60%; transform:translate(-50%, 7px); opacity:0;}
@@ -951,6 +983,10 @@
     <div class="pillrow" id="settings-lang-row"></div>
   </div>
   <div class="field">
+    <label id="settings-theme-label">מצג</label>
+    <div class="pillrow" id="settings-theme-row"></div>
+  </div>
+  <div class="field">
     <div class="habit-switch-row">
       <label id="lock-settings-label">נעילת אפליקציה</label>
       <label class="switch"><input type="checkbox" id="lock-enable-toggle"><span class="slider"></span></label>
@@ -1102,7 +1138,8 @@
       jumpWeek:'השבוע', jumpMonth:'החודש', jumpYear:'השנה',
       weekTitle:'תובנה על השבוע', reflectBtn:'ליצור תובנה',
       reflectLoading:'חושב על השבוע…', reflectEmpty:'אחרי כמה רשומות יהיה כאן מה לומר.',
-      settingsTitle:'הגדרות', settingsName:'שם', settingsLang:'שפה',
+      settingsTitle:'הגדרות', settingsName:'שם', settingsLang:'שפה', settingsTheme:'מצב תצוגה',
+      themeAuto:'אוטומטי', themeLight:'בהיר', themeDark:'כהה',
       driveSyncLabel:'סנכרון בעננה', driveConnect:'התחבר ל-Google Drive',
       driveSyncNow:'סנכרון עכשיו', driveDisconnect:'התנתקות',
       driveDisconnectConfirm:'להתנתק מ-Google Drive? הסנכרון האוטומטי יופסק, אבל המידע יישאר במכשיר הזה.',
@@ -1175,7 +1212,8 @@
       jumpWeek:'This week', jumpMonth:'This month', jumpYear:'This year',
       weekTitle:'This week', reflectBtn:'Reflect on this week',
       reflectLoading:'Thinking about your week…', reflectEmpty:"After a few entries, there'll be something to say here.",
-      settingsTitle:'Settings', settingsName:'Name', settingsLang:'Language',
+      settingsTitle:'Settings', settingsName:'Name', settingsLang:'Language', settingsTheme:'Appearance',
+      themeAuto:'Auto', themeLight:'Light', themeDark:'Dark',
       driveSyncLabel:'Cloud sync', driveConnect:'Connect Google Drive',
       driveSyncNow:'Sync now', driveDisconnect:'Disconnect',
       driveDisconnectConfirm:"Disconnect from Google Drive? Automatic sync will stop, but your data stays on this device.",
@@ -1235,6 +1273,33 @@
     return g === 'm' ? m : (g === 'f' ? f : (x !== undefined ? x : m + '/' + f));
   }
 
+  function applyTheme(){
+    var t = (state.profile && state.theme) || 'auto';
+    document.documentElement.setAttribute('data-theme', t);
+    var isDark = t === 'dark' || (t === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches);
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', isDark ? '#1B1C22' : '#5B6B8C');
+  }
+
+  function renderSettingsThemeRow(){
+    var row = document.getElementById('settings-theme-row');
+    if(!row) return;
+    row.innerHTML = '';
+    var cur = state.theme || 'auto';
+    [['auto',tr('themeAuto')],['light',tr('themeLight')],['dark',tr('themeDark')]].forEach(function(pair){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pill' + (cur === pair[0] ? ' active' : '');
+      b.textContent = pair[1];
+      b.addEventListener('click', function(){
+        state.theme = pair[0];
+        saveState();
+        applyTheme();
+        renderSettingsThemeRow();
+      });
+      row.appendChild(b);
+    });
+  }
+
   /* ============ State ============ */
   function loadState(){
     try{
@@ -1254,6 +1319,7 @@
   if(!state.habits) state.habits = [];
   if(!state.weeklyCache) state.weeklyCache = {};
   if(!state.security) state.security = { lockEnabled:false, pinHash:null, pinSalt:null, biometricEnabled:false, credentialId:null, credentialUserId:null };
+  if(!state.theme) state.theme = 'auto';
   function saveState(){
     state.lastModified = Date.now();
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
@@ -1389,6 +1455,7 @@
 
   /* ============ App init ============ */
   function startApp(){
+    applyTheme();
     applyLangDir();
     document.getElementById('app').classList.add('live');
     initDistressCard();
@@ -1427,6 +1494,8 @@
     document.getElementById('settings-title').textContent = tr('settingsTitle');
     document.getElementById('settings-name-label').textContent = tr('settingsName');
     document.getElementById('settings-lang-label').textContent = tr('settingsLang');
+    document.getElementById('settings-theme-label').textContent = tr('settingsTheme');
+    renderSettingsThemeRow();
     document.getElementById('drive-sync-label').textContent = tr('driveSyncLabel');
     document.getElementById('drive-connect-label').textContent = tr('driveConnect');
     document.getElementById('drive-sync-now-btn').textContent = tr('driveSyncNow');
