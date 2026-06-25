@@ -649,6 +649,7 @@
   .corr-bar-track{flex:1; height:6px; border-radius:3px; background:var(--line); overflow:hidden;}
   .corr-bar-fill{height:100%; border-radius:3px; transition:width .4s ease;}
   .corr-bar-val{font-size:0.72rem; color:var(--ink-soft); width:26px; flex-shrink:0;}
+  .corr-mood-lbl{font-size:0.7rem; color:var(--ink-faint); white-space:nowrap; flex-shrink:0;}
   .corr-delta{font-size:0.75rem; color:var(--ink-faint); margin-top:5px;}
 
   /* ---------- Settings sheet ---------- */
@@ -2574,6 +2575,7 @@
 
   var insightsPeriod = 'week';
   var insightsAnchor = new Date();
+  var corrSelectedId = null;
   var PERIOD_TYPE_KEY = { week:'periodWeek', month:'periodMonth', year:'periodYear' };
   var PERIOD_JUMP_KEY = { week:'jumpWeek', month:'jumpMonth', year:'jumpYear' };
 
@@ -2671,65 +2673,79 @@
     });
   }
 
-  function computeHabitMoodCorrelations(){
-    var dayMap = {};
+  function buildCorrDayMap(){
+    var dm = {};
     state.entries.forEach(function(e){
-      if(!dayMap[e.date]) dayMap[e.date] = {moods:[], hasNote:false, habitsCompleted:{}};
-      if(typeof e.mood === 'number') dayMap[e.date].moods.push(e.mood);
-      if((e.note && e.note.trim()) || (e.messages && e.messages.length > 1)) dayMap[e.date].hasNote = true;
+      if(!dm[e.date]) dm[e.date] = {moods:[], hasNote:false, done:{}};
+      if(typeof e.mood === 'number') dm[e.date].moods.push(e.mood);
+      if((e.note && e.note.trim()) || (e.messages && e.messages.length > 1)) dm[e.date].hasNote = true;
     });
     state.habits.forEach(function(h){
       if(h.trackMode !== 'simple') return;
-      (h.completions||[]).forEach(function(date){
-        if(!dayMap[date]) dayMap[date] = {moods:[], hasNote:false, habitsCompleted:{}};
-        dayMap[date].habitsCompleted[h.id] = true;
+      (h.completions||[]).forEach(function(d){
+        if(!dm[d]) dm[d] = {moods:[], hasNote:false, done:{}};
+        dm[d].done[h.id] = true;
       });
     });
-    var moodDays = Object.keys(dayMap).filter(function(d){ return dayMap[d].moods.length > 0; });
-    function avgMoodDays(arr){
-      return arr.reduce(function(s,d){
-        var ms = dayMap[d].moods; return s + ms.reduce(function(a,b){return a+b;},0)/ms.length;
-      }, 0) / arr.length;
+    return dm;
+  }
+
+  function computeCorrelationFor(itemId, dm){
+    var moodDays = Object.keys(dm).filter(function(d){ return dm[d].moods.length > 0; });
+    function avg(arr){ return arr.reduce(function(s,d){ var ms=dm[d].moods; return s+ms.reduce(function(a,b){return a+b;},0)/ms.length; },0)/arr.length; }
+    var done, notDone, MIN = 4;
+    if(itemId === 'writing'){
+      done = moodDays.filter(function(d){ return dm[d].hasNote; });
+      notDone = moodDays.filter(function(d){ return !dm[d].hasNote; });
+    } else {
+      done = moodDays.filter(function(d){ return dm[d].done[itemId]; });
+      notDone = moodDays.filter(function(d){ return !dm[d].done[itemId]; });
     }
-    var results = []; var MIN = 4;
-    state.habits.forEach(function(h){
-      if(h.trackMode !== 'simple') return;
-      var done = moodDays.filter(function(d){ return dayMap[d].habitsCompleted[h.id]; });
-      var notDone = moodDays.filter(function(d){ return !dayMap[d].habitsCompleted[h.id]; });
-      if(done.length < MIN || notDone.length < MIN) return;
-      var avgDone = avgMoodDays(done), avgNotDone = avgMoodDays(notDone), diff = avgDone - avgNotDone;
-      if(Math.abs(diff) < 0.3) return;
-      results.push({name:h.name, avgDone:avgDone, avgNotDone:avgNotDone, diff:diff});
-    });
-    var writingDays = moodDays.filter(function(d){ return dayMap[d].hasNote; });
-    var noWritingDays = moodDays.filter(function(d){ return !dayMap[d].hasNote; });
-    if(writingDays.length >= MIN && noWritingDays.length >= MIN){
-      var avgW = avgMoodDays(writingDays), avgNW = avgMoodDays(noWritingDays), diff = avgW - avgNW;
-      if(Math.abs(diff) >= 0.3) results.push({name:tr('corrWriting'), avgDone:avgW, avgNotDone:avgNW, diff:diff});
-    }
-    results.sort(function(a,b){ return Math.abs(b.diff)-Math.abs(a.diff); });
-    return results;
+    if(done.length < MIN || notDone.length < MIN) return null;
+    var avgDone = avg(done), avgNotDone = avg(notDone);
+    return {avgDone:avgDone, avgNotDone:avgNotDone, diff:avgDone-avgNotDone, doneDays:done.length, notDoneDays:notDone.length};
   }
 
   function renderCorrelationsSection(host){
-    var correlations = computeHabitMoodCorrelations();
+    var wrapper = document.createElement('div');
+    host.appendChild(wrapper);
+    renderCorrInner(wrapper);
+  }
+
+  function renderCorrInner(wrapper){
+    wrapper.innerHTML = '';
+    var lang = state.profile.lang;
+    var items = state.habits.filter(function(h){ return h.trackMode === 'simple'; }).map(function(h){ return {id:h.id, name:h.name}; });
+    items.push({id:'writing', name:tr('corrWriting')});
+
     var title = document.createElement('div');
     title.className = 'section-title'; title.textContent = tr('corrTitle');
-    host.appendChild(title);
+    wrapper.appendChild(title);
+
+    if(!corrSelectedId || !items.some(function(i){ return i.id === corrSelectedId; })) corrSelectedId = items[0].id;
+
+    var pillRow = document.createElement('div'); pillRow.className = 'pillrow';
+    items.forEach(function(item){
+      var b = document.createElement('button'); b.type = 'button';
+      b.className = 'pill' + (corrSelectedId === item.id ? ' active' : '');
+      b.textContent = item.name;
+      b.addEventListener('click', function(){ corrSelectedId = item.id; renderCorrInner(wrapper); });
+      pillRow.appendChild(b);
+    });
+    wrapper.appendChild(pillRow);
+
+    var dm = buildCorrDayMap();
+    var corr = computeCorrelationFor(corrSelectedId, dm);
     var card = document.createElement('div'); card.className = 'reflect-card';
-    if(!correlations.length){
+
+    if(!corr){
       var p = document.createElement('p');
       p.style.margin = '0'; p.style.color = 'var(--ink-soft)'; p.style.fontSize = '0.85rem';
       p.textContent = tr('corrInsufficient');
-      card.appendChild(p); host.appendChild(card); return;
-    }
-    correlations.forEach(function(corr){
-      var item = document.createElement('div'); item.className = 'corr-item';
-      var nameEl = document.createElement('div'); nameEl.className = 'corr-name'; nameEl.textContent = corr.name;
-      item.appendChild(nameEl);
-      var barsEl = document.createElement('div'); barsEl.className = 'corr-bars';
-      [[corr.avgDone, tr('corrWith')],[corr.avgNotDone, tr('corrWithout')]].forEach(function(pair){
-        var val = pair[0], label = pair[1];
+      card.appendChild(p);
+    } else {
+      [[corr.avgDone, tr('corrWith'), corr.doneDays],[corr.avgNotDone, tr('corrWithout'), corr.notDoneDays]].forEach(function(triple){
+        var val = triple[0], label = triple[1], days = triple[2];
         var row = document.createElement('div'); row.className = 'corr-bar-row';
         var lbl = document.createElement('span'); lbl.className = 'corr-bar-label'; lbl.textContent = label;
         var track = document.createElement('div'); track.className = 'corr-bar-track';
@@ -2738,17 +2754,17 @@
         fill.style.background = moodColor(val);
         track.appendChild(fill);
         var valEl = document.createElement('span'); valEl.className = 'corr-bar-val'; valEl.textContent = val.toFixed(1);
-        row.appendChild(lbl); row.appendChild(track); row.appendChild(valEl);
-        barsEl.appendChild(row);
+        var moodLbl = document.createElement('span'); moodLbl.className = 'corr-mood-lbl';
+        moodLbl.textContent = MOOD_LABELS[lang][Math.round(val)] + ' · ' + days + (lang==='he' ? ' ימ׳' : 'd');
+        row.appendChild(lbl); row.appendChild(track); row.appendChild(valEl); row.appendChild(moodLbl);
+        card.appendChild(row);
       });
-      item.appendChild(barsEl);
       var delta = document.createElement('div'); delta.className = 'corr-delta';
       var sign = corr.diff > 0 ? '+' : '';
-      delta.textContent = sign + corr.diff.toFixed(1) + ' ' + (state.profile.lang==='he' ? 'נקודות' : 'pts');
-      item.appendChild(delta);
-      card.appendChild(item);
-    });
-    host.appendChild(card);
+      delta.textContent = sign + corr.diff.toFixed(1) + ' ' + (lang==='he' ? 'נקודות' : 'pts');
+      card.appendChild(delta);
+    }
+    wrapper.appendChild(card);
   }
 
   /* ============ Habits ============ */
