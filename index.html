@@ -639,6 +639,17 @@
   .habit-insight-name{font-weight:600; font-size:0.88rem;}
   .habit-insight-stat{font-size:0.82rem; color:var(--ink-soft); white-space:nowrap; flex:0 0 auto;}
   .habit-insight-stat.streak{color:var(--accent); font-weight:700;}
+  .corr-item{padding:10px 0; border-bottom:1px solid var(--line);}
+  .corr-item:last-child{border-bottom:none; padding-bottom:0;}
+  .corr-item:first-child{padding-top:0;}
+  .corr-name{font-weight:600; font-size:0.88rem; margin-bottom:8px;}
+  .corr-bars{display:flex; flex-direction:column; gap:5px;}
+  .corr-bar-row{display:flex; align-items:center; gap:8px;}
+  .corr-bar-label{font-size:0.72rem; color:var(--ink-soft); width:34px; flex-shrink:0; text-align:end;}
+  .corr-bar-track{flex:1; height:6px; border-radius:3px; background:var(--line); overflow:hidden;}
+  .corr-bar-fill{height:100%; border-radius:3px; transition:width .4s ease;}
+  .corr-bar-val{font-size:0.72rem; color:var(--ink-soft); width:26px; flex-shrink:0;}
+  .corr-delta{font-size:0.75rem; color:var(--ink-faint); margin-top:5px;}
 
   /* ---------- Settings sheet ---------- */
   .sheet-backdrop{
@@ -1172,6 +1183,8 @@
       habitDoneToday:'בוצע היום', habitNotDueToday:'לא היום',
       insightsHabitsTitle:'הרגלים', habitsCompletedToday:'הושלמו היום', habitsBestStreak:'הרצף הטוב',
       habitsTotalLabel:'הרגלים פעילים',
+      corrTitle:'קשרים', corrWith:'עם', corrWithout:'בלי', corrWriting:'כתיבה ביומן',
+      corrInsufficient:'עוד כמה ימי רישום ותיראה כאן דפוסים בין הרגלים, כתיבה ומצב הרוח.',
       lockTitle:'אופק נעול', lockSub:'הזן/י קוד לפתיחה',
       lockWrongPin:'קוד שגוי, נסה/י שוב',
       lockUseBiometric:'זיהוי ביומטרי', lockUseFaceID:'זיהוי פנים', lockUseTouchID:'טביעת אצבע',
@@ -1246,6 +1259,8 @@
       habitDoneToday:'Done today', habitNotDueToday:'Not today',
       insightsHabitsTitle:'Habits', habitsCompletedToday:'Done today', habitsBestStreak:'Best streak',
       habitsTotalLabel:'Active habits',
+      corrTitle:'Patterns', corrWith:'with', corrWithout:'without', corrWriting:'Writing',
+      corrInsufficient:"Log a few more days and you'll see patterns between habits, writing, and mood here.",
       lockTitle:'Ofek is locked', lockSub:'Enter your code to unlock',
       lockWrongPin:'Wrong code, try again',
       lockUseBiometric:'Biometric unlock', lockUseFaceID:'Face ID', lockUseTouchID:'Touch ID',
@@ -2621,6 +2636,7 @@
     host.appendChild(renderReflectCard());
 
     renderHabitsInsightsSection(host);
+    renderCorrelationsSection(host);
   }
 
   function renderHabitsInsightsSection(host){
@@ -2653,6 +2669,86 @@
       row.appendChild(nameEl); row.appendChild(statEl);
       host.appendChild(row);
     });
+  }
+
+  function computeHabitMoodCorrelations(){
+    var dayMap = {};
+    state.entries.forEach(function(e){
+      if(!dayMap[e.date]) dayMap[e.date] = {moods:[], hasNote:false, habitsCompleted:{}};
+      if(typeof e.mood === 'number') dayMap[e.date].moods.push(e.mood);
+      if((e.note && e.note.trim()) || (e.messages && e.messages.length > 1)) dayMap[e.date].hasNote = true;
+    });
+    state.habits.forEach(function(h){
+      if(h.trackMode !== 'simple') return;
+      (h.completions||[]).forEach(function(date){
+        if(!dayMap[date]) dayMap[date] = {moods:[], hasNote:false, habitsCompleted:{}};
+        dayMap[date].habitsCompleted[h.id] = true;
+      });
+    });
+    var moodDays = Object.keys(dayMap).filter(function(d){ return dayMap[d].moods.length > 0; });
+    function avgMoodDays(arr){
+      return arr.reduce(function(s,d){
+        var ms = dayMap[d].moods; return s + ms.reduce(function(a,b){return a+b;},0)/ms.length;
+      }, 0) / arr.length;
+    }
+    var results = []; var MIN = 4;
+    state.habits.forEach(function(h){
+      if(h.trackMode !== 'simple') return;
+      var done = moodDays.filter(function(d){ return dayMap[d].habitsCompleted[h.id]; });
+      var notDone = moodDays.filter(function(d){ return !dayMap[d].habitsCompleted[h.id]; });
+      if(done.length < MIN || notDone.length < MIN) return;
+      var avgDone = avgMoodDays(done), avgNotDone = avgMoodDays(notDone), diff = avgDone - avgNotDone;
+      if(Math.abs(diff) < 0.3) return;
+      results.push({name:h.name, avgDone:avgDone, avgNotDone:avgNotDone, diff:diff});
+    });
+    var writingDays = moodDays.filter(function(d){ return dayMap[d].hasNote; });
+    var noWritingDays = moodDays.filter(function(d){ return !dayMap[d].hasNote; });
+    if(writingDays.length >= MIN && noWritingDays.length >= MIN){
+      var avgW = avgMoodDays(writingDays), avgNW = avgMoodDays(noWritingDays), diff = avgW - avgNW;
+      if(Math.abs(diff) >= 0.3) results.push({name:tr('corrWriting'), avgDone:avgW, avgNotDone:avgNW, diff:diff});
+    }
+    results.sort(function(a,b){ return Math.abs(b.diff)-Math.abs(a.diff); });
+    return results;
+  }
+
+  function renderCorrelationsSection(host){
+    var correlations = computeHabitMoodCorrelations();
+    var title = document.createElement('div');
+    title.className = 'section-title'; title.textContent = tr('corrTitle');
+    host.appendChild(title);
+    var card = document.createElement('div'); card.className = 'reflect-card';
+    if(!correlations.length){
+      var p = document.createElement('p');
+      p.style.margin = '0'; p.style.color = 'var(--ink-soft)'; p.style.fontSize = '0.85rem';
+      p.textContent = tr('corrInsufficient');
+      card.appendChild(p); host.appendChild(card); return;
+    }
+    correlations.forEach(function(corr){
+      var item = document.createElement('div'); item.className = 'corr-item';
+      var nameEl = document.createElement('div'); nameEl.className = 'corr-name'; nameEl.textContent = corr.name;
+      item.appendChild(nameEl);
+      var barsEl = document.createElement('div'); barsEl.className = 'corr-bars';
+      [[corr.avgDone, tr('corrWith')],[corr.avgNotDone, tr('corrWithout')]].forEach(function(pair){
+        var val = pair[0], label = pair[1];
+        var row = document.createElement('div'); row.className = 'corr-bar-row';
+        var lbl = document.createElement('span'); lbl.className = 'corr-bar-label'; lbl.textContent = label;
+        var track = document.createElement('div'); track.className = 'corr-bar-track';
+        var fill = document.createElement('div'); fill.className = 'corr-bar-fill';
+        fill.style.width = Math.round((val/(MOOD_STEPS-1))*100)+'%';
+        fill.style.background = moodColor(val);
+        track.appendChild(fill);
+        var valEl = document.createElement('span'); valEl.className = 'corr-bar-val'; valEl.textContent = val.toFixed(1);
+        row.appendChild(lbl); row.appendChild(track); row.appendChild(valEl);
+        barsEl.appendChild(row);
+      });
+      item.appendChild(barsEl);
+      var delta = document.createElement('div'); delta.className = 'corr-delta';
+      var sign = corr.diff > 0 ? '+' : '';
+      delta.textContent = sign + corr.diff.toFixed(1) + ' ' + (state.profile.lang==='he' ? 'נקודות' : 'pts');
+      item.appendChild(delta);
+      card.appendChild(item);
+    });
+    host.appendChild(card);
   }
 
   /* ============ Habits ============ */
