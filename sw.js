@@ -1,10 +1,13 @@
-const VERSION = 'ofek-v9';
+const VERSION = 'ofek-v10';
 const OFEK_AI_ENDPOINT = 'https://ofek-api.gefenrose.workers.dev';
 const LEGACY_AI_ENDPOINT = 'https://serenity-api.gefenrose.workers.dev';
 const AI_OVERRIDE_SCRIPT = './ofek-ai-override.js';
 
 const CORE_ASSETS = [
   './index.html',
+  './legacy-index.html',
+  './styles.css',
+  './app.js',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
@@ -37,13 +40,6 @@ function shouldServeAppShell(req) {
   return url.pathname.endsWith('/ofek/') || url.pathname.endsWith('/ofek/index.html') || url.pathname.endsWith('/index.html');
 }
 
-function injectAiOverride(html) {
-  if (html.includes('ofek-ai-override.js')) return html;
-  const tag = '<script src="./ofek-ai-override.js?v=' + VERSION + '"></script>';
-  if (html.includes('</body>')) return html.replace('</body>', tag + '\n</body>');
-  return html + '\n' + tag;
-}
-
 async function appShellResponse(req) {
   const cache = await caches.open(VERSION);
   let source;
@@ -69,15 +65,7 @@ async function appShellResponse(req) {
     });
   }
 
-  const html = injectAiOverride(await source.text());
-  return new Response(html, {
-    status: 200,
-    statusText: 'OK',
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'no-store'
-    }
-  });
+  return source;
 }
 
 async function redirectLegacyAi(req) {
