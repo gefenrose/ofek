@@ -1,4 +1,4 @@
-const VERSION = 'ofek-v12';
+const VERSION = 'ofek-v13';
 const OFEK_AI_ENDPOINT = 'https://ofek-api.gefenrose.workers.dev';
 const LEGACY_AI_ENDPOINT = 'https://serenity-api.gefenrose.workers.dev';
 
@@ -6,11 +6,13 @@ const CORE_ASSETS = [
   './index.html',
   './src/legacy/monolith.html',
   './src/css/shell.css',
+  './src/js/theme.js',
   './src/js/bootstrap.js',
   './src/js/ai-settings.js',
   './manifest.webmanifest',
-  './icon-192.png',
-  './icon-512.png'
+  './assets/icons/apple-touch-icon.png',
+  './assets/icons/icon-192.png',
+  './assets/icons/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
