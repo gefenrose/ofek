@@ -15,6 +15,8 @@ Ofek started as a single-file PWA. The repo is now organized so the public entry
 ├─ icon-192.png
 ├─ icon-512.png
 ├─ src/
+│  ├─ css/                    # New app styles go here
+│  ├─ js/                     # New app modules go here
 │  └─ legacy/
 │     └─ monolith.html        # Preserved former single-file app
 └─ worker/
