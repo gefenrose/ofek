@@ -1,4 +1,4 @@
-const VERSION = 'ofek-v8';
+const VERSION = 'ofek-v9';
 const OFEK_AI_ENDPOINT = 'https://ofek-api.gefenrose.workers.dev';
 const LEGACY_AI_ENDPOINT = 'https://serenity-api.gefenrose.workers.dev';
 const AI_OVERRIDE_SCRIPT = './ofek-ai-override.js';
@@ -103,7 +103,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
 
   // Safety net: if old frontend code still calls the legacy Serenity worker,
-  // route it to Ofek's dedicated worker instead.
+  // route it to Ofek's dedicated BYOK-only worker instead.
   if (req.url.startsWith(LEGACY_AI_ENDPOINT)) {
     event.respondWith(redirectLegacyAi(req));
     return;
