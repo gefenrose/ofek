@@ -3,7 +3,7 @@
 // Bring-your-own-key only:
 //   Ofek -> this Worker -> selected provider using the user's key for that request.
 //
-// There is no app-owned Groq/OpenAI/OpenRouter key path in this Worker.
+// There is no app-owned AI API key path in this Worker.
 // User-provided keys are never stored by the Worker; they are forwarded only
 // for the current request.
 //
@@ -33,6 +33,10 @@ const PROVIDERS = {
   openrouter: {
     endpoint: 'https://openrouter.ai/api/v1/chat/completions',
     defaultModel: 'meta-llama/llama-3.1-8b-instruct'
+  },
+  gemini: {
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    defaultModel: 'gemini-3.5-flash'
   }
 };
 
