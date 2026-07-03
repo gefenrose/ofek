@@ -6,11 +6,18 @@ Live: https://gefenrose.github.io/ofek/
 
 ## Structure
 
-- `index.html` — the whole app (HTML/CSS/JS, single file)
-- `manifest.webmanifest`, `sw.js`, `icon-*.png` — PWA install support
-- `ofek-ai-override.js` — runtime AI routing/settings patch injected by the service worker
+Ofek has been split out of the original single-file entry point:
+
+- `index.html` — small public app shell
+- `styles.css` — shell/loading styles
+- `app.js` — bootstrapper that loads the preserved app source
+- `legacy-index.html` — preserved copy of the former monolithic app while the larger CSS/JS migration continues
+- `manifest.webmanifest`, `sw.js`, `icon-*.png` — PWA install/offline support
+- `ofek-ai-override.js` — BYOK-only AI routing/settings patch
 - `worker/worker.js` — Cloudflare Worker AI proxy
 - `worker/wrangler.toml` — Worker deployment config
+
+This keeps the live app safe while making `index.html` maintainable. The next cleanup step is to gradually move the CSS and JavaScript out of `legacy-index.html` into dedicated modules instead of loading the preserved source.
 
 ## AI backend
 
