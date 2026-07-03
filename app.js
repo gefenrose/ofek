@@ -1,14 +1,18 @@
 // Ofek app bootstrapper.
 //
-// The original single-file app is preserved in legacy-index.html. This file
-// loads that source, imports its body/styles, and executes its scripts in the
-// correct order. It lets index.html stay small while the larger app is migrated
-// into proper modules over time.
+// Current architecture:
+// - index.html is a thin public shell.
+// - src/legacy/monolith.html preserves the former single-file app.
+// - app.js loads the preserved app source while the large app is migrated into
+//   smaller modules.
+//
+// This is intentionally a bridge file. New code should live in src/js/ and
+// src/css/ instead of being added to the legacy monolith.
 
 (function(){
   'use strict';
 
-  var LEGACY_APP_URL = './legacy-index.html?v=split-1';
+  var LEGACY_APP_URL = './src/legacy/monolith.html?v=split-2';
 
   function setLoaderError(message){
     var el = document.getElementById('ofek-load-error');
@@ -53,7 +57,7 @@
   function copyStyleBlocks(doc){
     Array.prototype.slice.call(doc.head.querySelectorAll('style')).forEach(function(styleNode, index){
       var style = document.createElement('style');
-      style.setAttribute('data-ofek-extracted-style', String(index));
+      style.setAttribute('data-ofek-legacy-style', String(index));
       style.textContent = styleNode.textContent;
       document.head.appendChild(style);
     });
