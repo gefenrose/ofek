@@ -1,17 +1,16 @@
-const VERSION = 'ofek-v11';
+const VERSION = 'ofek-v12';
 const OFEK_AI_ENDPOINT = 'https://ofek-api.gefenrose.workers.dev';
 const LEGACY_AI_ENDPOINT = 'https://serenity-api.gefenrose.workers.dev';
-const AI_OVERRIDE_SCRIPT = './ofek-ai-override.js';
 
 const CORE_ASSETS = [
   './index.html',
   './src/legacy/monolith.html',
-  './styles.css',
-  './app.js',
+  './src/css/shell.css',
+  './src/js/bootstrap.js',
+  './src/js/ai-settings.js',
   './manifest.webmanifest',
   './icon-192.png',
-  './icon-512.png',
-  AI_OVERRIDE_SCRIPT
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
