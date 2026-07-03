@@ -3,8 +3,9 @@
 // This file is injected by sw.js so we can add stable AI routing without
 // rewriting the large single-file app. It:
 // 1. Redirects the old serenity-api endpoint to the dedicated Ofek Worker.
-// 2. Adds an advanced "bring your own API key" panel to Settings.
+// 2. Adds a bring-your-own-key AI panel to Settings.
 // 3. Sends user API keys only per request; keys are stored locally on this device.
+// 4. Fixes long settings sheets so they can scroll on mobile.
 
 (function(){
   'use strict';
@@ -15,7 +16,7 @@
   var STATE_KEY = 'ofek_state_v1';
 
   var DEFAULTS = {
-    mode: 'ofek',
+    mode: 'byok',
     provider: 'groq',
     model: 'llama-3.3-70b-versatile',
     apiKey: ''
@@ -40,13 +41,12 @@
     var he = readAppLang() !== 'en';
     return he ? {
       title: 'חיבור AI',
-      useOfek: 'להשתמש בחיבור של אופק',
-      useOwn: 'להשתמש במפתח API שלי',
+      subtitle: 'אופק משתמש רק במפתח API שהמשתמש/ת מזינ/ה ידנית. אין מפתח Groq מובנה באפליקציה.',
       provider: 'ספק',
       model: 'מודל',
       key: 'מפתח API',
-      keyPlaceholder: 'לא נשמר בענן — רק על המכשיר הזה',
-      note: 'מצב מתקדם: המפתח נשמר בדפדפן המקומי ונשלח רק לבקשות AI דרך ה־Worker של אופק. לא להשתמש במכשיר משותף.',
+      keyPlaceholder: 'נשמר רק על המכשיר הזה',
+      note: 'המפתח נשמר בדפדפן המקומי ונשלח רק לבקשות AI דרך ה־Worker של אופק. לא להשתמש במכשיר משותף.',
       save: 'שמירה',
       test: 'בדיקת חיבור',
       saved: 'נשמר',
@@ -56,13 +56,12 @@
       failed: 'הבדיקה נכשלה'
     } : {
       title: 'AI connection',
-      useOfek: 'Use Ofek connection',
-      useOwn: 'Use my own API key',
+      subtitle: 'Ofek only uses an API key entered manually by the user. There is no built-in Groq key in the app.',
       provider: 'Provider',
       model: 'Model',
       key: 'API key',
       keyPlaceholder: 'Saved only on this device',
-      note: 'Advanced mode: the key is saved in this browser and sent only for AI requests through the Ofek Worker. Do not use this on a shared device.',
+      note: 'The key is saved in this browser and sent only for AI requests through the Ofek Worker. Do not use this on a shared device.',
       save: 'Save',
       test: 'Test connection',
       saved: 'Saved',
@@ -76,7 +75,7 @@
   function readSettings(){
     try{
       var saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-      return Object.assign({}, DEFAULTS, saved || {});
+      return Object.assign({}, DEFAULTS, saved || {}, { mode: 'byok' });
     }catch(e){
       return Object.assign({}, DEFAULTS);
     }
@@ -84,7 +83,7 @@
 
   function saveSettings(settings){
     var clean = Object.assign({}, DEFAULTS, settings || {});
-    clean.mode = clean.mode === 'byok' ? 'byok' : 'ofek';
+    clean.mode = 'byok';
     clean.provider = DEFAULT_MODELS[clean.provider] ? clean.provider : 'groq';
     clean.model = String(clean.model || DEFAULT_MODELS[clean.provider] || DEFAULTS.model).trim();
     clean.apiKey = String(clean.apiKey || '').trim();
@@ -125,16 +124,12 @@
     var headers = headersToObject(init.headers);
     headers['Content-Type'] = 'application/json';
 
-    if(settings.mode === 'byok'){
-      body.ai = {
-        mode: 'byok',
-        provider: settings.provider,
-        model: settings.model || DEFAULT_MODELS[settings.provider],
-        apiKey: settings.apiKey
-      };
-    } else {
-      body.ai = { mode: 'ofek' };
-    }
+    body.ai = {
+      mode: 'byok',
+      provider: settings.provider,
+      model: settings.model || DEFAULT_MODELS[settings.provider],
+      apiKey: settings.apiKey
+    };
 
     return originalFetch(OFEK_ENDPOINT, {
       method: init.method || 'POST',
@@ -150,18 +145,18 @@
     var style = document.createElement('style');
     style.id = 'ofek-ai-settings-style';
     style.textContent = [
+      '.sheet{max-height:calc(100dvh - 18px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;touch-action:pan-y!important;}',
+      '.sheet.open{transform:translateY(0)!important;}',
+      '.sheet h2{position:relative;}',
       '.ofek-ai-card{padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:var(--paper-raised);}',
-      '.ofek-ai-title{font-weight:700;margin-bottom:10px;}',
-      '.ofek-ai-mode{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}',
-      '.ofek-ai-radio{display:flex;align-items:center;gap:8px;color:var(--ink-soft);font-size:.9rem;}',
-      '.ofek-ai-radio input{accent-color:var(--accent);}',
+      '.ofek-ai-title{font-weight:700;margin-bottom:5px;}',
+      '.ofek-ai-subtitle{font-size:.82rem;line-height:1.45;color:var(--ink-soft);margin-bottom:12px;}',
       '.ofek-ai-grid{display:grid;gap:10px;margin-top:10px;}',
       '.ofek-ai-row label{font-size:.78rem;color:var(--ink-soft);display:block;margin-bottom:5px;}',
       '.ofek-ai-row input,.ofek-ai-row select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;}',
       '.ofek-ai-note{font-size:.78rem;line-height:1.45;color:var(--ink-faint);margin:10px 0 0;}',
       '.ofek-ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}',
-      '.ofek-ai-status{font-size:.8rem;color:var(--ink-soft);align-self:center;}',
-      '.ofek-ai-hidden{display:none!important;}'
+      '.ofek-ai-status{font-size:.8rem;color:var(--ink-soft);align-self:center;}'
     ].join('\n');
     document.head.appendChild(style);
   }
@@ -173,11 +168,10 @@
   }
 
   function injectSettingsPanel(){
+    addStyle();
     if(document.getElementById('ofek-ai-settings-field')) return;
     var sheet = document.getElementById('settings-sheet');
     if(!sheet) return;
-
-    addStyle();
 
     var labels = text();
     var settings = readSettings();
@@ -187,10 +181,7 @@
     field.innerHTML = ''+
       '<div class="ofek-ai-card">'+
         '<div class="ofek-ai-title">'+labels.title+'</div>'+
-        '<div class="ofek-ai-mode">'+
-          '<label class="ofek-ai-radio"><input type="radio" name="ofek-ai-mode" value="ofek" '+(settings.mode!=='byok'?'checked':'')+'> <span>'+labels.useOfek+'</span></label>'+
-          '<label class="ofek-ai-radio"><input type="radio" name="ofek-ai-mode" value="byok" '+(settings.mode==='byok'?'checked':'')+'> <span>'+labels.useOwn+'</span></label>'+
-        '</div>'+
+        '<div class="ofek-ai-subtitle">'+labels.subtitle+'</div>'+
         '<div class="ofek-ai-grid" id="ofek-ai-byok-fields">'+
           '<div class="ofek-ai-row"><label>'+labels.provider+'</label><select id="ofek-ai-provider">'+providerOptions(settings.provider)+'</select></div>'+
           '<div class="ofek-ai-row"><label>'+labels.model+'</label><input id="ofek-ai-model" type="text" value="'+escapeAttr(settings.model || DEFAULT_MODELS[settings.provider])+'"></div>'+
@@ -224,41 +215,29 @@
 
   function bindSettingsPanel(){
     var labels = text();
-    var modeInputs = Array.prototype.slice.call(document.querySelectorAll('input[name="ofek-ai-mode"]'));
     var provider = document.getElementById('ofek-ai-provider');
     var model = document.getElementById('ofek-ai-model');
     var key = document.getElementById('ofek-ai-key');
     var saveBtn = document.getElementById('ofek-ai-save-btn');
     var testBtn = document.getElementById('ofek-ai-test-btn');
     var status = document.getElementById('ofek-ai-status');
-    var fields = document.getElementById('ofek-ai-byok-fields');
-
-    function currentMode(){
-      var selected = modeInputs.find(function(input){ return input.checked; });
-      return selected ? selected.value : 'ofek';
-    }
 
     function setStatus(message){
       if(status) status.textContent = message || '';
     }
 
-    function syncVisible(){
-      if(fields) fields.classList.toggle('ofek-ai-hidden', currentMode() !== 'byok');
-    }
-
     function collect(){
       return saveSettings({
-        mode: currentMode(),
+        mode: 'byok',
         provider: provider ? provider.value : 'groq',
         model: model ? model.value : '',
         apiKey: key ? key.value : ''
       });
     }
 
-    modeInputs.forEach(function(input){ input.addEventListener('change', syncVisible); });
     if(provider){
       provider.addEventListener('change', function(){
-        if(model && (!model.value || DEFAULT_MODELS[Object.keys(DEFAULT_MODELS).find(function(p){ return p !== provider.value && DEFAULT_MODELS[p] === model.value; })])){
+        if(model && (!model.value || Object.keys(DEFAULT_MODELS).some(function(p){ return p !== provider.value && DEFAULT_MODELS[p] === model.value; }))){
           model.value = DEFAULT_MODELS[provider.value] || '';
         }
       });
@@ -269,24 +248,21 @@
     if(testBtn){
       testBtn.addEventListener('click', function(){ testConnection(collect(), labels, setStatus); });
     }
-    syncVisible();
   }
 
   async function testConnection(settings, labels, setStatus){
     setStatus(labels.testing);
     try{
-      if(settings.mode === 'byok' && !settings.apiKey){
+      if(!settings.apiKey){
         setStatus(labels.missingKey);
         return;
       }
       var body = {
         system: 'Reply with OK only.',
         messages: [{ role: 'user', content: 'Connection test' }],
-        max_tokens: 20
+        max_tokens: 20,
+        ai: { mode:'byok', provider:settings.provider, model:settings.model, apiKey:settings.apiKey }
       };
-      if(settings.mode === 'byok'){
-        body.ai = { mode:'byok', provider:settings.provider, model:settings.model, apiKey:settings.apiKey };
-      }
       var res = await originalFetch(OFEK_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -303,11 +279,12 @@
   }
 
   function boot(){
+    addStyle();
     injectSettingsPanel();
     var obs = new MutationObserver(function(){ injectSettingsPanel(); });
     if(document.body) obs.observe(document.body, { childList:true, subtree:true });
     setInterval(injectSettingsPanel, 2500);
-    console.info('[Ofek AI] routing through', OFEK_ENDPOINT);
+    console.info('[Ofek AI] BYOK-only routing through', OFEK_ENDPOINT);
   }
 
   if(document.readyState === 'loading'){
