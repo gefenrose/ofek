@@ -1,4 +1,4 @@
-const VERSION = 'ofek-v13';
+const VERSION = 'ofek-v14';
 const OFEK_AI_ENDPOINT = 'https://ofek-api.gefenrose.workers.dev';
 const LEGACY_AI_ENDPOINT = 'https://serenity-api.gefenrose.workers.dev';
 
