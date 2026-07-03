@@ -8,8 +8,8 @@
   <title>אופק · Ofek</title>
 
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="icon" href="assets/icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
@@ -18,22 +18,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="src/css/shell.css">
 
-  <script>
-    /* Apply saved theme before first paint to avoid flash. */
-    (function(){
-      try{
-        var s = JSON.parse(localStorage.getItem('ofek_state_v1'));
-        document.documentElement.setAttribute('data-theme', (s && s.theme) || 'auto');
-      }catch(e){
-        document.documentElement.setAttribute('data-theme','auto');
-      }
-    })();
-  </script>
+  <script src="src/js/theme.js"></script>
 </head>
 <body>
   <div class="ofek-loader" id="ofek-loader">
     <div class="ofek-loader-card">
-      <img class="ofek-loader-mark" src="icon-192.png" alt="">
+      <img class="ofek-loader-mark" src="assets/icons/icon-192.png" alt="">
       <h1 class="ofek-loader-title">אופק</h1>
       <p class="ofek-loader-text">טוען את היומן…</p>
       <div class="ofek-loader-bar" aria-hidden="true"></div>
