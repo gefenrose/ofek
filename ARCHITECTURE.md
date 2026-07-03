@@ -7,16 +7,16 @@ Ofek started as a single-file PWA. The repo is now organized so the public entry
 ```text
 /
 ├─ index.html                 # Thin public shell only
-├─ styles.css                 # Shell/loading styles
-├─ app.js                     # Bootstrap bridge into the preserved app
-├─ ofek-ai-override.js        # BYOK-only AI settings + request routing patch
 ├─ manifest.webmanifest       # PWA manifest
 ├─ sw.js                      # Service worker/cache/routing
 ├─ icon-192.png
 ├─ icon-512.png
 ├─ src/
-│  ├─ css/                    # New app styles go here
-│  ├─ js/                     # New app modules go here
+│  ├─ css/
+│  │  └─ shell.css            # Shell/loading styles
+│  ├─ js/
+│  │  ├─ bootstrap.js         # Bridge loader for the preserved app
+│  │  └─ ai-settings.js       # BYOK-only AI settings/request routing
 │  └─ legacy/
 │     └─ monolith.html        # Preserved former single-file app
 └─ worker/
@@ -32,10 +32,11 @@ Ofek started as a single-file PWA. The repo is now organized so the public entry
 4. **Put new styles under `src/css/`.**
 5. **Keep AI logic BYOK-only.** Ofek should never include an app-owned Groq/OpenAI/OpenRouter key.
 6. **Keep the Worker stateless.** It forwards user keys per request and does not persist them.
+7. **Keep root clean.** Root should contain only public entry/PWA files and documentation. Runtime implementation belongs under `src/`.
 
 ## Migration plan
 
-The current `app.js` bridge loads `src/legacy/monolith.html`, copies its styles/body into the shell, then executes its scripts. This is intentionally temporary.
+The current `src/js/bootstrap.js` bridge loads `src/legacy/monolith.html`, copies its styles/body into the shell, then executes its scripts. This is intentionally temporary.
 
 Recommended next steps:
 
