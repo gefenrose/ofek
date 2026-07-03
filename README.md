@@ -6,18 +6,19 @@ Live: https://gefenrose.github.io/ofek/
 
 ## Structure
 
-Ofek has been split out of the original single-file entry point:
+Ofek now uses a cleaned bridge architecture:
 
-- `index.html` — small public app shell
+- `index.html` — thin public shell only
 - `styles.css` — shell/loading styles
-- `app.js` — bootstrapper that loads the preserved app source
-- `legacy-index.html` — preserved copy of the former monolithic app while the larger CSS/JS migration continues
-- `manifest.webmanifest`, `sw.js`, `icon-*.png` — PWA install/offline support
+- `app.js` — bootstrap bridge into the preserved app source
+- `src/legacy/monolith.html` — preserved former single-file app while migration continues
 - `ofek-ai-override.js` — BYOK-only AI routing/settings patch
+- `manifest.webmanifest`, `sw.js`, `icon-*.png` — PWA install/offline support
 - `worker/worker.js` — Cloudflare Worker AI proxy
 - `worker/wrangler.toml` — Worker deployment config
+- `ARCHITECTURE.md` — architecture rules and migration plan
 
-This keeps the live app safe while making `index.html` maintainable. The next cleanup step is to gradually move the CSS and JavaScript out of `legacy-index.html` into dedicated modules instead of loading the preserved source.
+New code should not be added to `src/legacy/monolith.html`. Use `src/js/` and `src/css/` for new modules/styles as the migration continues.
 
 ## AI backend
 
