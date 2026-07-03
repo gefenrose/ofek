@@ -1,11 +1,11 @@
-const VERSION = 'ofek-v10';
+const VERSION = 'ofek-v11';
 const OFEK_AI_ENDPOINT = 'https://ofek-api.gefenrose.workers.dev';
 const LEGACY_AI_ENDPOINT = 'https://serenity-api.gefenrose.workers.dev';
 const AI_OVERRIDE_SCRIPT = './ofek-ai-override.js';
 
 const CORE_ASSETS = [
   './index.html',
-  './legacy-index.html',
+  './src/legacy/monolith.html',
   './styles.css',
   './app.js',
   './manifest.webmanifest',
