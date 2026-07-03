@@ -1,11 +1,11 @@
 // Ofek AI proxy worker.
 //
-// Default mode:
-//   Ofek -> this Worker -> Groq using GROQ_API_KEY stored as a Cloudflare secret.
-//
-// Bring-your-own-key mode:
+// Bring-your-own-key only:
 //   Ofek -> this Worker -> selected provider using the user's key for that request.
-// The Worker does not store user-provided keys; it only forwards them upstream.
+//
+// There is no app-owned Groq/OpenAI/OpenRouter key path in this Worker.
+// User-provided keys are never stored by the Worker; they are forwarded only
+// for the current request.
 //
 // Response contract for the frontend stays stable:
 //   { content: [{ text: "..." }] }
@@ -20,14 +20,11 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 const DEFAULT_PROVIDER = 'groq';
-const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
-const FALLBACK_MODEL = 'llama-3.1-8b-instant';
 
 const PROVIDERS = {
   groq: {
     endpoint: 'https://api.groq.com/openai/v1/chat/completions',
-    defaultModel: DEFAULT_MODEL,
-    fallbackModel: FALLBACK_MODEL
+    defaultModel: 'llama-3.3-70b-versatile'
   },
   openai: {
     endpoint: 'https://api.openai.com/v1/chat/completions',
@@ -71,7 +68,6 @@ function extractText(data) {
   if (typeof rawContent === 'string') return rawContent;
   if (Array.isArray(rawContent)) return rawContent.map(cleanTextPart).join('');
 
-  // Some proxy-style APIs return the frontend format already.
   const normalized = data?.content?.[0]?.text;
   if (typeof normalized === 'string') return normalized;
 
@@ -94,26 +90,13 @@ function providerFromBody(body) {
   return PROVIDERS[providerName] ? providerName : DEFAULT_PROVIDER;
 }
 
-function apiKeyFromBody(body, env, providerName) {
+function apiKeyFromBody(body) {
   const ai = body.ai && typeof body.ai === 'object' ? body.ai : {};
   const userKey = ai.apiKey || body.apiKey || body.userApiKey;
   if (typeof userKey === 'string' && userKey.trim()) {
-    return { apiKey: userKey.trim(), source: 'user' };
+    return userKey.trim();
   }
-
-  if (providerName === 'groq' && env.GROQ_API_KEY) {
-    return { apiKey: env.GROQ_API_KEY, source: 'default' };
-  }
-
-  if (providerName === 'openai' && env.OPENAI_API_KEY) {
-    return { apiKey: env.OPENAI_API_KEY, source: 'default' };
-  }
-
-  if (providerName === 'openrouter' && env.OPENROUTER_API_KEY) {
-    return { apiKey: env.OPENROUTER_API_KEY, source: 'default' };
-  }
-
-  return { apiKey: '', source: 'missing' };
+  return '';
 }
 
 function modelFromBody(body, providerName) {
@@ -167,10 +150,8 @@ export default {
       return jsonResponse({
         ok: true,
         service: 'ofek-api',
-        defaultProvider: DEFAULT_PROVIDER,
-        defaultModel: DEFAULT_MODEL,
-        fallbackModel: FALLBACK_MODEL,
-        hasDefaultGroqKey: Boolean(env.GROQ_API_KEY),
+        mode: 'bring-your-own-key-only',
+        hasAppOwnedApiKey: false,
         supportsBringYourOwnKey: true,
         providers: Object.fromEntries(Object.entries(PROVIDERS).map(([name, value]) => [name, { defaultModel: value.defaultModel }]))
       }, { status: 200 }, origin);
@@ -190,50 +171,26 @@ export default {
     }
 
     const providerName = providerFromBody(body);
-    const keyInfo = apiKeyFromBody(body, env, providerName);
-    if (!keyInfo.apiKey) {
+    const apiKey = apiKeyFromBody(body);
+    if (!apiKey) {
       return jsonResponse({
-        error: 'Missing API key',
-        detail: providerName === 'groq'
-          ? 'Set GROQ_API_KEY on the Worker, or send ai.apiKey in bring-your-own-key mode.'
-          : `Send ai.apiKey for ${providerName}, or configure a default provider secret.`
+        error: 'Missing user API key',
+        detail: 'Ofek does not include an app-owned AI API key. Enter your own API key in Settings > AI connection.'
       }, { status: 401 }, origin);
     }
 
     const messages = normalizeMessages(body.system, body.messages);
-    const requestedModel = modelFromBody(body, providerName);
+    const modelUsed = modelFromBody(body, providerName);
     const maxTokens = body.max_tokens || body.maxTokens || 300;
 
-    let upstream = await callProvider({
+    const upstream = await callProvider({
       providerName,
-      model: requestedModel,
+      model: modelUsed,
       messages,
-      apiKey: keyInfo.apiKey,
+      apiKey,
       maxTokens,
       origin
     });
-
-    let modelUsed = requestedModel;
-
-    // Use the cheaper/faster Groq fallback only for the app's default key.
-    // If the user supplied their own key/model, do not silently change their provider billing path.
-    const shouldFallback = providerName === 'groq'
-      && keyInfo.source === 'default'
-      && PROVIDERS.groq.fallbackModel
-      && PROVIDERS.groq.fallbackModel !== requestedModel
-      && [400, 404, 429, 500, 502, 503, 504].includes(upstream.status);
-
-    if (shouldFallback) {
-      upstream = await callProvider({
-        providerName,
-        model: PROVIDERS.groq.fallbackModel,
-        messages,
-        apiKey: keyInfo.apiKey,
-        maxTokens,
-        origin
-      });
-      modelUsed = PROVIDERS.groq.fallbackModel;
-    }
 
     const upstreamText = await upstream.text();
     let data;
@@ -266,7 +223,7 @@ export default {
       content: [{ text }],
       provider: providerName,
       model: modelUsed,
-      keySource: keyInfo.source
+      keySource: 'user'
     }, { status: 200 }, origin);
   }
 };
