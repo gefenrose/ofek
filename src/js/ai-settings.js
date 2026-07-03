@@ -25,8 +25,11 @@
   var DEFAULT_MODELS = {
     groq: 'llama-3.3-70b-versatile',
     openai: 'gpt-4.1-mini',
-    openrouter: 'meta-llama/llama-3.1-8b-instruct'
+    openrouter: 'meta-llama/llama-3.1-8b-instruct',
+    gemini: 'gemini-3.5-flash'
   };
+
+  var PROVIDER_ORDER = ['groq','openai','openrouter','gemini'];
 
   function readAppLang(){
     try{
@@ -162,7 +165,7 @@
   }
 
   function providerOptions(current){
-    return ['groq','openai','openrouter'].map(function(name){
+    return PROVIDER_ORDER.map(function(name){
       return '<option value="'+name+'"'+(current===name?' selected':'')+'>'+name+'</option>';
     }).join('');
   }
