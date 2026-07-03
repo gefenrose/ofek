@@ -9,10 +9,10 @@ Live: https://gefenrose.github.io/ofek/
 Ofek now uses a cleaned bridge architecture:
 
 - `index.html` — thin public shell only
-- `styles.css` — shell/loading styles
-- `app.js` — bootstrap bridge into the preserved app source
+- `src/css/shell.css` — shell/loading styles
+- `src/js/bootstrap.js` — bootstrap bridge into the preserved app source
+- `src/js/ai-settings.js` — BYOK-only AI routing/settings patch
 - `src/legacy/monolith.html` — preserved former single-file app while migration continues
-- `ofek-ai-override.js` — BYOK-only AI routing/settings patch
 - `manifest.webmanifest`, `sw.js`, `icon-*.png` — PWA install/offline support
 - `worker/worker.js` — Cloudflare Worker AI proxy
 - `worker/wrangler.toml` — Worker deployment config
