@@ -8,12 +8,34 @@ Live: https://gefenrose.github.io/ofek/
 
 - `index.html` — the whole app (HTML/CSS/JS, single file)
 - `manifest.webmanifest`, `sw.js`, `icon-*.png` — PWA install support
-- `worker/worker.js` — optional standalone Cloudflare Worker (OpenRouter proxy, free-tier model) if you want Ofek on its own backend instead of reusing `serenity-api`
+- `ofek-ai-override.js` — runtime AI routing/settings patch injected by the service worker
+- `worker/worker.js` — Cloudflare Worker AI proxy
+- `worker/wrangler.toml` — Worker deployment config
 
 ## AI backend
 
-`index.html` currently points `AI_ENDPOINT` at the existing `serenity-api.gefenrose.workers.dev` worker. Swap that constant to point at `worker/worker.js` (deployed separately via `wrangler deploy`) if you'd rather keep this app's traffic independent.
+Ofek now routes AI requests through a dedicated Worker, intended to be deployed as:
+
+```text
+https://ofek-api.gefenrose.workers.dev
+```
+
+The Worker supports two modes:
+
+1. **Default Ofek mode** — uses the Worker secret `GROQ_API_KEY` and Groq's `llama-3.3-70b-versatile`, with `llama-3.1-8b-instant` as a fallback.
+2. **Bring your own API key mode** — users can enter their own Groq, OpenAI, or OpenRouter key in Settings. The key is stored locally on that device and sent per request through the Worker. It is not committed to the repo and is not stored by the Worker.
+
+Deploy from the worker folder:
+
+```bash
+cd worker
+npx wrangler login
+npx wrangler deploy
+npx wrangler secret put GROQ_API_KEY
+```
+
+The Worker health check is available at the Worker root URL and returns whether the default Groq secret is configured.
 
 ## Storage
 
-Entries and profile live in `localStorage` for now (key `ofek_state_v1`). No cloud sync yet — that's a reasonable next step if cross-device history matters.
+Entries and profile live in `localStorage` for now (key `ofek_state_v1`). AI user-key settings live separately in `localStorage` under `ofek_ai_settings_v1`. No full cloud sync yet — that's a reasonable next step if cross-device history matters.
