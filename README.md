@@ -14,16 +14,27 @@ Live: https://gefenrose.github.io/ofek/
 
 ## AI backend
 
-Ofek now routes AI requests through a dedicated Worker, intended to be deployed as:
+Ofek is now **bring-your-own-key only**. There is no app-owned Groq/OpenAI/OpenRouter API key in the frontend or Worker.
+
+The Worker is intended to be deployed as:
 
 ```text
 https://ofek-api.gefenrose.workers.dev
 ```
 
-The Worker supports two modes:
+Users must enter their own API key in:
 
-1. **Default Ofek mode** — uses the Worker secret `GROQ_API_KEY` and Groq's `llama-3.3-70b-versatile`, with `llama-3.1-8b-instant` as a fallback.
-2. **Bring your own API key mode** — users can enter their own Groq, OpenAI, or OpenRouter key in Settings. The key is stored locally on that device and sent per request through the Worker. It is not committed to the repo and is not stored by the Worker.
+```text
+Settings → AI connection
+```
+
+Supported providers:
+
+- Groq
+- OpenAI
+- OpenRouter
+
+The user's key is stored locally on that device in `localStorage` under `ofek_ai_settings_v1` and is sent only per request through the Ofek Worker. The Worker does not store user keys.
 
 Deploy from the worker folder:
 
@@ -31,10 +42,11 @@ Deploy from the worker folder:
 cd worker
 npx wrangler login
 npx wrangler deploy
-npx wrangler secret put GROQ_API_KEY
 ```
 
-The Worker health check is available at the Worker root URL and returns whether the default Groq secret is configured.
+No `GROQ_API_KEY` secret is required anymore.
+
+The Worker health check is available at the Worker root URL and reports `mode: "bring-your-own-key-only"` and `hasAppOwnedApiKey: false`.
 
 ## Storage
 
