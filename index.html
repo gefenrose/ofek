@@ -1194,6 +1194,7 @@
       corrTitle:'קשרים', corrWriting:'כתיבה ביומן',
       corrDid:'ביצעת', corrDidnt:'לא ביצעת', corrDidWrite:'כתבת', corrDidntWrite:'לא כתבת', corrDays:'ימים',
       corrInsufficient:'עוד כמה ימי רישום ותיראה כאן דפוסים בין הרגלים, כתיבה ומצב הרוח.',
+      corrElapsed:'הרגל זה עוקב אחר מרווחי זמן בלבד ולא שומר היסטוריית ימים, ולכן לא ניתן לחשב קשר עם מצב הרוח.',
       lockTitle:'אופק נעול', lockSub:'הזן/י קוד לפתיחה',
       lockWrongPin:'קוד שגוי, נסה/י שוב',
       lockUseBiometric:'זיהוי ביומטרי', lockUseFaceID:'זיהוי פנים', lockUseTouchID:'טביעת אצבע',
@@ -1272,6 +1273,7 @@
       corrTitle:'Patterns', corrWriting:'Writing',
       corrDid:'done', corrDidnt:'not done', corrDidWrite:'wrote', corrDidntWrite:'no writing', corrDays:'days',
       corrInsufficient:"Log a few more days and you'll see patterns between habits, writing, and mood here.",
+      corrElapsed:'This habit tracks time intervals only and has no daily completion history, so mood correlation is unavailable.',
       lockTitle:'Ofek is locked', lockSub:'Enter your code to unlock',
       lockWrongPin:'Wrong code, try again',
       lockUseBiometric:'Biometric unlock', lockUseFaceID:'Face ID', lockUseTouchID:'Touch ID',
@@ -2740,8 +2742,8 @@
   function renderCorrInner(wrapper){
     wrapper.innerHTML = '';
     var lang = state.profile.lang;
-    var items = state.habits.filter(function(h){ return h.trackMode === 'simple'; }).map(function(h){ return {id:h.id, name:h.name}; });
-    items.push({id:'writing', name:tr('corrWriting')});
+    var items = state.habits.map(function(h){ return {id:h.id, name:h.name, elapsed:h.trackMode==='elapsed'}; });
+    items.push({id:'writing', name:tr('corrWriting'), elapsed:false});
 
     var title = document.createElement('div');
     title.className = 'section-title'; title.textContent = tr('corrTitle');
@@ -2762,10 +2764,15 @@
     var selectedItem = items.find(function(i){ return i.id === corrSelectedId; });
     var isWriting = corrSelectedId === 'writing';
     var dm = buildCorrDayMap();
-    var corr = computeCorrelationFor(corrSelectedId, dm);
+    var corr = selectedItem && !selectedItem.elapsed ? computeCorrelationFor(corrSelectedId, dm) : null;
     var card = document.createElement('div'); card.className = 'reflect-card';
 
-    if(!corr){
+    if(selectedItem && selectedItem.elapsed){
+      var p = document.createElement('p');
+      p.style.margin = '0'; p.style.color = 'var(--ink-soft)'; p.style.fontSize = '0.85rem';
+      p.textContent = tr('corrElapsed');
+      card.appendChild(p);
+    } else if(!corr){
       var p = document.createElement('p');
       p.style.margin = '0'; p.style.color = 'var(--ink-soft)'; p.style.fontSize = '0.85rem';
       p.textContent = tr('corrInsufficient');
