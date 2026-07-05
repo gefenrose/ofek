@@ -1,58 +1,30 @@
 # Ofek architecture
 
-Ofek started as a single-file PWA. The repo is now organized so the public entry point is small and new code has a clear place to live.
+Ofek is a single-file PWA. The public entry point contains the full app.
 
-## Current file map
+## File map
 
 ```text
 /
-├─ index.html                 # Thin public shell only
+├─ index.html                 # Full app — HTML, CSS, and JS in one file
 ├─ manifest.webmanifest       # PWA manifest
-├─ sw.js                      # Service worker/cache/routing
-├─ icon-192.png
-├─ icon-512.png
+├─ sw.js                      # Service worker / cache / routing
+├─ assets/
+│  └─ icons/                  # App icons (192, 512, apple-touch-icon)
 ├─ src/
-│  ├─ css/
-│  │  └─ shell.css            # Shell/loading styles
-│  ├─ js/
-│  │  ├─ bootstrap.js         # Bridge loader for the preserved app
-│  │  └─ ai-settings.js       # BYOK-only AI settings/request routing
-│  └─ legacy/
-│     └─ monolith.html        # Preserved former single-file app
+│  └─ js/
+│     └─ ai-settings.js       # BYOK-only AI settings and request routing
 └─ worker/
-   ├─ worker.js               # BYOK-only AI proxy
+   ├─ worker.js               # BYOK-only AI proxy (Cloudflare Worker)
    └─ wrangler.toml           # Cloudflare Worker config
 ```
 
 ## Rules going forward
 
-1. **Do not add new features to `src/legacy/monolith.html`.** It exists to keep the current app working while migration continues.
-2. **Use `index.html` only for document metadata and loading top-level scripts/styles.**
-3. **Put new browser behavior in modular JS files under `src/js/`.**
-4. **Put new styles under `src/css/`.**
-5. **Keep AI logic BYOK-only.** Ofek should never include an app-owned Groq/OpenAI/OpenRouter key.
-6. **Keep the Worker stateless.** It forwards user keys per request and does not persist them.
-7. **Keep root clean.** Root should contain only public entry/PWA files and documentation. Runtime implementation belongs under `src/`.
-
-## Migration plan
-
-The current `src/js/bootstrap.js` bridge loads `src/legacy/monolith.html`, copies its styles/body into the shell, then executes its scripts. This is intentionally temporary.
-
-Recommended next steps:
-
-1. Extract the `<style>` block from `src/legacy/monolith.html` into `src/css/app.css`.
-2. Extract the inline app script into `src/js/legacy-app.js`.
-3. Split `legacy-app.js` into focused modules:
-   - `src/js/state.js`
-   - `src/js/i18n.js`
-   - `src/js/settings.js`
-   - `src/js/ai.js`
-   - `src/js/history.js`
-   - `src/js/habits.js`
-   - `src/js/grounding.js`
-   - `src/js/main.js`
-4. Replace the bridge loader with direct module imports.
-5. Delete `src/legacy/monolith.html` only after the app works without it.
+1. **App code lives in `index.html`.** HTML structure, CSS, and JS are co-located in a single file.
+2. **`src/js/ai-settings.js` is the one exception.** It handles BYOK AI routing and is loaded via a `<script defer>` tag so it can be updated independently.
+3. **Keep AI logic BYOK-only.** Ofek should never include an app-owned Groq/OpenAI/OpenRouter key.
+4. **Keep the Worker stateless.** It forwards user keys per request and does not persist them.
 
 ## AI architecture
 
@@ -64,4 +36,4 @@ Ofek Worker
 Groq / OpenAI / OpenRouter
 ```
 
-No default app-owned key exists. If the user does not enter a key, AI features should fail gracefully while journaling continues locally.
+No default app-owned key exists. If the user does not enter a key, AI features fail gracefully while journaling continues locally.
