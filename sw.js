@@ -1,13 +1,9 @@
-const VERSION = 'ofek-v14';
+const VERSION = 'ofek-v15';
 const OFEK_AI_ENDPOINT = 'https://ofek-api.gefenrose.workers.dev';
 const LEGACY_AI_ENDPOINT = 'https://serenity-api.gefenrose.workers.dev';
 
 const CORE_ASSETS = [
   './index.html',
-  './src/legacy/monolith.html',
-  './src/css/shell.css',
-  './src/js/theme.js',
-  './src/js/bootstrap.js',
   './src/js/ai-settings.js',
   './manifest.webmanifest',
   './assets/icons/apple-touch-icon.png',
