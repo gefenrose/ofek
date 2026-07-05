@@ -1346,6 +1346,19 @@
   if(!state.weeklyCache) state.weeklyCache = {};
   if(!state.security) state.security = { lockEnabled:false, pinHash:null, pinSalt:null, biometricEnabled:false, credentialId:null, credentialUserId:null };
   if(!state.theme) state.theme = 'auto';
+  // One-time migration: seed elapsed habits' completions[] from lastDoneAt so
+  // they can participate in mood correlation.
+  (function(){
+    var changed = false;
+    (state.habits||[]).forEach(function(h){
+      if(h.trackMode !== 'elapsed' || !h.lastDoneAt) return;
+      h.completions = h.completions || [];
+      var d = new Date(h.lastDoneAt);
+      var key = d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
+      if(h.completions.indexOf(key) === -1){ h.completions.push(key); changed = true; }
+    });
+    if(changed) try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  })();
   function saveState(){
     state.lastModified = Date.now();
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
@@ -2717,7 +2730,7 @@
   function computeCorrelationFor(itemId, dm){
     var moodDays = Object.keys(dm).filter(function(d){ return dm[d].moods.length > 0; });
     function avg(arr){ return arr.reduce(function(s,d){ var ms=dm[d].moods; return s+ms.reduce(function(a,b){return a+b;},0)/ms.length; },0)/arr.length; }
-    var done, notDone, MIN = 4;
+    var done, notDone, MIN = 3;
     if(itemId === 'writing'){
       done = moodDays.filter(function(d){ return dm[d].hasNote; });
       notDone = moodDays.filter(function(d){ return !dm[d].hasNote; });
