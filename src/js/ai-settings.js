@@ -148,8 +148,7 @@
     var style = document.createElement('style');
     style.id = 'ofek-ai-settings-style';
     style.textContent = [
-      '.sheet{max-height:calc(100dvh - 18px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;touch-action:pan-y!important;}',
-      '.sheet.open{transform:translateY(0)!important;}',
+      '@media(max-width:767px){.sheet{max-height:calc(100dvh - 18px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;touch-action:pan-y!important;}.sheet.open{transform:translateY(0)!important;}}',
       '.sheet h2{position:relative;}',
       '.ofek-ai-card{padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:var(--paper-raised);}',
       '.ofek-ai-title{font-weight:700;margin-bottom:5px;}',
