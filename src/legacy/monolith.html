@@ -639,18 +639,14 @@
   .habit-insight-name{font-weight:600; font-size:0.88rem;}
   .habit-insight-stat{font-size:0.82rem; color:var(--ink-soft); white-space:nowrap; flex:0 0 auto;}
   .habit-insight-stat.streak{color:var(--accent); font-weight:700;}
-  .corr-item{padding:10px 0; border-bottom:1px solid var(--line);}
-  .corr-item:last-child{border-bottom:none; padding-bottom:0;}
-  .corr-item:first-child{padding-top:0;}
-  .corr-name{font-weight:600; font-size:0.88rem; margin-bottom:8px;}
-  .corr-bars{display:flex; flex-direction:column; gap:5px;}
-  .corr-bar-row{display:flex; align-items:center; gap:8px;}
-  .corr-bar-label{font-size:0.72rem; color:var(--ink-soft); width:34px; flex-shrink:0; text-align:end;}
-  .corr-bar-track{flex:1; height:6px; border-radius:3px; background:var(--line); overflow:hidden;}
-  .corr-bar-fill{height:100%; border-radius:3px; transition:width .4s ease;}
-  .corr-bar-val{font-size:0.72rem; color:var(--ink-soft); width:26px; flex-shrink:0;}
-  .corr-mood-lbl{font-size:0.7rem; color:var(--ink-faint); white-space:nowrap; flex-shrink:0;}
-  .corr-delta{font-size:0.75rem; color:var(--ink-faint); margin-top:5px;}
+  .corr-compare{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
+  .corr-col{text-align:center; padding:14px 10px 12px; border-radius:var(--radius-md); background:var(--paper); border:1px solid var(--line);}
+  .corr-dot{width:10px; height:10px; border-radius:50%; margin:0 auto 8px;}
+  .corr-col-label{font-size:0.72rem; color:var(--ink-soft); margin-bottom:6px; font-weight:500;}
+  .corr-col-mood{font-size:1rem; font-weight:700; margin-bottom:3px;}
+  .corr-col-score{font-size:0.72rem; color:var(--ink-soft); margin-bottom:4px;}
+  .corr-col-days{font-size:0.68rem; color:var(--ink-faint);}
+  .corr-summary{font-size:0.83rem; color:var(--ink-soft); text-align:center; line-height:1.45;}
 
   /* ---------- Settings sheet ---------- */
   .sheet-backdrop{
@@ -1184,7 +1180,8 @@
       habitDoneToday:'בוצע היום', habitNotDueToday:'לא היום',
       insightsHabitsTitle:'הרגלים', habitsCompletedToday:'הושלמו היום', habitsBestStreak:'הרצף הטוב',
       habitsTotalLabel:'הרגלים פעילים',
-      corrTitle:'קשרים', corrWith:'עם', corrWithout:'בלי', corrWriting:'כתיבה ביומן',
+      corrTitle:'קשרים', corrWriting:'כתיבה ביומן',
+      corrDid:'ביצעת', corrDidnt:'לא ביצעת', corrDidWrite:'כתבת', corrDidntWrite:'לא כתבת', corrDays:'ימים',
       corrInsufficient:'עוד כמה ימי רישום ותיראה כאן דפוסים בין הרגלים, כתיבה ומצב הרוח.',
       lockTitle:'אופק נעול', lockSub:'הזן/י קוד לפתיחה',
       lockWrongPin:'קוד שגוי, נסה/י שוב',
@@ -1260,7 +1257,8 @@
       habitDoneToday:'Done today', habitNotDueToday:'Not today',
       insightsHabitsTitle:'Habits', habitsCompletedToday:'Done today', habitsBestStreak:'Best streak',
       habitsTotalLabel:'Active habits',
-      corrTitle:'Patterns', corrWith:'with', corrWithout:'without', corrWriting:'Writing',
+      corrTitle:'Patterns', corrWriting:'Writing',
+      corrDid:'done', corrDidnt:'not done', corrDidWrite:'wrote', corrDidntWrite:'no writing', corrDays:'days',
       corrInsufficient:"Log a few more days and you'll see patterns between habits, writing, and mood here.",
       lockTitle:'Ofek is locked', lockSub:'Enter your code to unlock',
       lockWrongPin:'Wrong code, try again',
@@ -2734,6 +2732,8 @@
     });
     wrapper.appendChild(pillRow);
 
+    var selectedItem = items.find(function(i){ return i.id === corrSelectedId; });
+    var isWriting = corrSelectedId === 'writing';
     var dm = buildCorrDayMap();
     var corr = computeCorrelationFor(corrSelectedId, dm);
     var card = document.createElement('div'); card.className = 'reflect-card';
@@ -2744,25 +2744,33 @@
       p.textContent = tr('corrInsufficient');
       card.appendChild(p);
     } else {
-      [[corr.avgDone, tr('corrWith'), corr.doneDays],[corr.avgNotDone, tr('corrWithout'), corr.notDoneDays]].forEach(function(triple){
+      var withLbl = isWriting ? tr('corrDidWrite') : tr('corrDid');
+      var withoutLbl = isWriting ? tr('corrDidntWrite') : tr('corrDidnt');
+
+      var compare = document.createElement('div'); compare.className = 'corr-compare';
+      [[corr.avgDone, withLbl, corr.doneDays],[corr.avgNotDone, withoutLbl, corr.notDoneDays]].forEach(function(triple){
         var val = triple[0], label = triple[1], days = triple[2];
-        var row = document.createElement('div'); row.className = 'corr-bar-row';
-        var lbl = document.createElement('span'); lbl.className = 'corr-bar-label'; lbl.textContent = label;
-        var track = document.createElement('div'); track.className = 'corr-bar-track';
-        var fill = document.createElement('div'); fill.className = 'corr-bar-fill';
-        fill.style.width = Math.round((val/(MOOD_STEPS-1))*100)+'%';
-        fill.style.background = moodColor(val);
-        track.appendChild(fill);
-        var valEl = document.createElement('span'); valEl.className = 'corr-bar-val'; valEl.textContent = val.toFixed(1);
-        var moodLbl = document.createElement('span'); moodLbl.className = 'corr-mood-lbl';
-        moodLbl.textContent = MOOD_LABELS[lang][Math.round(val)] + ' · ' + days + (lang==='he' ? ' ימ׳' : 'd');
-        row.appendChild(lbl); row.appendChild(track); row.appendChild(valEl); row.appendChild(moodLbl);
-        card.appendChild(row);
+        var col = document.createElement('div'); col.className = 'corr-col';
+        var dot = document.createElement('div'); dot.className = 'corr-dot'; dot.style.background = moodColor(val);
+        var lbl = document.createElement('div'); lbl.className = 'corr-col-label'; lbl.textContent = label;
+        var mood = document.createElement('div'); mood.className = 'corr-col-mood';
+        mood.textContent = MOOD_LABELS[lang][Math.round(val)]; mood.style.color = moodColor(val);
+        var score = document.createElement('div'); score.className = 'corr-col-score'; score.textContent = val.toFixed(1);
+        var daysEl = document.createElement('div'); daysEl.className = 'corr-col-days'; daysEl.textContent = days + ' ' + tr('corrDays');
+        col.appendChild(dot); col.appendChild(lbl); col.appendChild(mood); col.appendChild(score); col.appendChild(daysEl);
+        compare.appendChild(col);
       });
-      var delta = document.createElement('div'); delta.className = 'corr-delta';
-      var sign = corr.diff > 0 ? '+' : '';
-      delta.textContent = sign + corr.diff.toFixed(1) + ' ' + (lang==='he' ? 'נקודות' : 'pts');
-      card.appendChild(delta);
+      card.appendChild(compare);
+
+      var summary = document.createElement('div'); summary.className = 'corr-summary';
+      var prefix = isWriting
+        ? (lang==='he' ? 'ביום שכתבת' : 'On writing days')
+        : (lang==='he' ? 'ביום עם ' + selectedItem.name : 'On ' + selectedItem.name + ' days');
+      var dir = corr.diff > 0 ? (lang==='he' ? 'גבוה' : 'higher') : (lang==='he' ? 'נמוך' : 'lower');
+      summary.textContent = lang==='he'
+        ? prefix + ' — מצב הרוח שלך ' + dir + ' ב-' + Math.abs(corr.diff).toFixed(1) + ' נקודות'
+        : prefix + ', your mood is ' + Math.abs(corr.diff).toFixed(1) + ' pts ' + dir;
+      card.appendChild(summary);
     }
     wrapper.appendChild(card);
   }
