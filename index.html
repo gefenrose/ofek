@@ -255,7 +255,7 @@
 
   main{flex:1 1 0; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y; display:flex; flex-direction:column; min-height:0; padding-bottom:calc(82px + var(--safe-b));}
   .panel{display:none; padding:6px 18px 0;}
-  .panel.active{display:block; animation:panelIn .28s ease; flex:1 0 auto;}
+  .panel.active{display:block; animation:panelIn .28s ease; flex:1 0 auto; width:100%; min-width:0;}
   @keyframes panelIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
 
   nav.bottomnav{
@@ -2172,7 +2172,6 @@
     } else {
       selectedDate = dateKey;
     }
-    renderCalendar();
     renderHistory();
   }
   function clearSelectedDate(){
