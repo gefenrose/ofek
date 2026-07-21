@@ -76,6 +76,23 @@
     cloudSync.schedule();
   }
 
+  // Elapsed habits created by older versions only stored lastDoneAt. Seed that
+  // date into completions so those habits can participate in Insights without
+  // losing their existing history.
+  (function migrateElapsedHabitHistory(){
+    var changed = false;
+    state.habits.forEach(function(habit){
+      if(habit.trackMode !== 'elapsed' || !habit.lastDoneAt) return;
+      habit.completions = habit.completions || [];
+      var completionDate = todayStr(new Date(habit.lastDoneAt));
+      if(habit.completions.indexOf(completionDate) === -1){
+        habit.completions.push(completionDate);
+        changed = true;
+      }
+    });
+    if(changed) saveState();
+  })();
+
   var toastTimer = null;
   function showToast(message, actionLabel, action){
     var previous = document.querySelector('.app-toast');
@@ -1573,7 +1590,6 @@
       if((e.note && e.note.trim()) || (e.messages && e.messages.length > 1)) dm[e.date].hasNote = true;
     });
     state.habits.forEach(function(h){
-      if(h.trackMode !== 'simple') return;
       (h.completions||[]).forEach(function(d){
         if(!dm[d]) dm[d] = {moods:[], hasNote:false, done:{}};
         dm[d].done[h.id] = true;
@@ -1609,7 +1625,7 @@
   function renderCorrInner(wrapper){
     wrapper.innerHTML = '';
     var lang = state.profile.lang;
-    var items = state.habits.filter(function(h){ return h.trackMode === 'simple'; }).map(function(h){ return {id:h.id, name:h.name}; });
+    var items = state.habits.map(function(h){ return {id:h.id, name:h.name}; });
     items.push({id:'writing', name:translate('corrWriting')});
 
     var title = document.createElement('h2');
@@ -1766,13 +1782,17 @@
     if(!habit) return;
     var wasChecked = habitCheckedToday(habit);
     if(habit.trackMode === 'elapsed'){
+      var elapsedToday = todayStr();
+      habit.completions = habit.completions || [];
       if(habitCheckedToday(habit)){
         // tap again to undo today's check-in, restoring whatever it showed before
         habit.lastDoneAt = (habit.previousLastDoneAt !== undefined) ? habit.previousLastDoneAt : null;
         delete habit.previousLastDoneAt;
+        habit.completions = habit.completions.filter(function(date){ return date !== elapsedToday; });
       } else {
         habit.previousLastDoneAt = habit.lastDoneAt || null;
         habit.lastDoneAt = Date.now();
+        if(habit.completions.indexOf(elapsedToday) === -1) habit.completions.push(elapsedToday);
       }
     } else {
       var today = todayStr();
