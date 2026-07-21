@@ -1,39 +1,46 @@
 # Ofek architecture
 
-Ofek is a single-file PWA. The public entry point contains the full app.
+Ofek is a static bilingual PWA. The former single-file application and runtime bridge have been removed; the public document now loads focused assets directly.
 
 ## File map
 
 ```text
 /
-├─ index.html                 # Full app — HTML, CSS, and JS in one file
-├─ manifest.webmanifest       # PWA manifest
-├─ sw.js                      # Service worker / cache / routing
-├─ assets/
-│  └─ icons/                  # App icons (192, 512, apple-touch-icon)
+├─ index.html                 # Semantic app markup and document metadata
+├─ manifest.webmanifest       # Install metadata and icons
+├─ sw.js                      # Offline navigation and same-origin asset cache
 ├─ src/
+│  ├─ css/app.css             # Application styles and responsive layouts
 │  └─ js/
-│     └─ ai-settings.js       # BYOK-only AI settings and request routing
+│     ├─ theme.js             # Pre-paint theme preference
+│     ├─ storage.js           # IndexedDB persistence and migration
+│     ├─ a11y.js              # Dialog semantics, focus trap, focus restoration
+│     ├─ i18n.js              # Hebrew/English copy and flow label maps
+│     ├─ image-utils.js        # Image validation, resize, and compression
+│     ├─ cloud-sync.js         # Optional Google Drive app-data synchronization
+│     ├─ screen-lock.js        # PIN and platform-biometric screen lock
+│     ├─ data-transfer.js      # JSON backup export and validated import
+│     ├─ ai-settings.js       # BYOK settings and request routing
+│     ├─ daily-summaries.js    # Cached whole-day AI summaries
+│     └─ app.js               # App orchestration, journal, history, and habits
 └─ worker/
-   ├─ worker.js               # BYOK-only AI proxy (Cloudflare Worker)
-   └─ wrangler.toml           # Cloudflare Worker config
+   ├─ worker.js               # Stateless BYOK AI proxy
+   └─ wrangler.toml           # Worker deployment configuration
 ```
 
-## Rules going forward
+## Data and privacy
 
-1. **App code lives in `index.html`.** HTML structure, CSS, and JS are co-located in a single file.
-2. **`src/js/ai-settings.js` is the one exception.** It handles BYOK AI routing and is loaded via a `<script defer>` tag so it can be updated independently.
-3. **Keep AI logic BYOK-only.** Ofek should never include an app-owned Groq/OpenAI/OpenRouter key.
-4. **Keep the Worker stateless.** It forwards user keys per request and does not persist them.
+- Journal state is stored in IndexedDB. The old `ofek_state_v1` localStorage value is migrated once and removed after a successful IndexedDB write.
+- Theme and language preferences are stored separately in `ofek_prefs_v1` so the theme can be applied before app startup.
+- API keys are session-only by default. Persistent storage requires an explicit “remember” choice and can be cleared from Settings.
+- The app lock is a local screen lock. PBKDF2 slows offline PIN guessing, but journal records are not encrypted at rest; the UI states this explicitly.
+- Google Drive sync uses the user's authenticated app-data folder and remains optional.
 
-## AI architecture
+## Reliability rules
 
-```text
-Ofek PWA
-  ↓ user enters provider/model/API key in Settings
-Ofek Worker
-  ↓ forwards request only for this call
-Groq / OpenAI / OpenRouter
-```
-
-No default app-owned key exists. If the user does not enter a key, AI features fail gracefully while journaling continues locally.
+1. Persistence errors must be visible; never swallow a failed journal write.
+2. Service-worker asset failures must never fall back to HTML. Only navigation requests receive the app shell.
+3. Closed sheets remain `inert` and hidden from the accessibility tree.
+4. The Worker accepts only allow-listed providers, bounded request sizes, known message roles, and valid model identifiers.
+5. Feature modules receive dependencies through small `create`/`bind` APIs. Avoid hidden cross-module globals.
+6. New functionality should be added in a focused module instead of growing `app.js` indefinitely.

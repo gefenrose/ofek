@@ -6,19 +6,26 @@ Live: https://gefenrose.github.io/ofek/
 
 ## Structure
 
-Ofek now uses a cleaned bridge architecture:
+Ofek now uses direct, static app assets:
 
-- `index.html` — thin public shell only
-- `src/css/shell.css` — shell/loading styles
-- `src/js/bootstrap.js` — bootstrap bridge into the preserved app source
-- `src/js/ai-settings.js` — BYOK-only AI routing/settings patch
-- `src/legacy/monolith.html` — preserved former single-file app while migration continues
+- `index.html` — semantic app markup and metadata
+- `src/css/app.css` — application styles
+- `src/js/app.js` — journaling, history, habits, sync, and lock behavior
+- `src/js/storage.js` — IndexedDB persistence and localStorage migration
+- `src/js/a11y.js` — dialog focus and accessibility behavior
+- `src/js/i18n.js` — bilingual copy and labels
+- `src/js/image-utils.js` — journal image processing
+- `src/js/cloud-sync.js` — optional Google Drive synchronization
+- `src/js/screen-lock.js` — PIN and biometric screen lock
+- `src/js/data-transfer.js` — backup export/import
+- `src/js/ai-settings.js` — BYOK-only AI routing and settings
+- `src/js/daily-summaries.js` — cached AI summaries generated from every entry in a day
 - `manifest.webmanifest`, `sw.js`, `icon-*.png` — PWA install/offline support
 - `worker/worker.js` — Cloudflare Worker AI proxy
 - `worker/wrangler.toml` — Worker deployment config
 - `ARCHITECTURE.md` — architecture rules and migration plan
 
-New code should not be added to `src/legacy/monolith.html`. Use `src/js/` and `src/css/` for new modules/styles as the migration continues.
+New browser behavior belongs in focused modules under `src/js/`; styles belong under `src/css/`.
 
 ## AI backend
 
@@ -41,8 +48,9 @@ Supported providers:
 - Groq
 - OpenAI
 - OpenRouter
+- Gemini
 
-The user's key is stored locally on that device in `localStorage` under `ofek_ai_settings_v1` and is sent only per request through the Ofek Worker. The Worker does not store user keys.
+The user's key is kept in `sessionStorage` by default and is sent only per request through the Ofek Worker. Users can explicitly opt into remembering it on the device; the Worker does not store user keys.
 
 Deploy from the worker folder:
 
@@ -58,4 +66,4 @@ The Worker health check is available at the Worker root URL and reports `mode: "
 
 ## Storage
 
-Entries and profile live in `localStorage` for now (key `ofek_state_v1`). AI user-key settings live separately in `localStorage` under `ofek_ai_settings_v1`. No full cloud sync yet — that's a reasonable next step if cross-device history matters.
+Entries, profile, and photos live in IndexedDB. Existing `ofek_state_v1` localStorage data migrates automatically on first load. Small theme/language preferences remain in localStorage, while AI keys default to session-only storage. Google Drive app-data sync remains optional.

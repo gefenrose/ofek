@@ -1,0 +1,9 @@
+{
+  "name": "ofek-pwa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/js/theme.js && node --check src/js/storage.js && node --check src/js/a11y.js && node --check src/js/i18n.js && node --check src/js/image-utils.js && node --check src/js/cloud-sync.js && node --check src/js/screen-lock.js && node --check src/js/data-transfer.js && node --check src/js/ai-settings.js && node --check src/js/daily-summaries.js && node --check src/js/app.js && node --check sw.js && node --check worker/worker.js",
+    "test": "node --test"
+  }
+}

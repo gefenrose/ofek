@@ -1,120 +1,92 @@
-const VERSION = 'ofek-v15';
-const OFEK_AI_ENDPOINT = 'https://ofek-api.gefenrose.workers.dev';
-const LEGACY_AI_ENDPOINT = 'https://serenity-api.gefenrose.workers.dev';
+const VERSION = 'ofek-v20';
 
 const CORE_ASSETS = [
   './index.html',
+  './src/css/app.css',
+  './src/js/theme.js',
+  './src/js/storage.js',
+  './src/js/a11y.js',
+  './src/js/i18n.js',
+  './src/js/image-utils.js',
+  './src/js/cloud-sync.js',
+  './src/js/screen-lock.js',
+  './src/js/data-transfer.js',
   './src/js/ai-settings.js',
+  './src/js/daily-summaries.js',
+  './src/js/app.js',
   './manifest.webmanifest',
   './assets/icons/apple-touch-icon.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png'
 ];
 
+async function cacheCoreAssets(){
+  const cache = await caches.open(VERSION);
+  await Promise.all(CORE_ASSETS.map(async (url) => {
+    const response = await fetch(url, { cache:'no-store' });
+    if(!response.ok) throw new Error(`Core asset failed: ${url} (${response.status})`);
+    await cache.put(url, response);
+  }));
+}
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(VERSION)
-      .then((cache) => Promise.all(CORE_ASSETS.map((url) =>
-        fetch(url, { cache: 'no-store' }).then((res) => cache.put(url, res)).catch(() => {})
-      )))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(cacheCoreAssets().then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((key) => key.startsWith('ofek-') && key !== VERSION).map((key) => caches.delete(key)))
     ).then(() => self.clients.claim())
   );
 });
 
-function shouldServeAppShell(req) {
-  if (req.method !== 'GET') return false;
-  if (req.mode === 'navigate') return true;
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return false;
-  return url.pathname.endsWith('/ofek/') || url.pathname.endsWith('/ofek/index.html') || url.pathname.endsWith('/index.html');
+function isNavigation(request){
+  return request.method === 'GET' && request.mode === 'navigate';
 }
 
-async function appShellResponse(req) {
+async function navigationResponse(request){
   const cache = await caches.open(VERSION);
-  let source;
-
-  try {
-    source = await fetch(req, { cache: 'no-store' });
-    if (source && source.ok) {
-      const plainCopy = source.clone();
-      cache.put('./index.html', plainCopy).catch(() => {});
+  try{
+    const response = await fetch(request, { cache:'no-store' });
+    if(response.ok && (response.headers.get('Content-Type') || '').includes('text/html')){
+      await cache.put('./index.html', response.clone());
     }
-  } catch (e) {
-    source = await cache.match('./index.html');
-  }
-
-  if (!source) {
-    source = await cache.match('./index.html');
-  }
-
-  if (!source) {
-    return new Response('Ofek is unavailable offline until it has loaded once.', {
-      status: 503,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    return response;
+  }catch(error){
+    const cached = await cache.match('./index.html');
+    return cached || new Response('Ofek is unavailable offline until it has loaded once.', {
+      status:503,
+      headers:{ 'Content-Type':'text/plain; charset=utf-8' }
     });
   }
-
-  return source;
 }
 
-async function redirectLegacyAi(req) {
-  const headers = new Headers(req.headers);
-  headers.set('Content-Type', 'application/json');
-
-  const init = {
-    method: req.method,
-    headers,
-    cache: 'no-store',
-    credentials: 'omit',
-    redirect: 'follow'
-  };
-
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    init.body = await req.clone().text();
+async function assetResponse(request){
+  const cache = await caches.open(VERSION);
+  try{
+    const response = await fetch(request, { cache:'no-store' });
+    if(response.ok) await cache.put(request, response.clone());
+    return response;
+  }catch(error){
+    const cached = await cache.match(request);
+    return cached || Response.error();
   }
-
-  return fetch(OFEK_AI_ENDPOINT, init);
 }
 
 self.addEventListener('fetch', (event) => {
-  const req = event.request;
-
-  // Safety net: if old frontend code still calls the legacy Serenity worker,
-  // route it to Ofek's dedicated BYOK-only worker instead.
-  if (req.url.startsWith(LEGACY_AI_ENDPOINT)) {
-    event.respondWith(redirectLegacyAi(req));
+  const request = event.request;
+  if(isNavigation(request)){
+    event.respondWith(navigationResponse(request));
     return;
   }
-
-  if (shouldServeAppShell(req)) {
-    event.respondWith(appShellResponse(req));
-    return;
-  }
-
-  if (req.method !== 'GET') return;
-
-  // Never cache live API calls.
-  if (req.url.includes('workers.dev') || req.url.includes('/api/')) return;
-
-  event.respondWith(
-    fetch(req, { cache: 'no-store' })
-      .then((res) => {
-        const copy = res.clone();
-        caches.open(VERSION).then((cache) => cache.put(req, copy));
-        return res;
-      })
-      .catch(() => caches.match(req).then((cached) => cached || appShellResponse(req)))
-  );
+  if(request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if(url.origin !== self.location.origin || request.headers.has('Authorization')) return;
+  if(url.pathname.includes('/api/')) return;
+  event.respondWith(assetResponse(request));
 });
 
 self.addEventListener('message', (event) => {
-  if (event.data === 'skipWaiting') self.skipWaiting();
+  if(event.data === 'skipWaiting') self.skipWaiting();
 });

@@ -20,6 +20,11 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 const DEFAULT_PROVIDER = 'groq';
+const MAX_BODY_BYTES = 256 * 1024;
+const MAX_SYSTEM_CHARS = 20000;
+const MAX_MESSAGES = 80;
+const MAX_MESSAGE_CHARS = 30000;
+const PROVIDER_TIMEOUT_MS = 60000;
 
 const PROVIDERS = {
   groq: {
@@ -40,12 +45,38 @@ const PROVIDERS = {
   }
 };
 
+const SECURITY_HEADERS = {
+  'Referrer-Policy': 'no-referrer',
+  'X-Content-Type-Options': 'nosniff',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+  'Cross-Origin-Resource-Policy': 'same-site'
+};
+
+function allowedOrigin(origin) {
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+  try {
+    const url = new URL(origin);
+    return (url.protocol === 'http:' || url.protocol === 'https:') &&
+      (url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '[::1]');
+  } catch {
+    return false;
+  }
+}
+
 function corsHeaders(origin) {
-  return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.has(origin) ? origin : 'https://gefenrose.github.io',
+  const headers = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Vary': 'Origin'
+  };
+
+  if (allowedOrigin(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
+
+  return {
+    ...headers,
+    ...SECURITY_HEADERS
   };
 }
 
@@ -78,6 +109,26 @@ function extractText(data) {
   return '';
 }
 
+function extractProviderError(data, fallbackText) {
+  const candidates = [
+    data?.error?.message,
+    data?.error?.error?.message,
+    Array.isArray(data) ? data[0]?.error?.message : '',
+    Array.isArray(data) ? data[0]?.error?.error?.message : '',
+    data?.message,
+    typeof data?.error === 'string' ? data.error : ''
+  ];
+
+  const message = candidates.find((value) => typeof value === 'string' && value.trim());
+  if (message) return message.trim();
+
+  if (typeof fallbackText === 'string' && fallbackText.trim()) {
+    return fallbackText.slice(0, 600);
+  }
+
+  return 'Provider returned an error response';
+}
+
 function normalizeMessages(system, messages) {
   return [
     { role: 'system', content: system },
@@ -91,7 +142,7 @@ function normalizeMessages(system, messages) {
 function providerFromBody(body) {
   const ai = body.ai && typeof body.ai === 'object' ? body.ai : {};
   const providerName = String(ai.provider || body.provider || DEFAULT_PROVIDER).toLowerCase();
-  return PROVIDERS[providerName] ? providerName : DEFAULT_PROVIDER;
+  return PROVIDERS[providerName] ? providerName : null;
 }
 
 function apiKeyFromBody(body) {
@@ -111,7 +162,7 @@ function modelFromBody(body, providerName) {
 }
 
 async function callProvider({ providerName, model, messages, apiKey, maxTokens, origin }) {
-  const provider = PROVIDERS[providerName] || PROVIDERS[DEFAULT_PROVIDER];
+  const provider = PROVIDERS[providerName];
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${apiKey}`
@@ -122,24 +173,47 @@ async function callProvider({ providerName, model, messages, apiKey, maxTokens, 
     headers['X-Title'] = 'Ofek';
   }
 
-  return fetch(provider.endpoint, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model,
-      messages,
-      max_tokens: Math.min(Math.max(Number(maxTokens) || 300, 64), 900),
-      temperature: 0.7
-    })
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+  try {
+    return await fetch(provider.endpoint, {
+      method: 'POST',
+      headers,
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: Math.min(Math.max(Number(maxTokens) || 300, 64), 900),
+        temperature: 0.7
+      })
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function readBody(request) {
+  const declaredLength = Number(request.headers.get('Content-Length') || 0);
+  if (declaredLength > MAX_BODY_BYTES) return { error: 'Request body too large', status: 413 };
   try {
-    return await request.json();
+    const text = await request.text();
+    if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) return { error: 'Request body too large', status: 413 };
+    return { body: JSON.parse(text) };
   } catch {
-    return null;
+    return { error: 'Invalid JSON', status: 400 };
   }
+}
+
+function validateConversation(body) {
+  if (typeof body.system !== 'string' || !body.system.trim() || !Array.isArray(body.messages)) {
+    return 'Missing system or messages';
+  }
+  if (body.system.length > MAX_SYSTEM_CHARS) return 'System message is too long';
+  if (body.messages.length > MAX_MESSAGES) return 'Too many messages';
+  const invalid = body.messages.some((message) => !message ||
+    (message.role !== 'user' && message.role !== 'assistant') ||
+    typeof message.content !== 'string' || message.content.length > MAX_MESSAGE_CHARS);
+  return invalid ? 'Invalid message format' : '';
 }
 
 export default {
@@ -147,7 +221,7 @@ export default {
     const origin = request.headers.get('Origin') || '';
 
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders(origin) });
+      return new Response(null, { status: allowedOrigin(origin) ? 204 : 403, headers: corsHeaders(origin) });
     }
 
     if (request.method === 'GET') {
@@ -165,16 +239,25 @@ export default {
       return jsonResponse({ error: 'Method not allowed' }, { status: 405 }, origin);
     }
 
-    const body = await readBody(request);
-    if (!body) {
-      return jsonResponse({ error: 'Invalid JSON' }, { status: 400 }, origin);
+    if (!allowedOrigin(origin)) {
+      return jsonResponse({ error: 'Origin not allowed' }, { status: 403 }, origin);
     }
 
-    if (!body.system || !Array.isArray(body.messages)) {
-      return jsonResponse({ error: 'Missing system or messages' }, { status: 400 }, origin);
+    const parsed = await readBody(request);
+    if (parsed.error) {
+      return jsonResponse({ error: parsed.error }, { status: parsed.status }, origin);
+    }
+    const body = parsed.body;
+
+    const conversationError = validateConversation(body);
+    if (conversationError) {
+      return jsonResponse({ error: conversationError }, { status: 400 }, origin);
     }
 
     const providerName = providerFromBody(body);
+    if (!providerName) {
+      return jsonResponse({ error: 'Unsupported AI provider' }, { status: 400 }, origin);
+    }
     const apiKey = apiKeyFromBody(body);
     if (!apiKey) {
       return jsonResponse({
@@ -185,16 +268,29 @@ export default {
 
     const messages = normalizeMessages(body.system, body.messages);
     const modelUsed = modelFromBody(body, providerName);
+    if (modelUsed.length > 160 || !/^[a-zA-Z0-9._:/-]+$/.test(modelUsed)) {
+      return jsonResponse({ error: 'Invalid model name' }, { status: 400 }, origin);
+    }
     const maxTokens = body.max_tokens || body.maxTokens || 300;
 
-    const upstream = await callProvider({
-      providerName,
-      model: modelUsed,
-      messages,
-      apiKey,
-      maxTokens,
-      origin
-    });
+    let upstream;
+    try {
+      upstream = await callProvider({
+        providerName,
+        model: modelUsed,
+        messages,
+        apiKey,
+        maxTokens,
+        origin
+      });
+    } catch (error) {
+      const timedOut = error && error.name === 'AbortError';
+      return jsonResponse({
+        error: timedOut ? 'AI provider timed out' : 'AI provider unavailable',
+        provider: providerName,
+        model: modelUsed
+      }, { status: timedOut ? 504 : 502 }, origin);
+    }
 
     const upstreamText = await upstream.text();
     let data;
@@ -210,7 +306,7 @@ export default {
         provider: providerName,
         model: modelUsed,
         status: upstream.status,
-        detail: data?.error?.message || data?.error || upstreamText.slice(0, 600)
+        detail: extractProviderError(data, upstreamText)
       }, { status: upstream.status }, origin);
     }
 

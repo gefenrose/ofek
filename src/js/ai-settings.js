@@ -1,19 +1,12 @@
-// Runtime patch for Ofek AI routing.
-//
-// This file is loaded by index.html so we can add stable AI routing without
-// rewriting the large legacy app all at once. It:
-// 1. Redirects the old serenity-api endpoint to the dedicated Ofek Worker.
-// 2. Adds a bring-your-own-key AI panel to Settings.
-// 3. Sends user API keys only per request; keys are stored locally on this device.
-// 4. Fixes long settings sheets so they can scroll on mobile.
+// Bring-your-own-key AI routing and settings.
 
 (function(){
   'use strict';
 
-  var LEGACY_ENDPOINT = 'https://serenity-api.gefenrose.workers.dev';
   var OFEK_ENDPOINT = 'https://ofek-api.gefenrose.workers.dev';
   var SETTINGS_KEY = 'ofek_ai_settings_v1';
-  var STATE_KEY = 'ofek_state_v1';
+  var SESSION_KEY = 'ofek_ai_session_key_v1';
+  var PREFS_KEY = 'ofek_prefs_v1';
 
   var DEFAULTS = {
     mode: 'byok',
@@ -33,8 +26,8 @@
 
   function readAppLang(){
     try{
-      var state = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
-      return (state.profile && state.profile.lang) || document.documentElement.lang || 'he';
+      var prefs = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
+      return prefs.lang || document.documentElement.lang || 'he';
     }catch(e){
       return document.documentElement.lang || 'he';
     }
@@ -48,8 +41,11 @@
       provider: 'ספק',
       model: 'מודל',
       key: 'מפתח API',
-      keyPlaceholder: 'נשמר רק על המכשיר הזה',
-      note: 'המפתח נשמר בדפדפן המקומי ונשלח רק לבקשות AI דרך ה־Worker של אופק. לא להשתמש במכשיר משותף.',
+      keyPlaceholder: 'המפתח נשמר להפעלה הנוכחית',
+      note: 'ברירת המחדל היא שמירה עד סגירת הדפדפן. המפתח נשלח רק לבקשות AI דרך ה־Worker של אופק.',
+      remember: 'לזכור את המפתח במכשיר הזה',
+      forget: 'מחיקת המפתח',
+      forgotten: 'המפתח נמחק',
       save: 'שמירה',
       test: 'בדיקת חיבור',
       saved: 'נשמר',
@@ -63,8 +59,11 @@
       provider: 'Provider',
       model: 'Model',
       key: 'API key',
-      keyPlaceholder: 'Saved only on this device',
-      note: 'The key is saved in this browser and sent only for AI requests through the Ofek Worker. Do not use this on a shared device.',
+      keyPlaceholder: 'Kept for this browser session',
+      note: 'By default, the key is kept until the browser closes. It is sent only for AI requests through the Ofek Worker.',
+      remember: 'Remember the key on this device',
+      forget: 'Forget key',
+      forgotten: 'Key removed',
       save: 'Save',
       test: 'Test connection',
       saved: 'Saved',
@@ -78,7 +77,13 @@
   function readSettings(){
     try{
       var saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-      return Object.assign({}, DEFAULTS, saved || {}, { mode: 'byok' });
+      var persistentKey = String(saved.apiKey || '');
+      var sessionKey = sessionStorage.getItem(SESSION_KEY) || '';
+      return Object.assign({}, DEFAULTS, saved || {}, {
+        mode: 'byok',
+        apiKey: persistentKey || sessionKey,
+        rememberKey: !!persistentKey
+      });
     }catch(e){
       return Object.assign({}, DEFAULTS);
     }
@@ -90,7 +95,16 @@
     clean.provider = DEFAULT_MODELS[clean.provider] ? clean.provider : 'groq';
     clean.model = String(clean.model || DEFAULT_MODELS[clean.provider] || DEFAULTS.model).trim();
     clean.apiKey = String(clean.apiKey || '').trim();
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(clean));
+    clean.rememberKey = !!clean.rememberKey;
+    var persisted = { mode:clean.mode, provider:clean.provider, model:clean.model };
+    if(clean.rememberKey && clean.apiKey){
+      persisted.apiKey = clean.apiKey;
+      sessionStorage.removeItem(SESSION_KEY);
+    } else {
+      if(clean.apiKey) sessionStorage.setItem(SESSION_KEY, clean.apiKey);
+      else sessionStorage.removeItem(SESSION_KEY);
+    }
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(persisted));
     window.dispatchEvent(new CustomEvent('ofek-ai-settings-change', { detail: { mode: clean.mode, provider: clean.provider, model: clean.model } }));
     return clean;
   }
@@ -109,17 +123,7 @@
     try{ return JSON.parse(value || '{}'); }catch(e){ return {}; }
   }
 
-  var originalFetch = window.fetch ? window.fetch.bind(window) : null;
-  if(originalFetch && !window.__ofekAiFetchPatched){
-    window.__ofekAiFetchPatched = true;
-    window.fetch = function(input, init){
-      var url = typeof input === 'string' ? input : (input && input.url) || '';
-      if(url.indexOf(LEGACY_ENDPOINT) !== -1){
-        return routeAiRequest(init || {});
-      }
-      return originalFetch(input, init);
-    };
-  }
+  var originalFetch = window.fetch.bind(window);
 
   function routeAiRequest(init){
     var settings = readSettings();
@@ -143,25 +147,7 @@
     });
   }
 
-  function addStyle(){
-    if(document.getElementById('ofek-ai-settings-style')) return;
-    var style = document.createElement('style');
-    style.id = 'ofek-ai-settings-style';
-    style.textContent = [
-      '@media(max-width:767px){.sheet{max-height:calc(100dvh - 18px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;touch-action:pan-y!important;}.sheet.open{transform:translateY(0)!important;}}',
-      '.sheet h2{position:relative;}',
-      '.ofek-ai-card{padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:var(--paper-raised);}',
-      '.ofek-ai-title{font-weight:700;margin-bottom:5px;}',
-      '.ofek-ai-subtitle{font-size:.82rem;line-height:1.45;color:var(--ink-soft);margin-bottom:12px;}',
-      '.ofek-ai-grid{display:grid;gap:10px;margin-top:10px;}',
-      '.ofek-ai-row label{font-size:.78rem;color:var(--ink-soft);display:block;margin-bottom:5px;}',
-      '.ofek-ai-row input,.ofek-ai-row select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;}',
-      '.ofek-ai-note{font-size:.78rem;line-height:1.45;color:var(--ink-faint);margin:10px 0 0;}',
-      '.ofek-ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}',
-      '.ofek-ai-status{font-size:.8rem;color:var(--ink-soft);align-self:center;}'
-    ].join('\n');
-    document.head.appendChild(style);
-  }
+  window.OfekAI = { request:routeAiRequest, readSettings:readSettings };
 
   function providerOptions(current){
     return PROVIDER_ORDER.map(function(name){
@@ -170,7 +156,6 @@
   }
 
   function injectSettingsPanel(){
-    addStyle();
     if(document.getElementById('ofek-ai-settings-field')) return;
     var sheet = document.getElementById('settings-sheet');
     if(!sheet) return;
@@ -185,14 +170,16 @@
         '<div class="ofek-ai-title">'+labels.title+'</div>'+
         '<div class="ofek-ai-subtitle">'+labels.subtitle+'</div>'+
         '<div class="ofek-ai-grid" id="ofek-ai-byok-fields">'+
-          '<div class="ofek-ai-row"><label>'+labels.provider+'</label><select id="ofek-ai-provider">'+providerOptions(settings.provider)+'</select></div>'+
-          '<div class="ofek-ai-row"><label>'+labels.model+'</label><input id="ofek-ai-model" type="text" value="'+escapeAttr(settings.model || DEFAULT_MODELS[settings.provider])+'"></div>'+
-          '<div class="ofek-ai-row"><label>'+labels.key+'</label><input id="ofek-ai-key" type="password" autocomplete="off" placeholder="'+escapeAttr(labels.keyPlaceholder)+'" value="'+escapeAttr(settings.apiKey)+'"></div>'+
+          '<div class="ofek-ai-row"><label for="ofek-ai-provider">'+labels.provider+'</label><select id="ofek-ai-provider">'+providerOptions(settings.provider)+'</select></div>'+
+          '<div class="ofek-ai-row"><label for="ofek-ai-model">'+labels.model+'</label><input id="ofek-ai-model" type="text" value="'+escapeAttr(settings.model || DEFAULT_MODELS[settings.provider])+'"></div>'+
+          '<div class="ofek-ai-row"><label for="ofek-ai-key">'+labels.key+'</label><input id="ofek-ai-key" type="password" autocomplete="new-password" placeholder="'+escapeAttr(labels.keyPlaceholder)+'" value="'+escapeAttr(settings.apiKey)+'"></div>'+
+          '<label class="ofek-ai-remember"><input id="ofek-ai-remember" type="checkbox"'+(settings.rememberKey?' checked':'')+'> <span>'+labels.remember+'</span></label>'+
         '</div>'+
         '<p class="ofek-ai-note">'+labels.note+'</p>'+
         '<div class="ofek-ai-actions">'+
           '<button type="button" class="data-btn" id="ofek-ai-save-btn">'+labels.save+'</button>'+
           '<button type="button" class="data-btn" id="ofek-ai-test-btn">'+labels.test+'</button>'+
+          '<button type="button" class="data-btn" id="ofek-ai-forget-btn">'+labels.forget+'</button>'+
           '<span class="ofek-ai-status" id="ofek-ai-status"></span>'+
         '</div>'+
       '</div>';
@@ -222,10 +209,15 @@
     var key = document.getElementById('ofek-ai-key');
     var saveBtn = document.getElementById('ofek-ai-save-btn');
     var testBtn = document.getElementById('ofek-ai-test-btn');
+    var forgetBtn = document.getElementById('ofek-ai-forget-btn');
+    var remember = document.getElementById('ofek-ai-remember');
     var status = document.getElementById('ofek-ai-status');
 
     function setStatus(message){
-      if(status) status.textContent = message || '';
+      if(status){
+        status.textContent = message || '';
+        status.title = message || '';
+      }
     }
 
     function collect(){
@@ -233,7 +225,8 @@
         mode: 'byok',
         provider: provider ? provider.value : 'groq',
         model: model ? model.value : '',
-        apiKey: key ? key.value : ''
+        apiKey: key ? key.value : '',
+        rememberKey: remember ? remember.checked : false
       });
     }
 
@@ -250,6 +243,15 @@
     if(testBtn){
       testBtn.addEventListener('click', function(){ testConnection(collect(), labels, setStatus); });
     }
+    if(forgetBtn){
+      forgetBtn.addEventListener('click', function(){
+        localStorage.removeItem(SETTINGS_KEY);
+        sessionStorage.removeItem(SESSION_KEY);
+        if(key) key.value = '';
+        if(remember) remember.checked = false;
+        setStatus(labels.forgotten);
+      });
+    }
   }
 
   async function testConnection(settings, labels, setStatus){
@@ -262,30 +264,48 @@
       var body = {
         system: 'Reply with OK only.',
         messages: [{ role: 'user', content: 'Connection test' }],
-        max_tokens: 20,
-        ai: { mode:'byok', provider:settings.provider, model:settings.model, apiKey:settings.apiKey }
+        max_tokens: 20
       };
-      var res = await originalFetch(OFEK_ENDPOINT, {
+      var res = await routeAiRequest({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
         cache: 'no-store',
         credentials: 'omit'
       });
-      if(!res.ok) throw new Error(await res.text());
+      if(!res.ok) throw await parseErrorResponse(res);
       setStatus(labels.ok);
     }catch(e){
-      setStatus(labels.failed);
+      setStatus(formatConnectionError(e, labels));
       console.warn('[Ofek AI] connection test failed', e);
     }
   }
 
+  async function parseErrorResponse(res){
+    var text = await res.text();
+    try{
+      var json = JSON.parse(text || '{}');
+      return {
+        status: res.status,
+        provider: json.provider,
+        model: json.model,
+        detail: json.detail || json.error || text
+      };
+    }catch(e){
+      return { status: res.status, detail: text };
+    }
+  }
+
+  function formatConnectionError(error, labels){
+    var parts = [labels.failed];
+    if(error && error.status) parts.push(String(error.status));
+    if(error && error.provider) parts.push(String(error.provider));
+    if(error && error.detail) parts.push(String(error.detail).replace(/\s+/g, ' ').slice(0, 160));
+    return parts.join(' · ');
+  }
+
   function boot(){
-    addStyle();
     injectSettingsPanel();
-    var obs = new MutationObserver(function(){ injectSettingsPanel(); });
-    if(document.body) obs.observe(document.body, { childList:true, subtree:true });
-    setInterval(injectSettingsPanel, 2500);
     console.info('[Ofek AI] BYOK-only routing through', OFEK_ENDPOINT);
   }
 
