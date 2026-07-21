@@ -19,10 +19,18 @@
     groq: 'llama-3.3-70b-versatile',
     openai: 'gpt-4.1-mini',
     openrouter: 'meta-llama/llama-3.1-8b-instruct',
-    gemini: 'gemini-3.5-flash'
+    gemini: 'gemini-3.5-flash',
+    anthropic: 'claude-sonnet-5'
   };
 
-  var PROVIDER_ORDER = ['groq','openai','openrouter','gemini'];
+  var PROVIDER_ORDER = ['groq','openai','anthropic','openrouter','gemini'];
+  var PROVIDER_LABELS = {
+    groq: 'Groq',
+    openai: 'OpenAI',
+    anthropic: 'Anthropic',
+    openrouter: 'OpenRouter',
+    gemini: 'Gemini'
+  };
 
   function readAppLang(){
     try{
@@ -151,7 +159,7 @@
 
   function providerOptions(current){
     return PROVIDER_ORDER.map(function(name){
-      return '<option value="'+name+'"'+(current===name?' selected':'')+'>'+name+'</option>';
+      return '<option value="'+name+'"'+(current===name?' selected':'')+'>'+PROVIDER_LABELS[name]+'</option>';
     }).join('');
   }
 

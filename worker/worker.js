@@ -42,6 +42,11 @@ const PROVIDERS = {
   gemini: {
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     defaultModel: 'gemini-3.5-flash'
+  },
+  anthropic: {
+    endpoint: 'https://api.anthropic.com/v1/messages',
+    defaultModel: 'claude-sonnet-5',
+    format: 'anthropic'
   }
 };
 
@@ -103,8 +108,9 @@ function extractText(data) {
   if (typeof rawContent === 'string') return rawContent;
   if (Array.isArray(rawContent)) return rawContent.map(cleanTextPart).join('');
 
-  const normalized = data?.content?.[0]?.text;
-  if (typeof normalized === 'string') return normalized;
+  if (Array.isArray(data?.content)) {
+    return data.content.map(cleanTextPart).join('');
+  }
 
   return '';
 }
@@ -139,6 +145,13 @@ function normalizeMessages(system, messages) {
   ];
 }
 
+function normalizeAnthropicMessages(messages) {
+  return messages.map((message) => ({
+    role: message.role === 'assistant' ? 'assistant' : 'user',
+    content: String(message.content ?? '')
+  }));
+}
+
 function providerFromBody(body) {
   const ai = body.ai && typeof body.ai === 'object' ? body.ai : {};
   const providerName = String(ai.provider || body.provider || DEFAULT_PROVIDER).toLowerCase();
@@ -161,12 +174,18 @@ function modelFromBody(body, providerName) {
   return typeof requested === 'string' && requested.trim() ? requested.trim() : provider.defaultModel;
 }
 
-async function callProvider({ providerName, model, messages, apiKey, maxTokens, origin }) {
+async function callProvider({ providerName, model, system, messages, apiKey, maxTokens, origin }) {
   const provider = PROVIDERS[providerName];
   const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${apiKey}`
+    'Content-Type': 'application/json'
   };
+
+  if (provider.format === 'anthropic') {
+    headers['x-api-key'] = apiKey;
+    headers['anthropic-version'] = '2023-06-01';
+  } else {
+    headers.Authorization = `Bearer ${apiKey}`;
+  }
 
   if (providerName === 'openrouter') {
     headers['HTTP-Referer'] = origin || 'https://gefenrose.github.io';
@@ -175,17 +194,24 @@ async function callProvider({ providerName, model, messages, apiKey, maxTokens, 
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+  const outputLimit = Math.min(Math.max(Number(maxTokens) || 300, 64), 900);
+  const requestBody = provider.format === 'anthropic' ? {
+    model,
+    system,
+    messages: normalizeAnthropicMessages(messages),
+    max_tokens: outputLimit
+  } : {
+    model,
+    messages: normalizeMessages(system, messages),
+    max_tokens: outputLimit,
+    temperature: 0.7
+  };
   try {
     return await fetch(provider.endpoint, {
       method: 'POST',
       headers,
       signal: controller.signal,
-      body: JSON.stringify({
-        model,
-        messages,
-        max_tokens: Math.min(Math.max(Number(maxTokens) || 300, 64), 900),
-        temperature: 0.7
-      })
+      body: JSON.stringify(requestBody)
     });
   } finally {
     clearTimeout(timeout);
@@ -266,7 +292,6 @@ export default {
       }, { status: 401 }, origin);
     }
 
-    const messages = normalizeMessages(body.system, body.messages);
     const modelUsed = modelFromBody(body, providerName);
     if (modelUsed.length > 160 || !/^[a-zA-Z0-9._:/-]+$/.test(modelUsed)) {
       return jsonResponse({ error: 'Invalid model name' }, { status: 400 }, origin);
@@ -278,7 +303,8 @@ export default {
       upstream = await callProvider({
         providerName,
         model: modelUsed,
-        messages,
+        system: body.system,
+        messages: body.messages,
         apiKey,
         maxTokens,
         origin

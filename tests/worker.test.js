@@ -20,6 +20,7 @@ test('health response declares BYOK-only mode', async () => {
   const body = await response.json();
   assert.equal(body.mode, 'bring-your-own-key-only');
   assert.equal(body.hasAppOwnedApiKey, false);
+  assert.equal(body.providers.anthropic.defaultModel, 'claude-sonnet-5');
 });
 
 test('rejects disallowed origins before processing a request', async () => {
@@ -71,6 +72,45 @@ test('forwards a valid request and never returns the user key', async () => {
     const body = await response.json();
     assert.equal(body.content[0].text, 'OK');
     assert.equal(JSON.stringify(body).includes('user-secret'), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('adapts Anthropic requests and responses to the shared contract', async () => {
+  const originalFetch = globalThis.fetch;
+  let forwarded;
+  globalThis.fetch = async (url, init) => {
+    forwarded = { url, init, body:JSON.parse(init.body) };
+    return new Response(JSON.stringify({
+      content:[
+        { type:'text', text:'Hello ' },
+        { type:'text', text:'from Claude' }
+      ]
+    }), {
+      status:200,
+      headers:{ 'Content-Type':'application/json' }
+    });
+  };
+  try {
+    const response = await worker.fetch(post({
+      system:'Reply briefly',
+      messages:[{ role:'user', content:'Hello' }],
+      ai:{ provider:'anthropic', apiKey:'anthropic-secret' }
+    }), {});
+    assert.equal(response.status, 200);
+    assert.equal(forwarded.url, 'https://api.anthropic.com/v1/messages');
+    assert.equal(forwarded.init.headers['x-api-key'], 'anthropic-secret');
+    assert.equal(forwarded.init.headers['anthropic-version'], '2023-06-01');
+    assert.equal(forwarded.init.headers.Authorization, undefined);
+    assert.equal(forwarded.body.model, 'claude-sonnet-5');
+    assert.equal(forwarded.body.system, 'Reply briefly');
+    assert.deepEqual(forwarded.body.messages, [{ role:'user', content:'Hello' }]);
+    assert.equal(forwarded.body.temperature, undefined);
+    const body = await response.json();
+    assert.equal(body.content[0].text, 'Hello from Claude');
+    assert.equal(body.provider, 'anthropic');
+    assert.equal(JSON.stringify(body).includes('anthropic-secret'), false);
   } finally {
     globalThis.fetch = originalFetch;
   }
