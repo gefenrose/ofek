@@ -29,7 +29,7 @@ New browser behavior belongs in focused modules under `src/js/`; styles belong u
 
 ## AI backend
 
-Ofek is now **bring-your-own-key only**. There is no app-owned Groq/OpenAI/OpenRouter API key in the frontend or Worker.
+Ofek is now **bring-your-own-key only**. There is no app-owned AI provider key in the frontend or Worker.
 
 The Worker is intended to be deployed as:
 
@@ -47,6 +47,7 @@ Supported providers:
 
 - Groq
 - OpenAI
+- Anthropic
 - OpenRouter
 - Gemini
 
