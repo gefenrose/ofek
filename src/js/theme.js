@@ -1,8 +1,8 @@
 // Apply saved theme before first paint to avoid a flash.
 (function(){
   try{
-    var state = JSON.parse(localStorage.getItem('ofek_state_v1'));
-    document.documentElement.setAttribute('data-theme', (state && state.theme) || 'auto');
+    var prefs = JSON.parse(localStorage.getItem('ofek_prefs_v1'));
+    document.documentElement.setAttribute('data-theme', (prefs && prefs.theme) || 'auto');
   }catch(error){
     document.documentElement.setAttribute('data-theme','auto');
   }

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://ofek-api.gefenrose.workers.dev https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; manifest-src 'self'; worker-src 'self'">
   <meta name="theme-color" content="#5B6B8C">
   <meta name="description" content="Ofek — a quiet companion for your days.">
   <title>אופק · Ofek</title>
@@ -16,22 +17,289 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="src/css/shell.css">
-
-  <script src="src/js/theme.js"></script>
+  <link rel="stylesheet" href="src/css/app.css">
 </head>
 <body>
-  <div class="ofek-loader" id="ofek-loader">
-    <div class="ofek-loader-card">
-      <img class="ofek-loader-mark" src="assets/icons/icon-192.png" alt="">
-      <h1 class="ofek-loader-title">אופק</h1>
-      <p class="ofek-loader-text">טוען את היומן…</p>
-      <div class="ofek-loader-bar" aria-hidden="true"></div>
-      <div class="ofek-load-error" id="ofek-load-error" role="status" aria-live="polite"></div>
+<div class="sky-bg" aria-hidden="true"></div>
+
+<div id="splash-screen">
+  <div class="splash-horizon">
+    <svg class="splash-line" viewBox="0 0 400 24" preserveAspectRatio="none"><path d="M0,18 Q200,4 400,18"></path></svg>
+    <div class="splash-dot"></div>
+  </div>
+</div>
+
+
+<div id="lock-screen">
+  <div class="lock-inner">
+    <div class="lock-mark"><img src="assets/icons/icon-192.png" alt=""></div>
+    <h1 class="lock-title" id="lock-title-text"></h1>
+    <p class="lock-sub" id="lock-sub-text"></p>
+    <div class="pin-dots" id="lock-pin-dots">
+      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
     </div>
+    <div class="pin-error" id="lock-pin-error"></div>
+    <div class="pin-keypad" id="lock-keypad"></div>
+  </div>
+</div>
+
+<div class="sheet pin-setup-sheet" id="pin-setup-sheet" aria-hidden="true" inert>
+  <h2 id="pin-setup-title"></h2>
+  <p class="pin-setup-sub" id="pin-setup-sub"></p>
+  <div class="pin-dots" id="pin-setup-dots">
+    <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+  </div>
+  <div class="pin-error" id="pin-setup-error"></div>
+  <div class="pin-keypad" id="pin-setup-keypad"></div>
+  <button class="sheet-close" id="pin-setup-cancel-btn"></button>
+</div>
+
+<div id="onboarding">
+  <div class="ob-mark"><img src="assets/icons/icon-192.png" alt=""></div>
+  <h1 class="ob-title display" id="ob-title">נעים להכיר</h1>
+  <p class="ob-sub" id="ob-sub">כמה דברים קטנים, ואז נתחיל.</p>
+
+  <div class="field">
+    <label id="ob-name-label" for="ob-name">איך נקרא לך?</label>
+    <input type="text" id="ob-name" placeholder="השם שלך" maxlength="30">
   </div>
 
+  <div class="field">
+    <label id="ob-gender-label">כדי לדבר אליך נכון:</label>
+    <div class="pillrow" id="ob-gender-row"></div>
+  </div>
+
+  <div class="field">
+    <label id="ob-lang-label">שפה</label>
+    <div class="pillrow" id="ob-lang-row"></div>
+  </div>
+
+  <button class="btn-primary" id="ob-continue" disabled>בואו נתחיל</button>
+</div>
+
+<div id="app">
+  <nav class="sidenav" id="sidenav">
+    <div class="sidenav-brand"><img src="assets/icons/icon-192.png" alt=""><span class="display brand-text">אופק</span></div>
+
+    <button class="nav-btn active" data-panel="chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
+      <span data-nav="chat">כתיבה</span>
+    </button>
+    <button class="nav-btn" data-panel="history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 14"></polyline></svg>
+      <span data-nav="history">היסטוריה</span>
+    </button>
+    <button class="nav-btn" data-panel="habits">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+      <span data-nav="habits">הרגלים</span>
+    </button>
+    <button class="nav-btn" data-panel="insights">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"></path><path d="M7 14l4-4 3 3 5-6"></path></svg>
+      <span data-nav="insights">תובנות</span>
+    </button>
+
+    <div class="sidenav-spacer"></div>
+
+    <div class="lang-toggle sidenav-lang">
+      <button data-lang="he" class="lang-btn">עב</button><button data-lang="en" class="lang-btn">EN</button>
+    </div>
+    <button class="settings-btn" aria-label="הגדרות">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h0a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v0a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"></path></svg>
+      <span id="sidenav-settings-label">הגדרות</span>
+    </button>
+  </nav>
+
+  <div class="app-shell">
+  <header class="topbar">
+    <div class="brand"><img src="assets/icons/icon-192.png" alt=""><span class="display brand-text">אופק</span></div>
+    <div class="topbar-actions">
+      <div class="lang-toggle" id="lang-toggle-top">
+        <button data-lang="he" class="lang-btn">עב</button><button data-lang="en" class="lang-btn">EN</button>
+      </div>
+      <button class="icon-btn settings-btn" id="settings-btn" aria-label="הגדרות">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h0a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v0a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="ribbon ambient" id="ribbon"></div>
+
+  <main>
+    <section class="panel active" id="panel-chat">
+      <div class="greeting">
+        <h1 class="display" id="greeting-text">בוקר טוב</h1>
+        <p id="greeting-sub"></p>
+      </div>
+      <div class="distress-card" id="distress-card">
+        <div class="distress-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          <div class="dtext" id="distress-text">אם קשה עכשיו, אפשר להתקשר לער"ן בחינם — <a href="tel:1201">1201</a></div>
+          <button class="dismiss-btn" id="distress-close" aria-label="סגירה">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <button class="grounding-btn" id="grounding-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"></circle><line x1="12" y1="8" x2="12" y2="21"></line><path d="M5 13a7 7 0 0 0 14 0"></path><line x1="5" y1="13" x2="2" y2="13"></line><line x1="22" y1="13" x2="19" y2="13"></line></svg>
+          <span id="grounding-btn-label">שיחת קרקוע</span>
+        </button>
+      </div>
+      <div class="composer-host" id="composer-host"></div>
+    </section>
+
+    <section class="panel" id="panel-history">
+      <div id="calendar-host"></div>
+      <div id="history-list"></div>
+    </section>
+
+    <section class="panel" id="panel-insights">
+      <div id="insights-content"></div>
+    </section>
+
+    <section class="panel" id="panel-habits">
+      <div id="habits-list"></div>
+    </section>
+  </main>
+
+  <nav class="bottomnav">
+    <button class="nav-btn active" data-panel="chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
+      <span data-nav="chat">כתיבה</span>
+    </button>
+    <button class="nav-btn" data-panel="history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 14"></polyline></svg>
+      <span data-nav="history">היסטוריה</span>
+    </button>
+    <button class="nav-btn" data-panel="habits">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+      <span data-nav="habits">הרגלים</span>
+    </button>
+    <button class="nav-btn" data-panel="insights">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"></path><path d="M7 14l4-4 3 3 5-6"></path></svg>
+      <span data-nav="insights">תובנות</span>
+    </button>
+  </nav>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="sheet-backdrop" aria-hidden="true"></div>
+<div class="sheet" id="settings-sheet" aria-hidden="true" inert>
+  <h2 id="settings-title">הגדרות</h2>
+  <div class="field">
+    <label id="settings-name-label" for="settings-name">שם</label>
+    <input type="text" id="settings-name">
+  </div>
+  <div class="field">
+    <label id="settings-lang-label">שפה</label>
+    <div class="pillrow" id="settings-lang-row"></div>
+  </div>
+  <div class="field">
+    <label id="settings-theme-label">מצג</label>
+    <div class="pillrow" id="settings-theme-row"></div>
+  </div>
+  <div class="field">
+    <div class="habit-switch-row">
+      <label id="lock-settings-label">נעילת אפליקציה</label>
+      <label class="switch"><input type="checkbox" id="lock-enable-toggle" aria-labelledby="lock-settings-label"><span class="slider"></span></label>
+    </div>
+    <div class="habit-notify-note" id="lock-settings-note">נעילת מסך מקומית. הרשומות עצמן אינן מוצפנות במכשיר.</div>
+    <button class="data-btn" id="lock-change-pin-btn" style="display:none; margin-top:10px;">שינוי קוד</button>
+    <div class="habit-switch-row" id="lock-biometric-row" style="display:none; margin-top:14px;">
+      <label id="lock-biometric-label-el">פתיחה עם זיהוי ביומטרי</label>
+      <label class="switch"><input type="checkbox" id="lock-biometric-toggle" aria-labelledby="lock-biometric-label-el"><span class="slider"></span></label>
+    </div>
+  </div>
+  <div class="field">
+    <label id="drive-sync-label">סנכרון בענן</label>
+    <div id="drive-sync-disconnected">
+      <button class="data-btn drive-connect-btn" id="drive-connect-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.71 3.5L1.15 15l3.43 6 6.57-11.5z"></path><path d="M16.29 3.5L22.85 15l-3.43 6-6.57-11.5z"></path><path d="M4.58 21h14.84"></path></svg>
+        <span id="drive-connect-label">התחבר ל-Google Drive</span>
+      </button>
+    </div>
+    <div id="drive-sync-connected" style="display:none;">
+      <div class="drive-status" id="drive-status-row"><span class="dot"></span><span id="drive-status-text"></span></div>
+      <div class="data-actions">
+        <button class="data-btn" id="drive-sync-now-btn">סנכרון עכשיו</button>
+        <button class="data-btn" id="drive-disconnect-btn">התנתקות</button>
+      </div>
+    </div>
+  </div>
+  <div class="data-actions">
+    <button class="data-btn" id="export-data-btn">ייצוא נתונים</button>
+    <button class="data-btn" id="import-data-btn">ייבוא נתונים</button>
+  </div>
+  <input type="file" id="import-file-input" accept="application/json,.json" aria-label="ייבוא נתונים" style="display:none;">
+  <button class="danger-btn" id="clear-data-btn">מחיקת כל המידע</button>
+  <div class="settings-credit"><span id="settings-credit-text">נוצר על ידי גפן ר. גולני, 2026</span></div>
+  <button class="sheet-close" id="sheet-close-btn">סגירה</button>
+</div>
+
+<div class="sheet edit-entry-sheet" id="edit-entry-sheet" aria-hidden="true" inert>
+  <h2 id="edit-entry-title">עריכת רשומה</h2>
+  <div class="edit-meta" id="edit-entry-meta"></div>
+  <div class="field">
+    <label id="edit-mood-label">מצב רוח</label>
+    <div class="edit-moodface" id="edit-moodface"></div>
+    <div class="edit-moodlabel" id="edit-moodlabel">—</div>
+    <input type="range" class="moodslider" id="edit-moodslider" min="0" max="14" value="7" aria-labelledby="edit-mood-label edit-moodlabel">
+  </div>
+  <div class="field">
+    <label id="edit-note-label">הערה</label>
+    <textarea class="moodnote" id="edit-note" rows="1" placeholder="" aria-labelledby="edit-note-label"></textarea>
+  </div>
+  <div class="field">
+    <label id="edit-image-label">תמונה</label>
+    <div class="edit-image-row" id="edit-image-row">
+      <button type="button" class="image-btn" id="edit-image-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="12" cy="12" r="3.5"></circle><path d="M7 5l1.5-2h7L17 5"></path></svg>
+        <span id="edit-image-btn-label">החלף תמונה</span>
+      </button>
+      <input type="file" id="edit-image-input" accept="image/*" aria-label="בחירת תמונה" style="display:none;">
+      <div class="edit-image-thumb" id="edit-image-thumb" style="display:none;">
+        <img id="edit-image-preview" alt="">
+        <button type="button" class="remove-btn" id="edit-image-remove" aria-label="הסרת תמונה">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="edit-actions">
+    <button class="btn-primary" id="edit-save-btn">שמור שינויים</button>
+    <button class="delete-btn" id="edit-delete-btn">מחק</button>
+  </div>
+  <button class="sheet-close" id="edit-sheet-close-btn">סגירה</button>
+</div>
+
+<div class="sheet" id="habit-sheet" role="dialog" aria-modal="true" aria-labelledby="habit-sheet-title" aria-hidden="true" inert>
+  <h2 id="habit-sheet-title">הרגל חדש</h2>
+  <div id="habit-sheet-body"></div>
+  <div class="edit-actions">
+    <button class="btn-primary" id="habit-save-btn">שמירה</button>
+    <button class="delete-btn" id="habit-delete-btn" style="display:none;">מחק</button>
+  </div>
+  <button class="sheet-close" id="habit-sheet-close-btn">סגירה</button>
+</div>
+
+<div class="sheet" id="grounding-disclaimer-sheet" aria-hidden="true" inert>
+  <h2 id="grounding-disclaimer-title">לפני שמתחילים</h2>
+  <p class="disclaimer-text" id="grounding-disclaimer-text">אופק הוא לא מטפל/ת מוסמך/ת ולא תחליף לטיפול מקצועי — הוא יכול להציע תרגילי נשימה וקרקוע עדינים לרגע הזה. במצב חירום או מצוקה גדולה, אפשר גם להתקשר לער"ן בחינם — 1201.</p>
+  <button class="btn-primary" id="grounding-continue-btn">להתחיל</button>
+  <button class="sheet-close" id="grounding-cancel-btn">ביטול</button>
+</div>
+
+<div class="storage-status" id="storage-status" role="alert" aria-live="assertive" hidden></div>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="src/js/theme.js"></script>
+  <script src="src/js/storage.js"></script>
+  <script src="src/js/a11y.js"></script>
+  <script src="src/js/i18n.js"></script>
+  <script src="src/js/image-utils.js"></script>
+  <script src="src/js/cloud-sync.js"></script>
+  <script src="src/js/screen-lock.js"></script>
+  <script src="src/js/data-transfer.js"></script>
   <script src="src/js/ai-settings.js"></script>
-  <script src="src/js/bootstrap.js"></script>
+  <script src="src/js/daily-summaries.js"></script>
+  <script src="src/js/app.js"></script>
 </body>
 </html>

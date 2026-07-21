@@ -1,67 +1,46 @@
 # Ofek architecture
 
-Ofek started as a single-file PWA. The repo is now organized so the public entry point is small and new code has a clear place to live.
+Ofek is a static bilingual PWA. The former single-file application and runtime bridge have been removed; the public document now loads focused assets directly.
 
-## Current file map
+## File map
 
 ```text
 /
-├─ index.html                 # Thin public shell only
-├─ manifest.webmanifest       # PWA manifest
-├─ sw.js                      # Service worker/cache/routing
-├─ icon-192.png
-├─ icon-512.png
+├─ index.html                 # Semantic app markup and document metadata
+├─ manifest.webmanifest       # Install metadata and icons
+├─ sw.js                      # Offline navigation and same-origin asset cache
 ├─ src/
-│  ├─ css/
-│  │  └─ shell.css            # Shell/loading styles
-│  ├─ js/
-│  │  ├─ bootstrap.js         # Bridge loader for the preserved app
-│  │  └─ ai-settings.js       # BYOK-only AI settings/request routing
-│  └─ legacy/
-│     └─ monolith.html        # Preserved former single-file app
+│  ├─ css/app.css             # Application styles and responsive layouts
+│  └─ js/
+│     ├─ theme.js             # Pre-paint theme preference
+│     ├─ storage.js           # IndexedDB persistence and migration
+│     ├─ a11y.js              # Dialog semantics, focus trap, focus restoration
+│     ├─ i18n.js              # Hebrew/English copy and flow label maps
+│     ├─ image-utils.js        # Image validation, resize, and compression
+│     ├─ cloud-sync.js         # Optional Google Drive app-data synchronization
+│     ├─ screen-lock.js        # PIN and platform-biometric screen lock
+│     ├─ data-transfer.js      # JSON backup export and validated import
+│     ├─ ai-settings.js       # BYOK settings and request routing
+│     ├─ daily-summaries.js    # Cached whole-day AI summaries
+│     └─ app.js               # App orchestration, journal, history, and habits
 └─ worker/
-   ├─ worker.js               # BYOK-only AI proxy
-   └─ wrangler.toml           # Cloudflare Worker config
+   ├─ worker.js               # Stateless BYOK AI proxy
+   └─ wrangler.toml           # Worker deployment configuration
 ```
 
-## Rules going forward
+## Data and privacy
 
-1. **Do not add new features to `src/legacy/monolith.html`.** It exists to keep the current app working while migration continues.
-2. **Use `index.html` only for document metadata and loading top-level scripts/styles.**
-3. **Put new browser behavior in modular JS files under `src/js/`.**
-4. **Put new styles under `src/css/`.**
-5. **Keep AI logic BYOK-only.** Ofek should never include an app-owned Groq/OpenAI/OpenRouter key.
-6. **Keep the Worker stateless.** It forwards user keys per request and does not persist them.
-7. **Keep root clean.** Root should contain only public entry/PWA files and documentation. Runtime implementation belongs under `src/`.
+- Journal state is stored in IndexedDB. The old `ofek_state_v1` localStorage value is migrated once and removed after a successful IndexedDB write.
+- Theme and language preferences are stored separately in `ofek_prefs_v1` so the theme can be applied before app startup.
+- API keys are session-only by default. Persistent storage requires an explicit “remember” choice and can be cleared from Settings.
+- The app lock is a local screen lock. PBKDF2 slows offline PIN guessing, but journal records are not encrypted at rest; the UI states this explicitly.
+- Google Drive sync uses the user's authenticated app-data folder and remains optional.
 
-## Migration plan
+## Reliability rules
 
-The current `src/js/bootstrap.js` bridge loads `src/legacy/monolith.html`, copies its styles/body into the shell, then executes its scripts. This is intentionally temporary.
-
-Recommended next steps:
-
-1. Extract the `<style>` block from `src/legacy/monolith.html` into `src/css/app.css`.
-2. Extract the inline app script into `src/js/legacy-app.js`.
-3. Split `legacy-app.js` into focused modules:
-   - `src/js/state.js`
-   - `src/js/i18n.js`
-   - `src/js/settings.js`
-   - `src/js/ai.js`
-   - `src/js/history.js`
-   - `src/js/habits.js`
-   - `src/js/grounding.js`
-   - `src/js/main.js`
-4. Replace the bridge loader with direct module imports.
-5. Delete `src/legacy/monolith.html` only after the app works without it.
-
-## AI architecture
-
-```text
-Ofek PWA
-  ↓ user enters provider/model/API key in Settings
-Ofek Worker
-  ↓ forwards request only for this call
-Groq / OpenAI / OpenRouter
-```
-
-No default app-owned key exists. If the user does not enter a key, AI features should fail gracefully while journaling continues locally.
+1. Persistence errors must be visible; never swallow a failed journal write.
+2. Service-worker asset failures must never fall back to HTML. Only navigation requests receive the app shell.
+3. Closed sheets remain `inert` and hidden from the accessibility tree.
+4. The Worker accepts only allow-listed providers, bounded request sizes, known message roles, and valid model identifiers.
+5. Feature modules receive dependencies through small `create`/`bind` APIs. Avoid hidden cross-module globals.
+6. New functionality should be added in a focused module instead of growing `app.js` indefinitely.
