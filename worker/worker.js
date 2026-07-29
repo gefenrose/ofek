@@ -13,6 +13,7 @@
 const ALLOWED_ORIGINS = new Set([
   'https://gefens-serenity.pages.dev',
   'https://gefenrose.github.io',
+  'https://ofek-horizon.vercel.app',
   'https://ofek.pages.dev',
   'capacitor://localhost',
   'https://localhost',

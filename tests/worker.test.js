@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import worker from '../worker/worker.js';
 
 const APP_ORIGIN = 'https://gefenrose.github.io';
+const VERCEL_ORIGIN = 'https://ofek-horizon.vercel.app';
 
 function post(body, origin = APP_ORIGIN, extraHeaders = {}) {
   return new Request('https://ofek-api.example.test/', {
@@ -33,6 +34,12 @@ test('allows localhost development ports without weakening other origins', async
   const response = await worker.fetch(post({ system:'x', messages:[] }, 'http://localhost:4173'), {});
   assert.equal(response.status, 401);
   assert.equal(response.headers.get('Access-Control-Allow-Origin'), 'http://localhost:4173');
+});
+
+test('allows the Ofek Vercel production origin', async () => {
+  const response = await worker.fetch(post({ system:'x', messages:[] }, VERCEL_ORIGIN), {});
+  assert.equal(response.status, 401);
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'), VERCEL_ORIGIN);
 });
 
 test('rejects unknown providers instead of silently falling back', async () => {
