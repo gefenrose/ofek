@@ -1,4 +1,4 @@
-const VERSION = 'ofek-v21';
+const VERSION = 'ofek-v22';
 
 const CORE_ASSETS = [
   './index.html',

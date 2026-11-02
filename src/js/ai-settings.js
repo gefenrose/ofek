@@ -11,12 +11,12 @@
   var DEFAULTS = {
     mode: 'byok',
     provider: 'groq',
-    model: 'llama-3.3-70b-versatile',
+    model: 'openai/gpt-oss-120b',
     apiKey: ''
   };
 
   var DEFAULT_MODELS = {
-    groq: 'llama-3.3-70b-versatile',
+    groq: 'openai/gpt-oss-120b',
     openai: 'gpt-4.1-mini',
     openrouter: 'meta-llama/llama-3.1-8b-instruct',
     gemini: 'gemini-3.5-flash',
@@ -87,11 +87,15 @@
       var saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
       var persistentKey = String(saved.apiKey || '');
       var sessionKey = sessionStorage.getItem(SESSION_KEY) || '';
-      return Object.assign({}, DEFAULTS, saved || {}, {
+      var settings = Object.assign({}, DEFAULTS, saved || {}, {
         mode: 'byok',
         apiKey: persistentKey || sessionKey,
         rememberKey: !!persistentKey
       });
+      if(settings.provider === 'groq' && settings.model === 'llama-3.3-70b-versatile'){
+        settings.model = DEFAULT_MODELS.groq;
+      }
+      return settings;
     }catch(e){
       return Object.assign({}, DEFAULTS);
     }
@@ -102,6 +106,9 @@
     clean.mode = 'byok';
     clean.provider = DEFAULT_MODELS[clean.provider] ? clean.provider : 'groq';
     clean.model = String(clean.model || DEFAULT_MODELS[clean.provider] || DEFAULTS.model).trim();
+    if(clean.provider === 'groq' && clean.model === 'llama-3.3-70b-versatile'){
+      clean.model = DEFAULT_MODELS.groq;
+    }
     clean.apiKey = String(clean.apiKey || '').trim();
     clean.rememberKey = !!clean.rememberKey;
     var persisted = { mode:clean.mode, provider:clean.provider, model:clean.model };

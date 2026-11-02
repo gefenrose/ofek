@@ -30,7 +30,7 @@ const PROVIDER_TIMEOUT_MS = 60000;
 const PROVIDERS = {
   groq: {
     endpoint: 'https://api.groq.com/openai/v1/chat/completions',
-    defaultModel: 'llama-3.3-70b-versatile'
+    defaultModel: 'openai/gpt-oss-120b'
   },
   openai: {
     endpoint: 'https://api.openai.com/v1/chat/completions',
@@ -172,7 +172,10 @@ function modelFromBody(body, providerName) {
   const ai = body.ai && typeof body.ai === 'object' ? body.ai : {};
   const provider = PROVIDERS[providerName] || PROVIDERS[DEFAULT_PROVIDER];
   const requested = ai.model || body.model;
-  return typeof requested === 'string' && requested.trim() ? requested.trim() : provider.defaultModel;
+  const model = typeof requested === 'string' && requested.trim() ? requested.trim() : provider.defaultModel;
+  // Existing Ofek clients may still send Groq's retired default model ID.
+  if (providerName === 'groq' && model === 'llama-3.3-70b-versatile') return provider.defaultModel;
+  return model;
 }
 
 async function callProvider({ providerName, model, system, messages, apiKey, maxTokens, origin }) {

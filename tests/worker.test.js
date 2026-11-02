@@ -22,6 +22,7 @@ test('health response declares BYOK-only mode', async () => {
   assert.equal(body.mode, 'bring-your-own-key-only');
   assert.equal(body.hasAppOwnedApiKey, false);
   assert.equal(body.providers.anthropic.defaultModel, 'claude-sonnet-5');
+  assert.equal(body.providers.groq.defaultModel, 'openai/gpt-oss-120b');
 });
 
 test('rejects disallowed origins before processing a request', async () => {
@@ -118,6 +119,33 @@ test('adapts Anthropic requests and responses to the shared contract', async () 
     assert.equal(body.content[0].text, 'Hello from Claude');
     assert.equal(body.provider, 'anthropic');
     assert.equal(JSON.stringify(body).includes('anthropic-secret'), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('migrates old Groq default models when forwarding requests', async () => {
+  const originalFetch = globalThis.fetch;
+  const forwardedModels = [];
+  globalThis.fetch = async (url, init) => {
+    forwardedModels.push(JSON.parse(init.body).model);
+    return new Response(JSON.stringify({ choices:[{ message:{ content:'OK' } }] }), {
+      status:200, headers:{ 'Content-Type':'application/json' }
+    });
+  };
+  try {
+    for (const ai of [
+      { provider:'groq', apiKey:'test-key' },
+      { provider:'groq', model:'llama-3.3-70b-versatile', apiKey:'test-key' }
+    ]) {
+      const response = await worker.fetch(post({
+        system:'Reply briefly', messages:[{ role:'user', content:'Hello' }], ai
+      }), {});
+      assert.equal(response.status, 200);
+      const body = await response.json();
+      assert.equal(body.model, 'openai/gpt-oss-120b');
+    }
+    assert.deepEqual(forwardedModels, ['openai/gpt-oss-120b', 'openai/gpt-oss-120b']);
   } finally {
     globalThis.fetch = originalFetch;
   }
