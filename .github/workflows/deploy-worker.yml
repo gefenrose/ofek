@@ -20,6 +20,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Test Worker code
+        run: npm test
+
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
@@ -28,3 +31,33 @@ jobs:
           workingDirectory: worker
           wranglerVersion: "4"
           command: deploy
+
+      - name: Verify public Worker health and CORS
+        shell: bash
+        env:
+          OFEK_WORKER_URL: https://ofek-api.gefenrose.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 2 --max-time 20 \
+            "${OFEK_WORKER_URL}/" -o /tmp/ofek-health.json
+          jq -e '.ok == true and .service == "ofek-api" and .supportsBringYourOwnKey == true' /tmp/ofek-health.json > /dev/null
+
+          preflight_status="$(curl --silent --show-error --max-time 20 \
+            -X OPTIONS \
+            -H 'Origin: https://gefenrose.github.io' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: content-type' \
+            -D /tmp/ofek-preflight-headers \
+            -o /dev/null -w '%{http_code}' "${OFEK_WORKER_URL}/")"
+          test "$preflight_status" = "204"
+          grep -iq '^access-control-allow-origin: https://gefenrose.github.io' /tmp/ofek-preflight-headers
+
+          post_status="$(curl --silent --show-error --max-time 20 \
+            -X POST \
+            -H 'Origin: https://gefenrose.github.io' \
+            -H 'Content-Type: application/json' \
+            --data '{"system":"Health check","messages":[{"role":"user","content":"ping"}]}' \
+            -o /tmp/ofek-post.json -w '%{http_code}' "${OFEK_WORKER_URL}/")"
+          test "$post_status" = "401"
+          jq -e '.error == "Missing user API key"' /tmp/ofek-post.json > /dev/null
+          echo 'Worker health, CORS, and key handling passed.'
